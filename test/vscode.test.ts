@@ -39,7 +39,8 @@ describe("VS Code-style Markdown preview", () => {
     const html = await render("```mermaid\nflowchart TD\n A --> B\n```\n\n- [x] task");
     const summary = summarizeHtml(html);
     expect(summary.code).toEqual([{ block: true, text: "flowchart TD\n A --> B" }]);
-    expect(summary.text).toContain("[code] [x] task");
+    expect(summary.text).toContain("[x] task");
+    expect(summary.nodes.some((node) => node.kind === "code")).toBe(true);
     expect(summary.tasks).toEqual([]);
   });
   test("validates input and offers VS Code preview options", async () => {

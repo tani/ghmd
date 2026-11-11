@@ -1,7 +1,12 @@
 import { join } from "node:path";
 import { render as renderQuirks } from "../src/quirks";
 import { render as renderVsCode } from "../src/vscode";
-import { compareHtml, detectPotentialBreakage, type SemanticKind } from "../src/compare";
+import {
+  compareHtml,
+  compareMarkdown,
+  type LocatedFinding,
+  type SemanticKind,
+} from "../src/compare";
 import manifest from "../test/fixtures/e2e/manifest.json";
 import { fetchGitHubHtml } from "../src/compare/github";
 
@@ -49,12 +54,13 @@ async function compare(source: string, expected?: string) {
     renderQuirks(source, { runId: token }),
     renderVsCode(source),
   ]);
-  const analysis = detectPotentialBreakage(expected ?? quirks, vscode);
+  const analysis = compareMarkdown(source, expected ?? quirks, vscode);
   const categories = analysis.categories;
   const a = analysis.github,
     b = analysis.vscode;
   return {
     categories,
+    findings: analysis.findings,
     vscodeMathErrors: analysis.vscodeMathErrors,
     vscodeUnsupported: analysis.vscodeUnsupported,
     ...(expected === undefined
@@ -65,6 +71,22 @@ async function compare(source: string, expected?: string) {
         }),
     differences: Object.fromEntries(categories.map((k) => [k, { github: a[k], vscode: b[k] }])),
   };
+}
+function printLocations(findings: LocatedFinding[], prefix: string) {
+  for (const finding of findings) {
+    if (!finding.locations.length) {
+      console.log(
+        `  ${finding.category}: location unavailable${finding.note ? ` (${finding.note})` : ""}`,
+      );
+      continue;
+    }
+    for (const location of finding.locations) {
+      const { start, end } = location;
+      console.log(
+        `  ${finding.category}: ${prefix}:${start.line}:${start.column}-${end.line}:${end.column} (${location.precision}${finding.status === "ambiguous" ? ", ambiguous" : ""})`,
+      );
+    }
+  }
 }
 if (fixtures) {
   const cases = [];
@@ -84,8 +106,21 @@ if (fixtures) {
       mathErrors.push({ id: fixture.id, errors: result.vscodeMathErrors });
     if (result.vscodeUnsupported.length)
       unsupported.push({ id: fixture.id, features: result.vscodeUnsupported });
-    if (result.categories.length && (!kind || result.categories.includes(kind)))
-      cases.push({ id: fixture.id, aliases: fixture.cases.map((c) => c.id), ...result });
+    if (result.categories.length && (!kind || result.categories.includes(kind))) {
+      if (kind) {
+        result.categories = result.categories.filter((category) => category === kind);
+        result.findings = result.findings.filter((finding) => finding.category === kind);
+        result.differences = Object.fromEntries(
+          Object.entries(result.differences).filter(([category]) => category === kind),
+        );
+      }
+      cases.push({
+        id: fixture.id,
+        file: `test/fixtures/e2e/cases/${fixture.id}.md`,
+        aliases: fixture.cases.map((c) => c.id),
+        ...result,
+      });
+    }
   }
   const counts: Partial<Record<SemanticKind, number>> = {};
   for (const entry of cases)
@@ -128,6 +163,10 @@ if (fixtures) {
         console.log(
           `${c.id}\t${c.categories.join(",")}\tGitHub: quirks=${c.quirksVsGitHub.join(",") || "match"} vscode=${c.vscodeVsGitHub.join(",") || "match"}${c.vscodeUnsupported.length ? `\tVS Code incomplete: ${c.vscodeUnsupported.join(",")}` : ""}`,
         );
+        printLocations(
+          kind ? c.findings.filter((f) => f.category === kind) : c.findings,
+          `test/fixtures/e2e/cases/${c.id}.md`,
+        );
         if (only) console.log(JSON.stringify(c.differences, null, 2));
       }
     } else {
@@ -148,10 +187,24 @@ if (fixtures) {
     ? await fetchGitHubHtml(source, { token: process.env.GITHUB_PAT ?? process.env.GITHUB_TOKEN })
     : undefined;
   const result = await compare(source, expected);
-  if (kind) result.categories = result.categories.filter((category) => category === kind);
+  if (kind) {
+    result.categories = result.categories.filter((category) => category === kind);
+    result.findings = result.findings.filter((finding) => finding.category === kind);
+    result.differences = Object.fromEntries(
+      Object.entries(result.differences).filter(([category]) => category === kind),
+    );
+  }
   if (json)
     console.log(
-      JSON.stringify({ githubSource: live ? "github-api" : "local-quirks", ...result }, null, 2),
+      JSON.stringify(
+        {
+          file: path && path !== "-" ? path : null,
+          githubSource: live ? "github-api" : "local-quirks",
+          ...result,
+        },
+        null,
+        2,
+      ),
     );
   else if (!result.categories.length) {
     console.log(live ? "GitHub source: live API." : "GitHub source: local approximation.");
@@ -166,6 +219,7 @@ if (fixtures) {
       console.log(`VS Code math errors (not evaluated): ${result.vscodeMathErrors.join(", ")}`);
     if (result.vscodeUnsupported.length)
       console.log(`VS Code may not render GitHub features: ${result.vscodeUnsupported.join(", ")}`);
+    printLocations(result.findings, path && path !== "-" ? path : "<stdin>");
     for (const category of result.categories) {
       console.log(`\n${category}:`);
       console.log(JSON.stringify(result.differences[category], null, 2));

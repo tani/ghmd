@@ -1,4 +1,10 @@
 import { parseFragment } from "parse5";
+import { attachNodeLocations, locateDifferences } from "./locations";
+import { parseWithSourceMap } from "./source-map";
+import type { SourceRange } from "./locations";
+
+export { locateDifferences } from "./locations";
+export type { LocatedFinding, SourceRange } from "./locations";
 
 type Node = {
   nodeName: string;
@@ -9,7 +15,18 @@ type Node = {
 };
 export type SemanticKind =
   "text" | "math" | "code" | "links" | "images" | "tasks" | "structure" | "formatting";
+export type SemanticNode =
+  | { kind: "text"; text: string; source?: NodeSource }
+  | { kind: "math"; display: boolean; expression: string; source?: NodeSource }
+  | { kind: "math-error"; text: string; source?: NodeSource }
+  | { kind: "code"; block: boolean; text: string; source?: NodeSource }
+  | { kind: "image"; src: string; alt: string; source?: NodeSource };
+export type NodeSource = {
+  status: "block" | "ambiguous" | "unavailable";
+  locations: SourceRange[];
+};
 export type SemanticSummary = Record<SemanticKind, unknown[]> & {
+  nodes: SemanticNode[];
   mathErrors: string[];
   footnoteReferences: number;
   alerts: number;
@@ -26,11 +43,24 @@ export function summarizeHtml(html: string): SemanticSummary {
     tasks: [],
     structure: [],
     formatting: [],
+    nodes: [],
     mathErrors: [],
     footnoteReferences: 0,
     alerts: 0,
   };
-  const text: string[] = [];
+  let text = "";
+  const flushText = () => {
+    const normalized = text.replace(/[\t\n\f\r ]+/g, " ").trim();
+    if (normalized) {
+      result.text.push(normalized);
+      result.nodes.push({ kind: "text", text: normalized });
+    }
+    text = "";
+  };
+  const addNode = (node: SemanticNode) => {
+    flushText();
+    result.nodes.push(node);
+  };
   const attr = (n: Node, name: string) => n.attrs?.find((a) => a.name === name)?.value;
   const contents = (n: Node): string =>
     n.nodeName === "#text" ? (n.value ?? "") : (n.childNodes ?? []).map(contents).join("");
@@ -43,7 +73,7 @@ export function summarizeHtml(html: string): SemanticSummary {
   };
   const visit = (n: Node) => {
     if (n.nodeName === "#text") {
-      text.push(n.value ?? "");
+      text += n.value ?? "";
       return;
     }
     const tag = n.tagName;
@@ -52,7 +82,7 @@ export function summarizeHtml(html: string): SemanticSummary {
     if (tag === "a" && attr(n, "data-footnote-ref") !== undefined) result.footnoteReferences++;
     if (classes.includes("katex-error")) {
       result.mathErrors.push(attr(n, "title") ?? contents(n));
-      text.push("[math-error]");
+      addNode({ kind: "math-error", text: attr(n, "title") ?? contents(n) });
       return;
     }
     if (classes.includes("katex-display") || classes.includes("katex")) {
@@ -61,7 +91,7 @@ export function summarizeHtml(html: string): SemanticSummary {
         const display = classes.includes("katex-display");
         const expression = display ? contents(annotation).replace(/\n$/, "") : contents(annotation);
         result.math.push({ display, expression });
-        text.push("[math]");
+        addNode({ kind: "math", display, expression });
         return;
       }
     }
@@ -89,7 +119,7 @@ export function summarizeHtml(html: string): SemanticSummary {
       )
         expression = expression.slice(1, -1);
       result.math.push({ display, expression });
-      text.push("[math]");
+      addNode({ kind: "math", display, expression });
       return;
     }
     if (tag === "pre" || tag === "code") {
@@ -98,7 +128,11 @@ export function summarizeHtml(html: string): SemanticSummary {
         block: tag === "pre",
         text: tag === "pre" ? content.replace(/\n$/, "") : content,
       });
-      text.push("[code]");
+      addNode({
+        kind: "code",
+        block: tag === "pre",
+        text: tag === "pre" ? content.replace(/\n$/, "") : content,
+      });
       return;
     }
     if (tag === "img") {
@@ -106,7 +140,11 @@ export function summarizeHtml(html: string): SemanticSummary {
         src: attr(n, "data-canonical-src") ?? attr(n, "src") ?? "",
         alt: attr(n, "alt") ?? "",
       });
-      text.push("[image]");
+      addNode({
+        kind: "image",
+        src: attr(n, "data-canonical-src") ?? attr(n, "src") ?? "",
+        alt: attr(n, "alt") ?? "",
+      });
       return;
     }
     if (tag === "input" && attr(n, "type") === "checkbox") {
@@ -134,7 +172,7 @@ export function summarizeHtml(html: string): SemanticSummary {
       tag &&
       ["p", "div", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "br"].includes(tag)
     )
-      text.push(" ");
+      flushText();
     for (const child of n.childNodes ?? []) visit(child);
     if (
       format &&
@@ -147,15 +185,10 @@ export function summarizeHtml(html: string): SemanticSummary {
       tag &&
       ["p", "div", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote"].includes(tag)
     )
-      text.push(" ");
+      flushText();
   };
   visit(parseFragment(html) as Node);
-  result.text = [
-    text
-      .join("")
-      .replace(/[\t\n\f\r ]+/g, " ")
-      .trim(),
-  ];
+  flushText();
   return result;
 }
 
@@ -178,9 +211,46 @@ export function compareHtml(left: string, right: string): SemanticKind[] {
 }
 
 /** Candidate differences in which VS Code preserves a feature that GitHub may not. */
+export function missingTextFragments(expected: unknown[], actual: unknown[]): string[] {
+  const available = actual.map(String).filter(Boolean);
+  let index = 0,
+    offset = 0;
+  const missing: string[] = [];
+  for (const item of expected) {
+    const value = String(item);
+    if (!value) continue;
+    let match: { index: number; offset: number } | undefined;
+    for (let i = index; i < available.length && !match; i++) {
+      for (let start = i === index ? offset : 0; start < available[i].length && !match; start++) {
+        if (available[i][start] !== value[0]) continue;
+        let node = i,
+          position = start,
+          char = 0;
+        while (char < value.length && node < available.length) {
+          const current = position === available[node].length ? " " : available[node][position];
+          if (current !== value[char]) break;
+          char++;
+          if (position === available[node].length) {
+            node++;
+            position = 0;
+          } else position++;
+        }
+        if (char === value.length) match = { index: node, offset: position };
+      }
+    }
+    if (match) {
+      index = match.index;
+      offset = match.offset;
+    } else missing.push(value);
+  }
+  return missing;
+}
+
 export function detectPotentialBreakage(githubHtml: string, vscodeHtml: string) {
-  const github = summarizeHtml(githubHtml),
-    vscode = summarizeHtml(vscodeHtml);
+  return detectSummaries(summarizeHtml(githubHtml), summarizeHtml(vscodeHtml));
+}
+
+function detectSummaries(github: SemanticSummary, vscode: SemanticSummary) {
   const missing = (expected: unknown[], actual: unknown[]) => {
     const counts = new Map<string, number>();
     for (const item of actual) {
@@ -214,20 +284,12 @@ export function detectPotentialBreakage(githubHtml: string, vscodeHtml: string) 
   if (index < vscodeFormatting.length) categories.push("formatting");
   // If VS Code could not render a formula, or GitHub recognizes features that
   // VS Code leaves literal, text differences do not establish a GitHub defect.
-  const vscodeText = String(vscode.text[0] ?? "")
-    .replace(/\[math\]|\[code\]|\[image\]/g, "")
-    .trim();
-  const githubText = String(github.text[0] ?? "")
-    .replace(/\[math\]|\[code\]|\[image\]/g, "")
-    .trim();
   const githubHasExtraFeatures =
     github.math.length > vscode.math.length || github.tasks.length > vscode.tasks.length;
   if (
     !vscode.mathErrors.length &&
     !githubHasExtraFeatures &&
-    vscodeText &&
-    vscodeText !== githubText &&
-    !githubText.includes(vscodeText)
+    missingTextFragments(vscode.text, github.text).length
   )
     categories.push("text");
   const vscodeUnsupported: string[] = [];
@@ -235,4 +297,13 @@ export function detectPotentialBreakage(githubHtml: string, vscodeHtml: string) 
   if (github.alerts && !vscode.alerts) vscodeUnsupported.push("alerts");
   if (github.tasks.length && !vscode.tasks.length) vscodeUnsupported.push("task checkboxes");
   return { categories, vscodeMathErrors: vscode.mathErrors, vscodeUnsupported, github, vscode };
+}
+
+/** Compare the rendered fragments and locate the resulting candidates in Markdown. */
+export function compareMarkdown(source: string, githubHtml: string, vscodeHtml: string) {
+  const parsed = parseWithSourceMap(source);
+  const vscode = summarizeHtml(vscodeHtml);
+  vscode.nodes = attachNodeLocations(source, vscode.nodes, parsed);
+  const analysis = detectSummaries(summarizeHtml(githubHtml), vscode);
+  return { ...analysis, findings: locateDifferences(source, analysis, parsed) };
 }

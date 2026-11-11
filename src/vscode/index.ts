@@ -11,10 +11,8 @@ export interface RenderOptions {
   math?: boolean;
 }
 
-/** Approximate VS Code's built-in Markdown preview. The output is not sanitized. */
-export async function render(source: string, options: RenderOptions = {}): Promise<string> {
-  if (typeof source !== "string") throw new TypeError("render expects a string");
-  if (Buffer.byteLength(source) > 1_000_000) throw new RangeError("Markdown exceeds 1 MB");
+/** Build the same Markdown engine for rendering and source mapping. */
+export function createMarkdownEngine(options: RenderOptions = {}) {
   const md = new MarkdownIt({
     html: true,
     linkify: options.linkify ?? true,
@@ -47,6 +45,14 @@ export async function render(source: string, options: RenderOptions = {}): Promi
   md.linkify.set({ fuzzyLink: false });
   if (options.math !== false)
     md.use(math, { enableFencedBlocks: true, globalGroup: true, macros: {} });
+  return md;
+}
+
+/** Approximate VS Code's built-in Markdown preview. The output is not sanitized. */
+export async function render(source: string, options: RenderOptions = {}): Promise<string> {
+  if (typeof source !== "string") throw new TypeError("render expects a string");
+  if (Buffer.byteLength(source) > 1_000_000) throw new RangeError("Markdown exceeds 1 MB");
+  const md = createMarkdownEngine(options);
   const result = md.render(source);
   if (Buffer.byteLength(result) > 32 * 1024 * 1024) throw new RangeError("HTML exceeds 32 MB");
   return result;
