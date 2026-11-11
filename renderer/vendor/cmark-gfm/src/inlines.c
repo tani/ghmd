@@ -1271,7 +1271,10 @@ noMatch:
       // `opener` and the subject's current position there are other nodes
       //
       // (first, check for underflows)
-      if ((fnref_start_column + 2) <= fnref_end_column) {
+      if (opener->inl_text->start_line < subj->line ||
+          (opener->inl_text->next->next && opener->inl_text->next->next->type == CMARK_NODE_IMAGE)) {
+        fnref->as.literal = cmark_chunk_dup(literal, 1, literal->len - 1);
+      } else if ((fnref_start_column + 2) <= fnref_end_column) {
         fnref->as.literal = cmark_chunk_dup(literal, 1, (fnref_end_column - fnref_start_column) - 2);
       } else {
         fnref->as.literal = cmark_chunk_dup(literal, 1, 0);

@@ -1,0 +1,3 @@
+node_modules/
+native/libcmark-gfm-*.so
+native/libcmark-gfm-*.dylib

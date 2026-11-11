@@ -1,7 +1,7 @@
 import {dlopen,CString} from 'bun:ffi';
 import {join} from 'node:path';
 const root=join(import.meta.dir,'..');
-const nativePath=join(root,'native',process.platform==='darwin'?'libcmark-gfm.dylib':'libcmark-gfm.so');
+const nativePath=join(root,'native',`libcmark-gfm-${process.platform}-${process.arch}.${process.platform==='darwin'?'dylib':'so'}`);
 const lib=dlopen(nativePath,{
  cmark_version_string:{args:[],returns:'cstring'},
  cmark_gfm_core_extensions_ensure_registered:{args:[],returns:'void'},
@@ -23,7 +23,7 @@ export const nativeVersion=String(s.cmark_version_string());
 // Explicit byte length handles embedded NUL and non-ASCII input correctly.
 export function nativeRender(source:string):{html:string;astXML:string}{
  const bytes=Buffer.from(source,'utf8');
- const options=(1<<13)|(1<<11)|(1<<2); // footnotes, github_pre_lang, hardbreaks; raw HTML stays disabled
+ const options=(1<<17)|(1<<13)|(1<<11)|(1<<2); // raw HTML is sanitized after HTML5 parsing; footnotes, github_pre_lang, hardbreaks
  const parser=s.cmark_parser_new(options);if(!parser)throw Error('cmark allocation failed');
  let doc:any=null;
  const owned=(p:any)=>{if(!p)throw Error('cmark render allocation failed');try{return String(new CString(p))}finally{s.gfm_free(p)}};

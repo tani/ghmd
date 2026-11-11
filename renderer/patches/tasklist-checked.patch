@@ -1,0 +1,14 @@
+diff --git a/renderer/vendor/cmark-gfm/extensions/tasklist.c b/renderer/vendor/cmark-gfm/extensions/tasklist.c
+index 7bef454..ef08901 100644
+--- a/renderer/vendor/cmark-gfm/extensions/tasklist.c
++++ b/renderer/vendor/cmark-gfm/extensions/tasklist.c
+@@ -89,7 +89,8 @@ static cmark_node *open_tasklist_item(cmark_syntax_extension *self,
+   cmark_parser_advance_offset(parser, (char *)input, 3, false);
+ 
+   // Either an upper or lower case X means the task is completed.
+-  parent_container->as.list.checked = (strstr((char*)input, "[x]") || strstr((char*)input, "[X]"));
++  unsigned char *marker = memchr(input, '[', matched);
++  parent_container->as.list.checked = marker && marker + 2 < input + matched && (marker[1] == 'x' || marker[1] == 'X') && marker[2] == ']';
+ 
+   return NULL;
+ }

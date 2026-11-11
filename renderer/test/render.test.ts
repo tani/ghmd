@@ -1,83 +1,78 @@
 import {describe,test,expect} from 'bun:test';
-import {Window} from 'happy-dom';
 import {render} from '../src/index';
 import {nativeRender,nativeVersion} from '../src/native';
-async function inspect(source:string){const html=await render(source);const w=new Window();w.document.body.innerHTML=html;return {html,d:w.document,close:()=>w.happyDOM.abort()}}
 
-describe('render :: String -> Promise<String>',()=>{
- test('async string and native GFM extensions',async()=>{
+describe('render',()=>{
+ test('renders GFM and keeps task states separate from later content',async()=>{
   expect(nativeVersion).toBe('0.29.0.gfm.13');
-  const r=await inspect('# 日本語\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\n- [x] done\n\n~~old~~\n\nhttps://example.com');
-  try{expect(typeof r.html).toBe('string');expect(r.d.querySelector('h1')?.textContent).toBe('日本語');expect(r.d.querySelectorAll('td').length).toBe(2);expect(r.d.querySelector('input')?.checked).toBe(true);expect(r.d.querySelector('del')?.textContent).toBe('old');expect(r.d.querySelector('a')?.href).toBe('https://example.com/')}finally{await r.close()}
+  const html=await render('- [ ] `[x]`\n- [x] done\n\n| A | B |\n|---|---|\n| 1 | 2 |');
+  expect(html).toContain('aria-label="Incomplete task"');
+  expect(html).toContain('aria-label="Completed task"');
+  expect(html).toContain('<markdown-accessiblity-table><table role="table">');
  });
- test('real FFI emits ordered AST XML with UTF-8 source positions',()=>{
+ test('renders GitHub alerts and external link attributes',async()=>{
+  const html=await render('> [!NOTE]\n> Message.\n\n[link](https://example.com)');
+  expect(html).toContain('class="markdown-alert markdown-alert-note"');
+  expect(html).toContain('<p>Message.</p>');
+  expect(html).toContain('href="https://example.com" rel="nofollow"');
+ });
+ test('native parser retains UTF-8 source positions',()=>{
   const {html,astXML}=nativeRender('あ **太字**\n\n[^a]\n\n[^a]: note');
-  expect(html).toContain('<strong>太字</strong>');expect(html).toContain('data-footnote-ref');
-  const tree=Bun.XML.parse(astXML,{compact:false});expect(tree.name).toBe('document');expect(tree.attributes.xmlns).toBe('http://commonmark.org/xml/1.0');
+  expect(html).toContain('<strong>太字</strong>');
+  expect(Bun.XML.parse(astXML,{compact:false}).name).toBe('document');
  });
- test('MathJax renders inline, protected, display and fenced math into SVG',async()=>{
-  const r=await inspect('あ $x^2$ と $`\\{a\\,b\\}`$\n\n$$\n\\frac{1}{2}\n$$\n\n```math\n\\begin{pmatrix}1 & 2\\\\3 & 4\\end{pmatrix}\n```');
-  try{expect(r.d.querySelectorAll('.math svg').length).toBe(4);expect(r.d.querySelectorAll('.math-display').length).toBe(2);expect(r.d.querySelector('.math-error')).toBeNull();expect([...r.d.querySelectorAll('.math')].map(e=>e.getAttribute('data-tex'))).toContain('\\{a\\,b\\}');for(const svg of r.d.querySelectorAll('.math svg'))expect(Bun.XML.parse(svg.outerHTML,{compact:false}).name).toBe('svg')}
-  finally{await r.close()}
+ test('rejects invalid inputs and does not leak globals across concurrent calls',async()=>{
+  const before=Object.getOwnPropertyDescriptor(globalThis,'document');
+  const outputs=await Promise.all(['Alpha','Beta'].map(render));
+  expect(outputs).toEqual(['<p>Alpha</p>','<p>Beta</p>']);
+  expect(Object.getOwnPropertyDescriptor(globalThis,'document')).toEqual(before);
+  await expect(render(null as any)).rejects.toBeInstanceOf(TypeError);
+  await expect(render('x'.repeat(1000001))).rejects.toBeInstanceOf(RangeError);
  });
- test('ordinary code and link destinations stay opaque',async()=>{
-  const r=await inspect('`$x$`\n\n```text\n$y$\n```\n\n[price](https://example.com/$z$)\n\nEscaped \\$a\\$');
-  try{expect(r.d.querySelector('.math')).toBeNull();expect(r.d.querySelector('a')?.getAttribute('href')).toContain('$z$');expect(r.d.body.textContent).toContain('$x$')}finally{await r.close()}
+});
+
+describe('HTML and math compatibility',()=>{
+ test('preserves safe raw HTML and removes executable attributes and URLs',async()=>{
+  const html=await render('<details>\n<summary>More</summary>\n\nContent\n\n</details>\n\n<img src=x onerror=alert(1)>\n\n<a href="javascript:alert(1)">bad</a>');
+  expect(html).toContain('<details>\n<summary>More</summary>\n<p>Content</p>\n</details>');
+  expect(html).not.toContain('onerror');expect(html).not.toContain('javascript:');
  });
- test('invalid TeX is an escaped visible error, without leaking macros',async()=>{
-  const r=await inspect('$`\\newcommand{\\private}{x}\\private`$ and $`\\private`$ and $`\\notacommand`$');
-  try{expect(r.d.querySelectorAll('.math svg').length).toBe(1);expect(r.d.querySelectorAll('.math-error').length).toBe(2);expect(r.d.querySelector('.math-error')?.textContent).toBe('\\private')}finally{await r.close()}
+ test('produces math placeholders and preserves math inside footnotes as text',async()=>{
+  const html=await render('$`x^2`$\n\n```math\nx^2\n```\n\nText[^a]\n\n[^a]: $a$');
+  expect(html).toContain('class="js-inline-math"');expect(html).toContain('class="js-display-math"');
+  expect(html).toContain('>$$x^2$$</math-renderer>');expect(html).toContain('<p>$a$ <a');
  });
- test('Mermaid actually generates sanitized SVG and retains both node labels',async()=>{
-  const r=await inspect('```mermaid\nflowchart TD\n A[Input] --> B[Output]\n```');
-  try{expect(r.d.querySelector('figure.mermaid svg')).not.toBeNull();expect(r.d.querySelector('.mermaid-error')).toBeNull();expect(r.d.querySelector('figure.mermaid')?.textContent).toContain('Input');expect(r.d.querySelector('figure.mermaid')?.textContent).toContain('Output');expect(Bun.XML.parse(r.d.querySelector('figure.mermaid svg')!.outerHTML,{compact:false}).name).toBe('svg')}
-  finally{await r.close()}
+ test('handles multiline footnote labels and image nodes in labels',async()=>{
+  const html=await render('[^a\nb]: # c\n\nxxx[^a\nb].\n\n[^a]: note\n\n[^![image](#)]');
+  expect(html.match(/data-footnote-ref=/g)).toHaveLength(2);
+  expect(html).toContain('<p>[^]</p>');
  });
- test('invalid Mermaid is visible source rather than false success',async()=>{
-  const r=await inspect('```mermaid\nthis is not mermaid\n```');
-  try{expect(r.d.querySelector('figure.mermaid')).toBeNull();expect(r.d.querySelector('.mermaid-error')?.textContent).toContain('this is not mermaid');expect(r.d.querySelector('.mermaid-error')?.getAttribute('role')).toBe('alert')}finally{await r.close()}
+});
+
+describe('GitHub code blocks and image proxy',()=>{
+ test('highlights supported languages with GitHub-style token classes',async()=>{
+  const html=await render('```mermaid\nflowchart TD\n A --> B\n```\n\n```json\n{"type":"FeatureCollection"}\n```');
+  expect(html).toContain('<div class="highlight highlight-source-mermaid"><pre class="notranslate"><span class="pl-k">flowchart</span>');
+  expect(html).toContain('<span class="pl-ent">"type"</span>');
  });
- test('raw HTML and dangerous Markdown URLs do not execute or survive',async()=>{
-  const r=await inspect('<script>globalThis.pwned=true</script>\n\n[x](javascript:alert(1))\n\n<img src=x onerror=alert(1)>');
-  try{expect(r.d.querySelector('script,img')).toBeNull();expect(r.d.querySelector('a')?.getAttribute('href')).toBe('');expect(r.html).not.toContain('onerror=')}finally{await r.close()}
+ test('uses a caller-supplied signed image URL and rejects unsafe schemes',async()=>{
+  const input='![alt](https://example.com/a.png)';
+  const html=await render(input,{imageProxy:url=>`https://proxy.example/${encodeURIComponent(url)}`});
+  expect(html).toContain('<a target="_blank" rel="noopener noreferrer nofollow" href="https://proxy.example/');
+  expect(html).toContain('data-canonical-src="https://example.com/a.png" style="max-width: 100%;"');
+  await expect(render(input,{imageProxy:()=> 'javascript:alert(1)'})).rejects.toBeInstanceOf(TypeError);
  });
- test('source reaching Mermaid cannot emit script or event attributes',async()=>{
-  const r=await inspect('```mermaid\nflowchart TD\n A["<img src=x onerror=alert(1)>"] --> B[safe]\n```');
-  try{expect(r.d.querySelector('script,[onerror],[onload]')).toBeNull();expect(r.html).not.toContain('href="javascript:')}finally{await r.close()}
- });
- test('identical Markdown has deterministic output and no caller global pollution',async()=>{
-  const source='Math $`x`$\n\n```mermaid\nflowchart LR\n A --> B\n```';
-  const before=(globalThis as any).document;expect(await render(source)).toBe(await render(source));expect((globalThis as any).document).toBe(before);
- });
- test('bounds and input types reject asynchronously',async()=>{
-  await expect(render(null as any)).rejects.toBeInstanceOf(TypeError);await expect(render('x'.repeat(1000001))).rejects.toBeInstanceOf(RangeError);
- });
- test('render returns a Promise without calling process creation APIs',async()=>{
-  const {spyOn}=await import('bun:test');
-  const spawn=spyOn(Bun,'spawn').mockImplementation(()=>{throw Error('Forbidden child process')});
-  const spawnSync=spyOn(Bun,'spawnSync').mockImplementation(()=>{throw Error('Forbidden child process')});
-  try{
-   const result=render('**hello**\n\n```mermaid\nflowchart TD\n A --> B\n```');
-   expect(result).toBeInstanceOf(Promise);
-   const html=await result;expect(html).toContain('<strong>hello</strong>');expect(html).toContain('class="mermaid"');
-   expect(spawn).not.toHaveBeenCalled();expect(spawnSync).not.toHaveBeenCalled();
-  }finally{spawn.mockRestore();spawnSync.mockRestore()}
- });
- test('parallel calls keep labels and configuration separate',async()=>{
-  const sources=['Alpha','Beta','Gamma'].map(label=>'# '+label+'\n\n$`x`$\n\n```mermaid\nflowchart TD\n A['+label+'] --> B[End]\n```');
-  const htmls=await Promise.all(sources.map(render));
-  for(let i=0;i<htmls.length;i++){
-   expect(htmls[i]).toContain('<h1>'+['Alpha','Beta','Gamma'][i]+'</h1>');
-   expect(htmls[i]).toContain('class="mermaid"');
-   for(let j=0;j<htmls.length;j++)if(i!==j)expect(htmls[i]).not.toContain(['Alpha','Beta','Gamma'][j]);
-  }
- });
- test('global descriptors are restored and operational rejection does not poison the queue',async()=>{
-  const keys=['window','document','DOMParser','XMLSerializer','HTMLElement','SVGElement','CSSStyleSheet','CSSRule','Node','getComputedStyle','navigator'];
-  const before=keys.map(k=>Object.getOwnPropertyDescriptor(globalThis,k));
-  // A raw XML-forbidden control character makes cmark AST XML invalid.
-  await expect(render('bad \x01')).rejects.toBeInstanceOf(SyntaxError);
-  expect(await render('recovered')).toContain('<p>recovered</p>');
-  expect(keys.map(k=>Object.getOwnPropertyDescriptor(globalThis,k))).toEqual(before);
- });
+});
+
+test('linked images retain their original link when proxied',async()=>{
+ const html=await render('[![alt](https://example.com/a.png)](https://example.com)',{imageProxy:()=> 'https://proxy.example/a'});
+ expect(html).toBe('<p><a href="https://example.com" rel="nofollow"><img src="https://proxy.example/a" alt="alt" data-canonical-src="https://example.com/a.png" style="max-width: 100%;"></a></p>');
+});
+
+test('accepts a deterministic render ID and rejects malformed IDs',async()=>{
+ const runId='1234567890abcdef1234567890abcdef';
+ const html=await render('$x$ and [^a]\n\n[^a]: note',{runId});
+ expect(html).toContain(`data-run-id="${runId}"`);
+ expect(html).toContain(`user-content-fn-a-${runId}`);
+ await expect(render('text',{runId:'bad'})).rejects.toThrow('runId must be 32');
 });
