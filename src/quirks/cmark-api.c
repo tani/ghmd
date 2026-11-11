@@ -114,5 +114,6 @@ gfm_status gfm_call(const char *operation, const gfm_view *arguments, size_t cou
     if (output) result->text.length = strlen(output);
   }
   if (!result->text.data) { result->error = "Native string allocation failed"; return GFM_NO_MEMORY; }
+  if (!strcmp(operation, "finish")) return gfm_complete_html(result);
   return GFM_OK;
 }

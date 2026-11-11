@@ -90,3 +90,38 @@ test("ordinary rendering makes four native calls across every DOM reparse path",
   expect(result.exitCode).toBe(0);
   expect(JSON.parse(result.stdout.toString())).toEqual(samples.map(() => 4));
 });
+
+test("the final C stage removes exactly one trailing LF", () => {
+  for (const source of [
+    "",
+    "text",
+    "text\n",
+    "text\n\n",
+    "text\r\n",
+    "\n\r\n",
+    "text\n\r",
+    "text\u2028",
+  ]) {
+    expect(finishHtml(source, token, boundary, tableMarker)).toBe(source.replace(/\n$/, ""));
+  }
+});
+
+test("the final C stage enforces the byte limit after trimming and HTML expansion", () => {
+  const limit = 32 * 1024 * 1024;
+  // Character count is far below the byte limit; UTF-8 bytes fill it exactly.
+  const exact = "あ".repeat(Math.floor(limit / 3)) + "x".repeat(limit % 3);
+  expect(finishHtml(exact + "\n", token, boundary, tableMarker)).toBe(exact);
+  let failure: unknown;
+  try {
+    finishHtml(exact + "x", token, boundary, tableMarker);
+  } catch (error) {
+    failure = error;
+  }
+  expect(failure).toBeInstanceOf(RangeError);
+  expect((failure as Error).message).toBe("Rendered HTML exceeds 32 MB");
+  // The input fits, but relative-image wrapping pushes the final HTML over.
+  const expanded = "x".repeat(limit - 40) + '<img src="x">';
+  expect(Buffer.byteLength(expanded)).toBeLessThan(limit);
+  expect(() => finishHtml(expanded, token, boundary, tableMarker)).toThrow(RangeError);
+  expect(finishHtml("ok\n", token, boundary, tableMarker)).toBe("ok");
+}, 60_000);

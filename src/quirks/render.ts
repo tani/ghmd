@@ -111,10 +111,7 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       document.body.innerHTML = math.html;
       beforeFinal = document.body.innerHTML;
     }
-    const output = finishHtml(beforeFinal, token, mark, tableMarker).replace(/\n$/, "");
-    if (Buffer.byteLength(output) > 32 * 1024 * 1024)
-      throw new RangeError("Rendered HTML exceeds 32 MB");
-    return output;
+    return finishHtml(beforeFinal, token, mark, tableMarker);
   } finally {
     await window.happyDOM.abort();
   }

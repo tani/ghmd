@@ -1,6 +1,23 @@
 /* Consecutive native steps are grouped around the DOM reparse boundaries.
  * Stages return an ASCII '0' or '1' followed by HTML; '1' requests a DOM reparse.
  * Keeping this small framing in the string API avoids runtime-specific values. */
+#include "cmark-api.h"
+
+static gfm_status gfm_complete_html(gfm_result *result) {
+  size_t length = result->text.length;
+  if (length && result->text.data[length - 1] == '\n') {
+    result->text.data[--length] = 0;
+    result->text.length = length;
+  }
+  if (length > GFM_MAX_OUTPUT_BYTES) {
+    free(result->text.data);
+    result->text = (gfm_string){0};
+    result->error = "Rendered HTML exceeds 32 MB";
+    return GFM_LIMIT_EXCEEDED;
+  }
+  return GFM_OK;
+}
+
 static char *gfm_stage_result(char *html, int reparse) {
   if (!html) return NULL;
   size_t length = strlen(html);
