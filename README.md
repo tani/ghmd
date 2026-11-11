@@ -10,7 +10,6 @@ bun run compare --fixtures                  # Use saved GitHub API responses, of
 bun run compare --fixtures --kind math      # Filter by category
 bun run compare --fixtures --all            # List all candidates
 bun run compare --only original-0024        # Inspect a saved case
-bun run measure:recall                     # Evaluate the small labeled benchmark
 ```
 
 The live option uses `GITHUB_PAT` or `GITHUB_TOKEN` if available; GitHub's rate limits apply. The offline local renderer is an approximation, and can miss GitHub behavior; fixture comparisons use the exact saved GitHub response, even where the local renderer disagrees. The live option sends the document to GitHub, while ordinary comparisons and tests make no requests. `--json` emits machine-readable results.
