@@ -1,5 +1,4 @@
 import { renderInProcess } from "./render";
-export { createGitHubImageProxy } from "./github-image-proxy";
 
 export interface RenderOptions {
   /** Use a specific GitHub-style 32-character lowercase hexadecimal render ID. */

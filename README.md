@@ -15,8 +15,6 @@ Bun 1.4.4 is required. On first import, `bun:ffi` compiles the unmodified cmark-
 bun install --frozen-lockfile
 bun test
 bun run render input.md > output.html
-# Resolve signed image URLs through GitHub (requires network access):
-bun run render --github-image-proxy input.md > output.html
 ```
 
 The CLI also accepts standard input. The library returns a Promise containing an HTML fragment. The native compilation at import and native parsing are synchronous in the calling process; the Promise also covers the asynchronous HTML transformations. It uses the vendored cmark-gfm parser and happy-dom, and limits input to 1 MB and output to 32 MB. The `cc()` integration has been tested here with Bun 1.4.4 on Linux ARM64; other platforms have not been verified in this project.
@@ -29,17 +27,7 @@ For example, `matrix-bare-prefix-0` captures recognized `$x$`, while `matrix-bar
 
 The original inputs include cases split from the Markdown batches previously provided in this workspace, including examples attributed there to the markdown-math-acid-test project. The independently captured outputs reflect each case on its own; document-wide interactions can produce different results.
 
-The CLI flag sends each unique remote image URL to GitHub's Markdown API to obtain its signed Camo URL. It does not send the rest of the Markdown. GitHub API rate limits apply; optionally set `GITHUB_PAT` or `GITHUB_TOKEN` for authenticated requests. Bun loads the root `.env` automatically; run `bun src/cli.ts --github-image-proxy input.md`. Failed lookups cause rendering to fail. Without the flag, rendering remains offline and leaves remote image URLs unproxied.
-
-The library exposes the same opt-in resolver:
-
-```ts
-import { render, createGitHubImageProxy } from "./src/index.ts";
-const imageProxy = createGitHubImageProxy(); // optionally pass {token}
-const html = await render(markdown, { imageProxy });
-```
-
-Applications with a different trusted image proxy can supply a synchronous or asynchronous resolver:
+Applications can supply a synchronous or asynchronous image proxy resolver:
 
 ```ts
 const html = await render(markdown, {
@@ -49,6 +37,6 @@ const html = await render(markdown, {
 
 For reproducible output, pass a 32-character lowercase hexadecimal `runId` to `render`, or use `--run-id ID` on the CLI. Normally the renderer generates a fresh ID for each fragment, as GitHub does; reusing an ID in the same page can cause anchor collisions.
 
-The resolver must return an HTTP(S) URL. GitHub's signing key is not part of this project; the opt-in resolver obtains signatures from GitHub rather than generating them locally. Matching these fixtures does not prove compatibility with every possible Markdown input; math, sanitization, and GitHub's other server-side transformations have broader behavior than the cases covered here. Raw HTML passes through an HTML5 parser and DOMPurify before renderer transformations; this prototype is not a security-audited service.
+The resolver must return an HTTP(S) URL. Without one, the renderer leaves remote image URLs unproxied. Matching these fixtures does not prove compatibility with every possible Markdown input; math, sanitization, and GitHub's other server-side transformations have broader behavior than the cases covered here. Raw HTML passes through an HTML5 parser and DOMPurify before renderer transformations; this prototype is not a security-audited service.
 
 The native source is based on cmark-gfm 0.29.0.gfm.13. The vendored upstream C files are unmodified and are checked against the release hashes in `test/fixtures/cmark-gfm-upstream.json`. Compatibility adjustments live in `src/native.ts`. Multiline footnote compatibility can require reparsing transformed source, so AST XML source positions in those cases refer to the transformed input. See `vendor/cmark-gfm/PROVENANCE.json` and `COPYING` for provenance and licensing. Original prototype code is MIT licensed; third-party code retains its own license.
