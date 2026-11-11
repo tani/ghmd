@@ -56,15 +56,3 @@ static void gfm_unicode_lower_into(cmark_strbuf *out, const unsigned char *s, si
     pos += (size_t)width;
   }
 }
-
-typedef struct { size_t length; unsigned char text[]; } gfm_lower_result;
-gfm_lower_result *gfm_unicode_lower(const unsigned char *input, size_t length) {
-  cmark_strbuf out = CMARK_BUF_INIT(cmark_get_default_mem_allocator());
-  gfm_unicode_lower_into(&out, input, length);
-  gfm_lower_result *result = malloc(sizeof(*result) + (size_t)out.size + 1);
-  if (result) { result->length = out.size; memcpy(result->text, out.ptr, (size_t)out.size + 1); }
-  cmark_strbuf_free(&out);
-  return result;
-}
-size_t gfm_unicode_lower_length(const gfm_lower_result *result) { return result->length; }
-const unsigned char *gfm_unicode_lower_data(const gfm_lower_result *result) { return result->text; }

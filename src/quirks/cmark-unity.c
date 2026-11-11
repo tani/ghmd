@@ -160,10 +160,6 @@
 #undef MAX_INDENT
 #undef S_render_node
 #include <stdlib.h>
-/* Renderer strings use cmark's default malloc allocator. Free them in the
- * same compiled unit, avoiding assumptions about the host C runtime. */
-void gfm_free(void *p) { free(p); }
-
 #include "cmark-quirks.c"
 #include "cmark-footnotes.c"
 #include "cmark-math.c"
@@ -174,3 +170,5 @@ void gfm_free(void *p) { free(p); }
 #include "cmark-list.c"
 #include "cmark-math-dom.c"
 #include "cmark-postprocess.c"
+
+#include "cmark-api.c"

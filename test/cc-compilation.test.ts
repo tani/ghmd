@@ -35,3 +35,17 @@ describe("in-process C compilation", () => {
     expect(result.stderr.toString()).toBe("");
   });
 });
+
+test("the C string API works without the Bun/Node-API adapter", async () => {
+  const { cc } = await import("bun:ffi");
+  const native = cc({
+    source: join(root, "test/support/native-core-probe.c"),
+    include: ["src", "extensions", "generated"].map((dir) => join(root, "vendor/cmark-gfm", dir)),
+    symbols: { gfm_api_probe: { args: [], returns: "int" } },
+  });
+  try {
+    expect(native.symbols.gfm_api_probe()).toBe(0);
+  } finally {
+    native.close();
+  }
+});

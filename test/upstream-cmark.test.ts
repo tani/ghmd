@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import manifest from "./fixtures/cmark-gfm-upstream.json";
-import { nativeRender, renderMathHtml, finalizeHtml } from "../src/quirks/native";
+import { renderMarkdown, renderMathHtml, finalizeHtml } from "../src/quirks/native";
 
 const vendor = join(import.meta.dir, "../vendor/cmark-gfm");
 describe("unmodified upstream cmark-gfm", () => {
@@ -21,27 +21,27 @@ describe("unmodified upstream cmark-gfm", () => {
     }
   });
   test("adjusts task states without changing literal code", () => {
-    const html = nativeRender("- [ ] `[x]`\n- [x] yes\n\n`[^a\\]b]`").html;
+    const html = renderMarkdown("- [ ] `[x]`\n- [x] yes\n\n`[^a\\]b]`");
     expect(html).toContain('<input type="checkbox" disabled="" /> <code>[x]</code>');
     expect(html).toContain('<input type="checkbox" checked="" disabled="" /> yes');
     expect(html).toContain("<code>[^a\\]b]</code>");
   });
   test("adapts nested task markers after multibyte input and embedded NUL", () => {
-    const html = nativeRender("日本語\u0000\n\n- [x] 一\n  - [ ] 二\n  - [X] 三").html;
+    const html = renderMarkdown("日本語\u0000\n\n- [x] 一\n  - [ ] 二\n  - [X] 三");
     expect(html.match(/<input type="checkbox" checked="" disabled="" \/>/g)).toHaveLength(2);
     expect(html.match(/<input type="checkbox" disabled="" \/>/g)).toHaveLength(1);
   });
   test("recovers escaped unresolved labels without modifying code", () => {
-    const html = nativeRender("[^a\\]b] and `[^a\\]b]`").html;
+    const html = renderMarkdown("[^a\\]b] and `[^a\\]b]`");
     expect(html).toContain("[^a]b] and <code>[^a\\]b]</code>");
   });
   test("retains references whose label precedes an image", () => {
-    const html = nativeRender("[^a![x](#)]\n\n[^a]: note").html;
+    const html = renderMarkdown("[^a![x](#)]\n\n[^a]: note");
     expect(html).toContain("data-footnote-ref");
     expect(html).toContain("<p>note ");
   });
   test("recovers multiline labels after multibyte text and embedded NUL", () => {
-    const html = nativeRender("日本語\u0000 [^] [^a\nb]\n\n[^a]: note").html;
+    const html = renderMarkdown("日本語\u0000 [^] [^a\nb]\n\n[^a]: note");
     expect(html).toContain("日本語� [^] <sup");
     expect(html).toContain('href="#fn-a"');
     expect(html).toContain("<p>note ");
@@ -132,7 +132,7 @@ describe("unmodified upstream cmark-gfm", () => {
     expect(output).toContain('<template><img src="b"><input type="checkbox"></template>');
   });
   test("keeps code containing multiline footnote syntax literal", () => {
-    const html = nativeRender("[^] and `[^a\nb]`\n\n[^a]: note").html;
+    const html = renderMarkdown("[^] and `[^a\nb]`\n\n[^a]: note");
     expect(html).toContain("<code>[^a b]</code>");
   });
 });

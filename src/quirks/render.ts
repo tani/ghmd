@@ -2,7 +2,7 @@ import { createDOM } from "./dom";
 import {
   finalizeHtml,
   flattenTemplates,
-  nativeRender,
+  renderMarkdown,
   prepareDetails,
   prepareMathTables,
   processLinks,
@@ -15,7 +15,7 @@ import type { RenderOptions } from "./index";
 
 // GitHub assigns a unique suffix to footnote anchors for each rendered fragment.
 export async function renderInProcess(source: string, options: RenderOptions): Promise<string> {
-  const { html } = nativeRender(source);
+  const html = renderMarkdown(source);
   const window = createDOM();
   const document = window.document;
   try {

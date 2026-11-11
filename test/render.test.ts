@@ -1,6 +1,6 @@
 import { describe, test, expect } from "bun:test";
 import { render } from "../src/quirks/index";
-import { nativeRender, nativeVersion } from "../src/quirks/native";
+import { renderMarkdown, renderAstXml, nativeVersion } from "../src/quirks/native";
 
 describe("render", () => {
   test("renders GFM and keeps task states separate from later content", async () => {
@@ -17,7 +17,9 @@ describe("render", () => {
     expect(html).toContain('href="https://example.com" rel="nofollow"');
   });
   test("native parser retains UTF-8 source positions", () => {
-    const { html, astXML } = nativeRender("あ **太字**\n\n[^a]\n\n[^a]: note");
+    const source = "あ **太字**\n\n[^a]\n\n[^a]: note";
+    const html = renderMarkdown(source);
+    const astXML = renderAstXml(source);
     expect(html).toContain("<strong>太字</strong>");
     expect(Bun.XML.parse(astXML, { compact: false }).name).toBe("document");
   });

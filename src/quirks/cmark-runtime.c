@@ -7,7 +7,7 @@ typedef struct {
   int options;
 } gfm_document;
 
-void gfm_document_free(gfm_document *document) {
+static void gfm_document_free(gfm_document *document) {
   if (!document) return;
   if (document->doc) cmark_node_free(document->doc);
   if (document->parser) cmark_parser_free(document->parser);
@@ -23,7 +23,7 @@ static int gfm_document_parse(gfm_document *document, const unsigned char *sourc
   return document->doc != NULL;
 }
 
-gfm_document *gfm_document_new(const unsigned char *source, size_t length, int options) {
+static gfm_document *gfm_document_new(const unsigned char *source, size_t length, int options) {
   gfm_document *document = calloc(1, sizeof(*document));
   if (!document) return NULL;
   document->options = options;
@@ -60,17 +60,13 @@ gfm_document *gfm_document_new(const unsigned char *source, size_t length, int o
   return document;
 }
 
-size_t gfm_document_raw_count(const gfm_document *document) { return document->raw_count; }
-cmark_node *gfm_document_raw_node(const gfm_document *document, size_t index) {
-  return index < document->raw_count ? document->raw_html[index] : NULL;
-}
-char *gfm_document_html(gfm_document *document) {
+static char *gfm_document_html(gfm_document *document) {
   return cmark_render_html(document->doc, document->options,
                            cmark_parser_get_syntax_extensions(document->parser));
 }
 
 /* The upstream XML renderer uses <unknown> for footnote node types. */
-char *gfm_document_xml(gfm_document *document) {
+static char *gfm_document_xml(gfm_document *document) {
   char *xml = cmark_render_xml(document->doc, CMARK_OPT_SOURCEPOS);
   if (!xml) return NULL;
   cmark_strbuf output = CMARK_BUF_INIT(cmark_get_default_mem_allocator());
