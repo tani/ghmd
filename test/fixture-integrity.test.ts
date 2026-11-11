@@ -1,6 +1,5 @@
 import { expect, test } from "bun:test";
 import manifest from "./fixtures/e2e/manifest.json";
-import differences from "./fixtures/e2e/known-differences.json";
 import capturedCases from "../scripts/new-e2e-cases";
 
 test("reference manifest covers every capture case without duplicate identities", () => {
@@ -9,6 +8,4 @@ test("reference manifest covers every capture case without duplicate identities"
   expect(new Set(ids).size).toBe(ids.length);
   expect(new Set(sources).size).toBe(sources.length);
   for (const item of capturedCases) expect(ids).toContain(item.id);
-  for (const id of Object.keys(differences))
-    expect(manifest.fixtures.some((f) => f.id === id)).toBe(true);
 });

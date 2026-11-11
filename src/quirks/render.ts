@@ -1,10 +1,15 @@
 import { createDOM } from "./dom";
-import { nativeRender } from "./native";
+import {
+  displayMathBlocks,
+  emphasisDisplayMath,
+  fencedMath,
+  finalizeHtml,
+  nativeRender,
+  protectedMath,
+  splitInlineMath,
+} from "./native";
 import { parseFragment, serialize } from "parse5";
 import createDOMPurify from "dompurify";
-import { alertTitles } from "./alerts";
-import { highlight } from "./highlight";
-import { flattenDeepLists } from "./list-depth";
 import type { RenderOptions } from "./index";
 
 // GitHub assigns a unique suffix to footnote anchors for each rendered fragment.
@@ -109,6 +114,7 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       math.textContent = content;
       return math;
     };
+    // Details must be populated before math reads descendant textContent.
     for (const details of document.querySelectorAll("details")) {
       if (!details.querySelector(":scope > summary")) {
         const summary = document.createElement("summary");
@@ -139,9 +145,9 @@ export async function renderInProcess(source: string, options: RenderOptions): P
             n.nodeName === "EM" ? "_" + n.textContent + "_" : n.nodeType === 3 ? n.textContent : "",
           )
           .join("");
-        if (/^\$\$\n[\s\S]*\n\$\$$/.test(reconstructed)) {
-          const inner = reconstructed.slice(3, -3);
-          paragraph.replaceChildren(mathElement("$$\n\n" + inner + "\n\n$$", true));
+        const display = emphasisDisplayMath(reconstructed);
+        if (display !== undefined) {
+          paragraph.replaceChildren(mathElement(display, true));
           continue;
         }
       }
@@ -149,12 +155,12 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       if (children.every((n) => n.nodeType === 3 || n.nodeName === "BR")) {
         const text = paragraph.textContent ?? "";
         if (paragraph.tagName !== "LI" && !paragraph.closest("b,details")) {
-          const blocks = [...text.matchAll(/\$\$\n[\s\S]*?\n\$\$/g)];
-          if (blocks.length && blocks.map((m) => m[0]).join("\n") === text) {
+          const blocks = displayMathBlocks(text);
+          if (blocks) {
             const nodes: any[] = [];
             for (const block of blocks) {
               if (nodes.length) nodes.push(document.createTextNode("\n"));
-              nodes.push(mathElement(block[0].replace(/\\\n/g, "\\\\\n"), true));
+              nodes.push(mathElement(block, true));
             }
             paragraph.replaceChildren(...nodes);
             continue;
@@ -165,175 +171,39 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       for (const code of [...paragraph.querySelectorAll(":scope > code")]) {
         const before = code.previousSibling,
           after = code.nextSibling;
-        if (
-          before?.nodeType !== 3 ||
-          after?.nodeType !== 3 ||
-          !before.textContent?.endsWith("$") ||
-          !after.textContent?.startsWith("$")
-        )
-          continue;
-        // GitHub GFM's current protected-math boundary differs for lowercase
-        // a/b; the differential matrix records the tested letters and words.
-        if (/[ab]$/.test(before.textContent.slice(0, -1))) continue;
-        if (paragraph.tagName === "EM" && after.textContent === "$") continue;
-        const value = code.textContent ?? "";
-        before.textContent = before.textContent.slice(0, -1);
-        after.textContent = after.textContent.slice(1);
-        // GitHub's math filter escapes an ampersand already escaped by HTML.
-        code.replaceWith(
-          mathElement(
-            "$" +
-              value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;") +
-              "$",
-            false,
-          ),
+        if (before?.nodeType !== 3 || after?.nodeType !== 3) continue;
+        const value = protectedMath(
+          before.textContent ?? "",
+          after.textContent ?? "",
+          code.textContent ?? "",
+          paragraph.tagName === "EM",
         );
+        if (value === undefined) continue;
+        before.textContent = before.textContent!.slice(0, -1);
+        after.textContent = after.textContent!.slice(1);
+        code.replaceWith(mathElement(value, false));
       }
       if (paragraph.tagName === "EM" || (paragraph.tagName === "STRONG" && paragraph.closest("em")))
         continue;
       for (const node of [...paragraph.childNodes]) {
         if (node.nodeType !== 3 || !node.textContent?.includes("$")) continue;
-        const text = node.textContent,
-          re = /\$(?!\$)([^$\n]+?)\$/g;
-        let match: RegExpExecArray | null,
-          last = 0;
-        const fragment = document.createDocumentFragment();
-        while ((match = re.exec(text))) {
-          const before = text[match.index - 1],
-            after = text[match.index + match[0].length];
-          if (
-            (before && !/[\s(]/.test(before)) ||
-            (after && /[A-Za-z0-9_]/.test(after)) ||
-            /^\s/.test(match[1]) ||
-            (/\s$/.test(match[1]) && after !== "$") ||
-            match[1].includes("&")
-          ) {
-            // A rejected opening dollar can contain the next valid candidate.
-            re.lastIndex = match.index + 1;
-            continue;
+        const segments = splitInlineMath(node.textContent);
+        if (segments) {
+          const fragment = document.createDocumentFragment();
+          for (const segment of segments) {
+            fragment.append(
+              segment.math
+                ? mathElement(segment.text.replaceAll("<", "&lt;").replaceAll(">", "&gt;"), false)
+                : document.createTextNode(segment.text),
+            );
           }
-          fragment.append(
-            document.createTextNode(text.slice(last, match.index)),
-            mathElement(match[0].replaceAll("<", "&lt;").replaceAll(">", "&gt;"), false),
-          );
-          last = match.index + match[0].length;
-        }
-        if (last) {
-          fragment.append(document.createTextNode(text.slice(last)));
           node.replaceWith(fragment);
         }
       }
     }
     for (const pre of [...document.querySelectorAll('pre[lang="math"]')]) {
       if (blocked(pre)) continue;
-      const content = (pre.textContent ?? "")
-        .replace(/\n$/, "")
-        .replace(/(?<!\\)\$/g, "\\$")
-        .replace(/\\\n/g, "\\\\\n");
-      pre.replaceWith(mathElement("$$" + content + "$$", true));
-    }
-    for (const pre of [...document.querySelectorAll("pre[lang]")]) await highlight(document, pre);
-    for (const code of document.querySelectorAll("code")) code.classList.add("notranslate");
-    for (const pre of document.querySelectorAll("pre")) {
-      if (pre.getAttribute("lang") === "math") pre.removeAttribute("lang");
-      pre.classList.add("notranslate");
-    }
-    for (const table of [...document.querySelectorAll("table")]) {
-      table.setAttribute("role", "table");
-      const wrapper = document.createElement("markdown-accessiblity-table");
-      table.replaceWith(wrapper);
-      wrapper.append(table);
-    }
-    for (const quote of [...document.querySelectorAll("blockquote")]) {
-      if (quote.parentElement?.closest("blockquote")) continue;
-      const paragraph = quote.firstElementChild;
-      if (
-        !paragraph ||
-        paragraph.tagName !== "P" ||
-        !paragraph.firstChild ||
-        paragraph.firstChild.nodeType !== 3
-      )
-        continue;
-      const marker = paragraph.firstChild.textContent?.match(
-        /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]$/,
-      );
-      if (!marker || paragraph.firstChild.nextSibling?.nodeName !== "BR") continue;
-      const kind = marker[1].toLowerCase();
-      paragraph.firstChild.nextSibling.remove();
-      paragraph.firstChild!.remove();
-      if (paragraph.firstChild?.nodeType === 3)
-        paragraph.firstChild.textContent = paragraph.firstChild.textContent!.replace(/^\n/, "");
-      const alert = document.createElement("div");
-      alert.className = `markdown-alert markdown-alert-${kind}`;
-      const title = document.createElement("p");
-      title.className = "markdown-alert-title";
-      title.innerHTML = alertTitles[kind];
-      alert.append(title);
-      while (quote.firstChild) alert.append(quote.firstChild);
-      if (alert.childNodes[1]?.nodeType === 3 && !alert.childNodes[1].textContent?.trim())
-        alert.childNodes[1].remove();
-      quote.replaceWith(alert);
-    }
-    for (const input of document.querySelectorAll('input[type="checkbox"]')) {
-      if (!input.closest("li")) {
-        input.remove();
-        continue;
-      }
-      input.closest("li")?.classList.add("task-list-item");
-      input.closest("ul,ol")?.classList.add("contains-task-list");
-      const checked = input.hasAttribute("checked");
-      input.removeAttribute("checked");
-      input.removeAttribute("disabled");
-      input.setAttribute("id", "");
-      input.setAttribute("disabled", "");
-      input.classList.add("task-list-item-checkbox");
-      input.setAttribute("aria-label", checked ? "Completed task" : "Incomplete task");
-      if (checked) input.setAttribute("checked", "");
-    }
-    // For loose task items, GitHub places the checkbox inside the first
-    // paragraph rather than before it.
-    for (const li of document.querySelectorAll("li.task-list-item")) {
-      const input = li.firstElementChild;
-      if (input?.matches('input[type="checkbox"]')) {
-        const paragraph = [...li.children].find((e) => e.tagName === "P");
-        if (paragraph && input.nextElementSibling === paragraph) {
-          const space = input.nextSibling;
-          if (space?.nodeType === 3 && !space.textContent?.trim()) space.remove();
-          input.remove();
-          paragraph.prepend(document.createTextNode(" "));
-          paragraph.prepend(input);
-          if (
-            !li.firstChild ||
-            li.firstChild.nodeType !== 3 ||
-            !li.firstChild.textContent?.startsWith("\n")
-          )
-            li.prepend(document.createTextNode("\n"));
-        }
-      }
-    }
-    // GitHub's serializer separates a final math-related inline element from
-    // the closing list tag when other inline content precedes it.
-    for (const li of document.querySelectorAll("li")) {
-      const meaningful = [...li.childNodes].filter(
-        (n) => n.nodeType !== 3 || !!n.textContent?.trim(),
-      );
-      const last = meaningful.at(-1);
-      const hasMath =
-        last?.nodeType === 1 &&
-        (last.nodeName === "MATH-RENDERER" || (last as any).querySelector?.("math-renderer"));
-      if (meaningful.length > 1 && hasMath && !li.textContent?.endsWith("\n"))
-        li.append(document.createTextNode("\n"));
-      // GitHub separates a leading formula when ordinary text follows it.
-      if (
-        meaningful[0]?.nodeName === "MATH-RENDERER" &&
-        meaningful.length > 1 &&
-        meaningful[1]?.nodeType === 3 &&
-        meaningful[1].textContent?.trim() &&
-        [...li.childNodes]
-          .slice(0, [...li.childNodes].indexOf(meaningful[0]))
-          .every((n) => n.nodeType === 3 && !n.textContent)
-      )
-        li.insertBefore(document.createTextNode("\n"), meaningful[0]);
+      pre.replaceWith(mathElement(fencedMath(pre.textContent ?? ""), true));
     }
     // GitHub removes links whose destination was removed by sanitization.
     for (const link of [...document.querySelectorAll("a[data-gfm-had-href]")]) {
@@ -347,27 +217,6 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       )
         link.replaceWith(...link.childNodes);
     }
-    // GitHub wraps standalone relative images and adds the responsive style.
-    for (const image of [...document.querySelectorAll("img[src]")]) {
-      const src = image.getAttribute("src")!;
-      if (image.parentElement === document.body || image.parentElement?.tagName === "B") {
-        const paragraph = document.createElement("p");
-        image.replaceWith(paragraph);
-        paragraph.append(image);
-      }
-      if (/^(?:https?:)?\/\//i.test(src)) continue;
-      image.setAttribute("style", "max-width: 100%;");
-      const rejected = /^data:/i.test(src);
-      if (rejected) image.removeAttribute("src");
-      if (!image.closest("a")) {
-        const link = document.createElement("a");
-        link.setAttribute("target", "_blank");
-        link.setAttribute("rel", "noopener noreferrer");
-        link.setAttribute("href", rejected ? "" : src);
-        image.replaceWith(link);
-        link.append(image);
-      }
-    }
     for (const link of document.querySelectorAll("a[href]")) {
       const href = link.getAttribute("href")!;
       if (/^(?:https?:)?\/\//i.test(href) || /^mailto:/i.test(href))
@@ -377,6 +226,12 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       for (const image of [...document.querySelectorAll("img[src]")]) {
         const canonical = image.getAttribute("src")!;
         if (!/^https?:\/\//i.test(canonical)) continue;
+        // Proxy anchors are created here, so adjust their future parent first.
+        if (image.parentElement === document.body || image.parentElement?.tagName === "B") {
+          const paragraph = document.createElement("p");
+          image.replaceWith(paragraph);
+          paragraph.append(image);
+        }
         const proxy = await options.imageProxy(canonical);
         if (!/^https?:\/\//i.test(proxy))
           throw new TypeError("imageProxy must return an HTTP(S) URL");
@@ -393,52 +248,12 @@ export async function renderInProcess(source: string, options: RenderOptions): P
         }
       }
     }
-    for (const sup of document.querySelectorAll("sup.footnote-ref")) sup.removeAttribute("class");
-    for (const a of document.querySelectorAll("a[data-footnote-ref]")) {
-      const href = a.getAttribute("href");
-      const id = a.getAttribute("id");
-      if (href) {
-        const name = href.slice(4);
-        if (name === ":") a.removeAttribute("href");
-        else a.setAttribute("href", `#user-content-fn-${name}-${token}`);
-      }
-      if (id) a.setAttribute("id", `user-content-${id.toLowerCase()}-${token}`);
-      a.setAttribute("aria-describedby", "footnote-label");
+    // JavaScript retains responsibility for full Unicode lowercase mappings.
+    for (const anchor of document.querySelectorAll("a[data-footnote-ref][id]")) {
+      const id = anchor.getAttribute("id");
+      if (id) anchor.setAttribute("id", id.toLowerCase());
     }
-    for (const a of document.querySelectorAll("a[data-footnote-backref]")) {
-      const href = a.getAttribute("href");
-      if (href?.slice(7) === ":") {
-        a.replaceWith(document.createTextNode("↩"));
-        continue;
-      }
-      if (href) a.setAttribute("href", `#user-content-${href.slice(1)}-${token}`);
-      a.removeAttribute("class");
-      a.removeAttribute("data-footnote-backref-idx");
-      a.setAttribute("class", "data-footnote-backref");
-    }
-    const section = document.querySelector("section[data-footnotes]");
-    if (section) {
-      section.removeAttribute("class");
-      section.removeAttribute("data-footnotes");
-      section.setAttribute("data-footnotes", "");
-      section.setAttribute("class", "footnotes");
-      for (const li of section.querySelectorAll("li[id]")) li.id = `user-content-${li.id}-${token}`;
-      const title = document.createElement("h2");
-      title.id = "footnote-label";
-      title.className = "sr-only";
-      title.textContent = "Footnotes";
-      section.insertBefore(title, section.firstChild);
-      const next = section.nextSibling;
-      if (
-        section.parentElement !== document.body &&
-        next?.nodeType === 3 &&
-        !next.textContent?.trim() &&
-        !next.nextSibling
-      )
-        next.remove();
-    }
-    flattenDeepLists(document as unknown as Document);
-    const output = document.body.innerHTML.replace(/\n$/, "");
+    const output = finalizeHtml(document.body.innerHTML, token).replace(/\n$/, "");
     if (Buffer.byteLength(output) > 32 * 1024 * 1024)
       throw new RangeError("Rendered HTML exceeds 32 MB");
     return output;

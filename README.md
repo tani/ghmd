@@ -1,6 +1,6 @@
 # GitHub and VS Code Markdown comparison
 
-This project finds Markdown that may render correctly in VS Code's built-in preview but differently on GitHub. It uses `markdown-it`, `@vscode/markdown-it-katex` and `highlight.js` to approximate VS Code's default preview, then compares its meaningful output with GitHub HTML.
+This project finds Markdown that may render correctly in VS Code's built-in preview but differently on GitHub. It uses `markdown-it` and `@vscode/markdown-it-katex` to approximate VS Code's default preview, then compares its meaningful output with GitHub HTML.
 
 ```sh
 bun install --frozen-lockfile
@@ -52,7 +52,7 @@ The offline E2E tests cover 617 distinct inputs, representing 665 named cases, w
 
 The comparison parses HTML into a tree, sorts attributes, normalizes generated footnote and math IDs, and collapses ordinary HTML whitespace. It ignores formatting whitespace at block boundaries but keeps meaningful inline spacing and preserves whitespace inside code, preformatted text, and math. It checks tags, nesting, attributes, and content; it does not establish visual equivalence or validate the browser's rendering of math or diagrams. Saved signed image URLs are supplied via `imageProxy`.
 
-Known differences are listed with their reasons in `test/fixtures/e2e/known-differences.json`. Those tests still verify the GitHub fixture and the current output tree, so an unrelated regression or an improvement requires review rather than silently passing. The current list contains syntax highlighting differences for several languages.
+Neither renderer performs syntax highlighting. E2E comparison ignores GitHub’s highlighting wrappers, token spans, code-block language attributes, and one trailing code-block newline, while still checking code contents; language preservation is covered separately by unit tests.
 
 To capture missing cases from `scripts/new-e2e-cases.ts`, set `GITHUB_PAT` or `GITHUB_TOKEN` and run `bun scripts/capture-e2e.ts`. The script reuses existing references, waits at least 650 ms between requests by default, saves each successful response before continuing, and stops on an HTTP error so it can be resumed. `GFM_CAPTURE_DELAY_MS` may increase the interval (minimum 250 ms). GitHub's authenticated rate limit is typically 5,000 requests per hour, and secondary limits can apply.
 
@@ -72,4 +72,6 @@ For reproducible output, pass a 32-character lowercase hexadecimal `runId` to `r
 
 The resolver must return an HTTP(S) URL. Without one, the renderer leaves remote image URLs unproxied. Matching these fixtures does not prove compatibility with every possible Markdown input; math, sanitization, and GitHub's other server-side transformations have broader behavior than the cases covered here. Raw HTML passes through an HTML5 parser and DOMPurify before renderer transformations; this prototype is not a security-audited service.
 
-The native source is based on cmark-gfm 0.29.0.gfm.13. The vendored upstream C files are unmodified and are checked against the release hashes in `test/fixtures/cmark-gfm-upstream.json`. Compatibility adjustments live in `src/quirks/native.ts`. Multiline footnote compatibility can require reparsing transformed source, so AST XML source positions in those cases refer to the transformed input. See `vendor/cmark-gfm/PROVENANCE.json` and `COPYING` for provenance and licensing. Original prototype code is MIT licensed; third-party code retains its own license.
+The native compatibility layer owns the cmark parser and AST, adjusts task items and footnote references, and implements math boundary recognition and the post-sanitization handling of alerts, lists, tables, code blocks, footnotes, and images in C. TypeScript still coordinates HTML5 parsing and sanitization, constructs math DOM nodes, performs JavaScript-compatible Unicode lowercase conversion, and invokes the optional asynchronous image proxy. The post-sanitization C tree consumes HTML serialized by the DOM rather than parsing arbitrary input directly.
+
+The native source is based on cmark-gfm 0.29.0.gfm.13. The vendored upstream C files are unmodified and are checked against the release hashes in `test/fixtures/cmark-gfm-upstream.json`. Compatibility adjustments live in `src/quirks/cmark-*.c` and the TypeScript rendering pipeline; cmark sources remain unmodified. Multiline footnote compatibility can require reparsing transformed source, so AST XML source positions in those cases refer to the transformed input. See `vendor/cmark-gfm/PROVENANCE.json` and `COPYING` for provenance and licensing. Original prototype code is MIT licensed; third-party code retains its own license.

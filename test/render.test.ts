@@ -55,14 +55,17 @@ describe("HTML and math compatibility", () => {
 });
 
 describe("GitHub code blocks and image proxy", () => {
-  test("highlights supported languages with GitHub-style token classes", async () => {
+  test("preserves code and language without syntax highlighting", async () => {
     const html = await render(
       '```mermaid\nflowchart TD\n A --> B\n```\n\n```json\n{"type":"FeatureCollection"}\n```',
     );
     expect(html).toContain(
-      '<div class="highlight highlight-source-mermaid"><pre class="notranslate"><span class="pl-k">flowchart</span>',
+      '<pre lang="mermaid" class="notranslate"><code class="notranslate">flowchart TD\n A --&gt; B\n</code></pre>',
     );
-    expect(html).toContain('<span class="pl-ent">"type"</span>');
+    expect(html).toContain(
+      '<pre lang="json" class="notranslate"><code class="notranslate">{"type":"FeatureCollection"}\n</code></pre>',
+    );
+    expect(html).not.toContain('class="pl-');
   });
   test("uses a caller-supplied signed image URL and rejects unsafe schemes", async () => {
     const input = "![alt](https://example.com/a.png)";

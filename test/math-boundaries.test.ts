@@ -37,3 +37,21 @@ describe("GitHub math boundary behavior", () => {
     );
   });
 });
+
+test("preserves multiple display blocks and escapes fenced math", async () => {
+  const html = await render("$$\na\n$$\n$$\nb\n$$\n\n```math\nx$y\n```", {
+    runId: "00000000000000000000000000000000",
+  });
+  expect(html.match(/class="js-display-math"/g)).toHaveLength(3);
+  expect(html).toContain("$$x\\$y$$");
+});
+
+test("recognizes an empty display-math text block", async () => {
+  const { displayMathBlocks } = await import("../src/quirks/native");
+  expect(displayMathBlocks("$$\n\n$$")).toEqual(["$$\n\n$$"]);
+});
+
+test("adds details summaries before reading fenced math text", async () => {
+  const html = await render('<div>\n<pre lang="math"><details></details></pre>\n</div>', { runId });
+  expect(html).toContain("$$Details$$");
+});

@@ -5,7 +5,6 @@ import { parseFragment } from "parse5";
 import { render } from "../src/quirks/index";
 import manifest from "./fixtures/e2e/manifest.json";
 import { htmlAst } from "./support/html-ast";
-import knownDifferences from "./fixtures/e2e/known-differences.json";
 
 const directory = join(import.meta.dir, "fixtures/e2e/cases");
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -28,10 +27,7 @@ function imageUrls(html: string): Map<string, string> {
 describe("independent GitHub Markdown API references", () => {
   for (const fixture of manifest.fixtures) {
     const aliases = fixture.cases.map((c) => c.id).join(", ");
-    const difference = (
-      knownDifferences as Record<string, { reason: string; actualAstSha256: string }>
-    )[fixture.id];
-    test(difference ? `${aliases} [known difference: ${difference.reason}]` : aliases, async () => {
+    test(aliases, async () => {
       const source = await Bun.file(join(directory, `${fixture.id}.md`)).text();
       const expected = await Bun.file(join(directory, `${fixture.id}.html`)).text();
       expect(hash(source)).toBe(fixture.sourceSha256);
@@ -48,12 +44,9 @@ describe("independent GitHub Markdown API references", () => {
           return proxied;
         },
       });
-      const actualTree = htmlAst(actual),
-        expectedTree = htmlAst(expected);
-      if (difference) {
-        expect(actualTree).not.toEqual(expectedTree);
-        expect(hash(JSON.stringify(actualTree))).toBe(difference.actualAstSha256);
-      } else expect(actualTree).toEqual(expectedTree);
+      expect(htmlAst(actual, { ignoreHighlighting: true })).toEqual(
+        htmlAst(expected, { ignoreHighlighting: true }),
+      );
     });
   }
 });

@@ -11,7 +11,8 @@ describe("VS Code-style Markdown preview", () => {
     expect(html).toContain("<table>");
     expect(html).toContain("<s>old</s>");
     expect(html).toContain('<a href="https://example.com">https://example.com</a>');
-    expect(html).toContain("hljs-");
+    expect(html).toContain('<code class="language-js">const x = 1;\n</code>');
+    expect(html).not.toContain("hljs-");
     expect(summarizeHtml(html).code).toEqual([{ block: true, text: "const x = 1;" }]);
   });
   test("uses the VS Code KaTeX plugin for inline, protected and display math", async () => {

@@ -29,3 +29,21 @@ test("normalizes generated IDs only in their attributes", () => {
   );
   expect(htmlAst(`<p>${a}</p>`)).not.toEqual(htmlAst(`<p>${b}</p>`));
 });
+
+test("ignores syntax highlighting while preserving code and unrelated markup", () => {
+  const options = { ignoreHighlighting: true };
+  const highlighted =
+    '<div class="highlight highlight-source-js"><pre class="notranslate"><span class="pl-k">const</span> x</pre></div>';
+  const plain =
+    '<pre lang="js" class="notranslate"><code class="notranslate">const x\n</code></pre>';
+  expect(htmlAst(highlighted, options)).toEqual(htmlAst(plain, options));
+  expect(htmlAst(highlighted, options)).not.toEqual(
+    htmlAst(plain.replace("const x", "const y"), options),
+  );
+  expect(htmlAst("<pre><code><em>x</em></code></pre>", options)).not.toEqual(
+    htmlAst("<pre><code>x</code></pre>", options),
+  );
+  expect(
+    htmlAst('<div class="highlight"><pre><a href="/x">x</a></pre></div>', options),
+  ).not.toEqual(htmlAst("<pre><code>x</code></pre>", options));
+});

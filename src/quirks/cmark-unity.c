@@ -163,3 +163,11 @@
 /* Renderer strings use cmark's default malloc allocator. Free them in the
  * same compiled unit, avoiding assumptions about the host C runtime. */
 void gfm_free(void *p) { free(p); }
+
+#include "cmark-quirks.c"
+#include "cmark-footnotes.c"
+#include "cmark-math.c"
+#include "cmark-html.c"
+#include "cmark-runtime.c"
+#include "cmark-alerts.c"
+#include "cmark-list.c"

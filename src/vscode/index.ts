@@ -1,6 +1,5 @@
 import MarkdownIt from "markdown-it";
 import math from "@vscode/markdown-it-katex";
-import hljs from "highlight.js";
 
 export interface RenderOptions {
   /** VS Code's markdown.preview.linkify setting. Default: true. */
@@ -18,29 +17,6 @@ export function createMarkdownEngine(options: RenderOptions = {}) {
     linkify: options.linkify ?? true,
     breaks: options.breaks ?? false,
     typographer: false,
-    highlight: (source: string, language?: string) => {
-      const normalized =
-        (
-          {
-            shell: "sh",
-            py3: "python",
-            tsx: "jsx",
-            typescriptreact: "jsx",
-            json5: "json",
-            jsonc: "json",
-            "c#": "cs",
-            csharp: "cs",
-          } as Record<string, string>
-        )[language?.toLowerCase() ?? ""] ?? language?.toLowerCase();
-      if (normalized && hljs.getLanguage(normalized)) {
-        try {
-          return hljs.highlight(source, { language: normalized, ignoreIllegals: true }).value;
-        } catch {
-          /* Use escaped source. */
-        }
-      }
-      return md.utils.escapeHtml(source);
-    },
   });
   md.linkify.set({ fuzzyLink: false });
   if (options.math !== false)

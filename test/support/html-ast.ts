@@ -32,7 +32,31 @@ const generated = (name: string, value: string) => {
 };
 
 /** Compare HTML structure and attributes; collapse HTML whitespace outside literal contexts. */
-export function htmlAst(html: string): Canonical {
+export function htmlAst(html: string, options: { ignoreHighlighting?: boolean } = {}): Canonical {
+  const contents = (node: Node): string =>
+    node.nodeName === "#text" ? (node.value ?? "") : (node.childNodes ?? []).map(contents).join("");
+  const codeBlock = (node: Node): Canonical => {
+    const attrs = (node.attrs ?? [])
+      .filter((a) => a.name !== "lang" && !(a.name === "class" && a.value === "notranslate"))
+      .map((a): [string, string] => [a.name, generated(a.name, a.value)])
+      .sort(([a], [b]) => a.localeCompare(b));
+    return {
+      type: "pre",
+      attrs,
+      children: [{ type: "#text", value: contents(node).replace(/\n$/, "") }],
+    };
+  };
+  const highlightedChildren = (node: Node): boolean =>
+    (node.childNodes ?? []).every(
+      (child) =>
+        child.nodeName === "#text" ||
+        (child.tagName === "span" &&
+          (child.attrs ?? []).every(
+            (a) =>
+              a.name === "class" && a.value.split(/\s+/).every((name) => name.startsWith("pl-")),
+          ) &&
+          highlightedChildren(child)),
+    );
   function visit(node: Node, literal = false): Canonical {
     if (node.nodeName === "#text")
       return {
@@ -41,6 +65,32 @@ export function htmlAst(html: string): Canonical {
       };
     if (node.nodeName === "#comment") return { type: "#comment", value: node.data };
     const tag = node.tagName;
+    if (
+      options.ignoreHighlighting &&
+      tag === "div" &&
+      (node.attrs ?? []).some(
+        (a) => a.name === "class" && a.value.split(/\s+/).includes("highlight"),
+      )
+    ) {
+      const children = (node.childNodes ?? []).filter(
+        (child) => child.nodeName !== "#text" || child.value?.trim(),
+      );
+      if (
+        children.length === 1 &&
+        children[0].tagName === "pre" &&
+        highlightedChildren(children[0])
+      )
+        return codeBlock(children[0]);
+    }
+    if (options.ignoreHighlighting && tag === "pre") {
+      const children = node.childNodes ?? [];
+      if (
+        children.length === 1 &&
+        children[0].tagName === "code" &&
+        (children[0].childNodes ?? []).every((child) => child.nodeName === "#text")
+      )
+        return codeBlock(node);
+    }
     const keep = literal || (!!tag && preserve.has(tag));
     const rawChildren = node.content?.childNodes ?? node.childNodes ?? [];
     const children = rawChildren.map((child) => visit(child, keep));
