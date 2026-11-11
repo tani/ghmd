@@ -28,3 +28,30 @@ The HTML comparison fixes per-render IDs and reuses signed image URLs found in t
 `../fixtures/known-differences/` contains the exact synthetic batch inputs and their saved GitHub HTML responses for synthetic mismatches identified in the earlier audit. Three additional pairs isolate task-list, nested-alert and Mermaid sections extracted from those saved batch responses; GitHub was not separately queried for the isolated sections, so their HTML is a batch-derived reference. The `.html` files are GitHub's expected output, not this renderer's output. The batch boundaries are part of the input and must remain in place: further splitting a batch may change footnote, HTML or math behavior. `manifest.json` records the case IDs, capture context and hashes.
 
 `bun test test/known-differences.test.ts` checks fixture integrity and asserts byte-for-byte equality with each saved response. The audit command reports any new mismatch as `fail` and exits nonzero. The upstream acid-test inputs and the HTML derived from them are not redistributed because the pinned repository contains no license. Authenticated responses are retained only in the ignored local `.cache/github-acid-reference.json`. The `math-boundaries` pair is an independently authored synthetic fixture captured from GitHub in one request.
+
+## Finding the failing case
+
+The offline `bun test test/styleguide-cases.test.ts` suite has a named test for each synthetic case and rule ID. It renders each original batch once and checks the section for that case against the saved GitHub response. These results are labeled **batch context**: they retain the surrounding document, and are not claims about rendering the case alone. The original full-batch comparison remains in the audit.
+
+```sh
+# Run one named synthetic case (the test still renders its original batch).
+bun test test/styleguide-cases.test.ts -t tasks-markers-nesting
+
+# Diagnose one case in its original batch; no network is used.
+bun scripts/styleguide-audit.ts --only tasks-markers-nesting
+
+# Diagnose one upstream case in its batch using an existing local report.
+bun scripts/styleguide-audit.ts --acid-dir /tmp/gfm-math-acid-test \
+  --reference-report .cache/github-acid-reference.json \
+  --only 12-inline-math-succeeded-by-nonwhitespace.md
+
+# Only when an independently rendered result is needed: one API request.
+STYLEGUIDE_REPORT=.cache/isolated-task.json bun --env-file=../.env \
+  scripts/styleguide-audit.ts --live --isolate tasks-markers-nesting
+
+# Repeat that independent comparison without another API request.
+bun scripts/styleguide-audit.ts --isolate tasks-markers-nesting \
+  --reference-report .cache/isolated-task.json
+```
+
+`--isolate` also accepts an upstream filename when `--acid-dir` is supplied. Its result is labeled **whole document** and the input is the exact individual file, rather than an excerpt from a batch. Live mode sends that selected input to GitHub. It does not silently issue 24 requests; isolate only the cases that require it. The report includes each case's status, comparison scope, and first differing line, column and values. If a boundary is missing, duplicated or reordered, case attribution is marked `not-run` and the full document must be inspected. A `--only` selection still checks the entire original batch, so another case's failure can make the command exit nonzero.
