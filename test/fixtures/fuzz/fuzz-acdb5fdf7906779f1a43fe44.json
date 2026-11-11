@@ -1,0 +1,10 @@
+{
+  "id": "fuzz-acdb5fdf7906779f1a43fe44",
+  "seed": 2026,
+  "index": 1,
+  "failure": "fixed",
+  "sourceSha256": "acdb5fdf7906779f1a43fe447ba2cc6a3a09389be79849afd5f3db97883fd0c3",
+  "htmlSha256": "b7fafc1438f40d245de68ed17b50ec30617cb984b9c8a451cff8ad977e5615d8",
+  "reference": "GitHub REST /markdown (gfm)",
+  "capturedAt": "2026-11-11T15:17:16.702Z"
+}

@@ -56,6 +56,12 @@ Neither renderer performs syntax highlighting. E2E comparison ignores GitHub’s
 
 To capture missing cases from `scripts/new-e2e-cases.ts`, set `GITHUB_PAT` or `GITHUB_TOKEN` and run `bun scripts/capture-e2e.ts`. The script reuses existing references, waits at least 650 ms between requests by default, saves each successful response before continuing, and stops on an HTTP error so it can be resumed. `GFM_CAPTURE_DELAY_MS` may increase the interval (minimum 250 ms). GitHub's authenticated rate limit is typically 5,000 requests per hour, and secondary limits can apply.
 
+### Fuzzing and saved regressions
+
+`bun run fuzz --seed 42 --count 100` generates reproducible combinations of math, malformed HTML, deep lists and Unicode, running each render in an isolated process with a timeout. By default it performs no network requests and saves crashes under `test/fixtures/fuzz/`. To compare generated cases with GitHub's Markdown API, set `GITHUB_PAT` or `GITHUB_TOKEN` and add `--github`; this makes one request per unsaved input with at least 750 ms between requests, stops on API errors, and saves each mismatch or crash as a Markdown/HTML pair with seed, index and hashes. `--count` is capped at 1000 per run; GitHub's hourly and secondary limits still apply. Do not use `--github` with private input unless sending it to GitHub is intended.
+
+Saved cases are included in `bun test` and `bun run test:e2e`. A saved mismatch remains a tracked known difference: its reference and current normalized output hashes are verified, so a fix or other behavior change requires review. Once fixed, change its metadata `failure` from `mismatch` to `fixed` and remove `actualAstSha256`; the test then requires equality. A saved crash must stop crashing and, when a reference is present, match it before its test passes. The command exits nonzero when it saves a failure or encounters an API error. Fixtures are never overwritten by later fuzz runs.
+
 For example, `matrix-bare-prefix-0` captures recognized `$x$`, while `matrix-bare-prefix-1` captures `a$x$` remaining literal. Both expected responses come from GitHub, rather than being inferred from the renderer.
 
 The original inputs include cases split from the Markdown batches previously provided in this workspace, including examples attributed there to the markdown-math-acid-test project. The independently captured outputs reflect each case on its own; document-wide interactions can produce different results.

@@ -11,9 +11,10 @@
   "scripts": {
     "test": "bun test --timeout 60000",
     "render": "bun src/quirks/cli.ts",
-    "test:e2e": "bun test test/e2e.test.ts --timeout 60000",
+    "test:e2e": "bun test test/e2e.test.ts test/fuzz-regressions.test.ts --timeout 60000",
     "compare": "bun scripts/compare-renderers.ts",
-    "measure:recall": "bun scripts/measure-recall.ts"
+    "measure:recall": "bun scripts/measure-recall.ts",
+    "fuzz": "bun scripts/fuzz-renderer.ts"
   },
   "dependencies": {
     "@vscode/markdown-it-katex": "1.1.2",

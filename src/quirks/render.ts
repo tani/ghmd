@@ -28,6 +28,7 @@ export async function renderInProcess(source: string, options: RenderOptions): P
           i--;
           continue;
         }
+        if (child.content) unwrapSvg(child.content);
         unwrapSvg(child);
       }
     };
@@ -49,6 +50,17 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       }
     };
     unwrapReconstructedAnchors(tree);
+    // GitHub drops cmark's final newline when the last raw HTML element
+    // reaches EOF without an explicit closing tag. Keep newlines before
+    // source-authored closing tags and in already closed Markdown blocks.
+    const last = tree.childNodes.at(-1);
+    if (last?.tagName && last.sourceCodeLocation && !last.sourceCodeLocation.endTag) {
+      let leaf = last;
+      while ((leaf.content?.childNodes ?? leaf.childNodes)?.length)
+        leaf = (leaf.content?.childNodes ?? leaf.childNodes).at(-1);
+      if (leaf.nodeName === "#text" && leaf.value?.endsWith("\n"))
+        leaf.value = leaf.value.slice(0, -1);
+    }
     // HTML parsing can reconstruct an unclosed formatting tag around the
     // final newline. GitHub drops that empty reconstructed fragment.
     const tail = tree.childNodes.at(-1);
@@ -71,6 +83,7 @@ export async function renderInProcess(source: string, options: RenderOptions): P
         node.attrs.push({ name: "data-gfm-had-href", value: mark });
       }
       for (const child of node.childNodes ?? []) markLinks(child);
+      if (node.content) markLinks(node.content);
     };
     markLinks(tree);
     document.body.innerHTML = createDOMPurify(window as any).sanitize(serialize(tree), {
@@ -84,6 +97,17 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       ],
       ADD_TAGS: ["input"],
     });
+    // GitHub removes template elements while retaining their sanitized contents.
+    const unwrapTemplates = (root: any) => {
+      for (const child of [...root.childNodes]) {
+        if (child.nodeType !== 1) continue;
+        if (child.tagName === "TEMPLATE") {
+          unwrapTemplates(child.content);
+          child.replaceWith(...child.content.childNodes);
+        } else unwrapTemplates(child);
+      }
+    };
+    unwrapTemplates(document.body);
     const comments = document.createTreeWalker(document.body, window.NodeFilter.SHOW_COMMENT);
     const removeComments = [];
     while (comments.nextNode()) removeComments.push(comments.currentNode);
@@ -95,6 +119,32 @@ export async function renderInProcess(source: string, options: RenderOptions): P
         const summary = document.createElement("summary");
         summary.textContent = "Details";
         details.prepend(summary);
+      }
+    }
+    // A table moved out of a template can temporarily be inside a paragraph.
+    // GitHub processes math within that paragraph before applying its table
+    // wrapper; unrelated paragraphs retain their own table wrapper.
+    const tableMarker = `data-gfm-table-${mark.replaceAll("-", "")}`;
+    for (const paragraph of document.querySelectorAll("p")) {
+      const tables = [...paragraph.querySelectorAll("table")];
+      if (!tables.length) continue;
+      let blocked = false;
+      for (let parent = paragraph.parentElement; parent; parent = parent.parentElement) {
+        if (parent.tagName === "DETAILS") break;
+        if (["B", "STRONG", "EM", "A", "CODE", "PRE", "SECTION"].includes(parent.tagName)) {
+          blocked = true;
+          break;
+        }
+      }
+      const before = paragraph.outerHTML;
+      const hasMath = !blocked && renderMathHtml(before, token, mark) !== before;
+      for (const table of tables) {
+        table.setAttribute(tableMarker, "");
+        if (!hasMath) {
+          const wrapper = document.createElement("markdown-accessiblity-table");
+          table.replaceWith(wrapper);
+          wrapper.append(table);
+        }
       }
     }
     const htmlBeforeMath = document.body.innerHTML;
@@ -130,7 +180,7 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       if (/^(?:https?:)?\/\//i.test(href) || /^mailto:/i.test(href))
         link.setAttribute("rel", "nofollow");
     }
-    const output = finalizeHtml(document.body.innerHTML, token).replace(/\n$/, "");
+    const output = finalizeHtml(document.body.innerHTML, token, tableMarker).replace(/\n$/, "");
     if (Buffer.byteLength(output) > 32 * 1024 * 1024)
       throw new RangeError("Rendered HTML exceeds 32 MB");
     return output;

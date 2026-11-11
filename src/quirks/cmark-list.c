@@ -3,13 +3,14 @@
 typedef struct {
   size_t start, open_end, close_start, end, tag_start, tag_end;
   size_t parent, first, last, prev, next;
-  unsigned char element, inert, removed, normalize_class, before_newline, append_newline, wrap_table, checkbox, checked, synthetic, alert, footnote, arrow, relative_image, image_link, image_rejected, image_paragraph;
+  unsigned char element, inert, removed, normalize_class, before_newline, append_newline, wrap_table, suppress_table_wrapper, checkbox, checked, synthetic, alert, footnote, arrow, relative_image, image_link, image_rejected, image_paragraph;
 } gfm_html_node;
 typedef struct {
   const unsigned char *source;
   size_t length, count, capacity;
   gfm_html_node *nodes;
   const char *token;
+  const char *table_marker;
   const char *text_boundary;
   int had_text_boundary;
 } gfm_html_tree;
@@ -521,37 +522,28 @@ static void gfm_write_checkbox(cmark_strbuf *out, gfm_html_tree *tree, gfm_html_
   cmark_strbuf_putc(out, '>');
 }
 
-static void gfm_write_table_tag(cmark_strbuf *out, gfm_html_tree *tree, gfm_html_node *node) {
-  const unsigned char *s = tree->source;
-  size_t p = node->tag_end;
-  cmark_strbuf_puts(out, "<markdown-accessiblity-table>");
-  while (p < node->open_end && s[p] != '>') {
-    while (p < node->open_end && gfm_ascii_space(s[p])) p++;
-    size_t attr = p;
-    while (p < node->open_end && !gfm_ascii_space(s[p]) && s[p] != '=' && s[p] != '>' && s[p] != '/') p++;
-    if (p == attr) { p++; continue; }
-    size_t attr_end = p;
-    while (p < node->open_end && gfm_ascii_space(s[p])) p++;
-    if (p < node->open_end && s[p] == '=') {
-      p++; while (p < node->open_end && gfm_ascii_space(s[p])) p++;
-      if (p < node->open_end && (s[p] == '"' || s[p] == '\'')) {
-        unsigned char quote = s[p++];
-        while (p < node->open_end && s[p] != quote) p++;
-        if (p < node->open_end) p++;
-      } else while (p < node->open_end && !gfm_ascii_space(s[p]) && s[p] != '>') p++;
-    }
-    if (gfm_ascii_equal(s + attr, attr_end - attr, "role")) {
-      cmark_strbuf_put(out, s + node->start, attr - node->start);
-      cmark_strbuf_puts(out, "role=\"table\"");
-      cmark_strbuf_put(out, s + p, node->open_end - p);
-      return;
+#include "cmark-footnote-html.c"
+
+static int gfm_write_table_tag(cmark_strbuf *out, gfm_html_tree *tree, gfm_html_node *node) {
+  gfm_attributes attrs = {0};
+  if (!gfm_attributes_read(tree, node, &attrs)) { gfm_attributes_free(&attrs); return 0; }
+  if (tree->table_marker && *tree->table_marker) gfm_attribute_remove(&attrs, tree->table_marker);
+  if (!gfm_attribute_set(&attrs, "role", (const unsigned char *)"table", 5)) { gfm_attributes_free(&attrs); return 0; }
+  if (!node->suppress_table_wrapper) cmark_strbuf_puts(out, "<markdown-accessiblity-table>");
+  cmark_strbuf_put(out, tree->source + node->start, node->tag_end - node->start);
+  for (size_t i = 0; i < attrs.count; i++) {
+    gfm_attribute *attr = &attrs.items[i];
+    if (attr->removed) continue;
+    if (!attr->changed) cmark_strbuf_put(out, tree->source + attr->raw_start, attr->raw_end - attr->raw_start);
+    else {
+      cmark_strbuf_putc(out, ' '); cmark_strbuf_put(out, attr->name, attr->name_length);
+      cmark_strbuf_puts(out, "=\""); gfm_attribute_escape(out, attr->value.ptr, attr->value.size); cmark_strbuf_putc(out, '"');
     }
   }
-  cmark_strbuf_put(out, s + node->start, node->open_end - node->start - 1);
-  cmark_strbuf_puts(out, " role=\"table\">");
+  cmark_strbuf_putc(out, '>');
+  gfm_attributes_free(&attrs);
+  return 1;
 }
-
-#include "cmark-footnote-html.c"
 
 static int gfm_serialize_tree(gfm_html_tree *tree, cmark_strbuf *out) {
   size_t id = tree->nodes[0].first;
@@ -576,7 +568,7 @@ static int gfm_serialize_tree(gfm_html_tree *tree, cmark_strbuf *out) {
       cmark_strbuf_puts(out, gfm_alert_titles[kind]);
       cmark_strbuf_puts(out, "</p>");
     }
-    else if (node->wrap_table) gfm_write_table_tag(out, tree, node);
+    else if (node->wrap_table) { if (!gfm_write_table_tag(out, tree, node)) return 0; }
     else if (node->normalize_class) gfm_write_normalized_tag(out, tree, node);
     else cmark_strbuf_put(out, tree->source + node->start, node->open_end - node->start);
     if (!node->arrow && node->first != GFM_NONE) { id = node->first; continue; }
@@ -587,7 +579,7 @@ static int gfm_serialize_tree(gfm_html_tree *tree, cmark_strbuf *out) {
       else if (node->alert) cmark_strbuf_puts(out, "</div>");
       else if (node->element && node->end > node->close_start)
         cmark_strbuf_put(out, tree->source + node->close_start, node->end - node->close_start);
-      if (node->wrap_table) cmark_strbuf_puts(out, "</markdown-accessiblity-table>");
+      if (node->wrap_table && !node->suppress_table_wrapper) cmark_strbuf_puts(out, "</markdown-accessiblity-table>");
       if (node->image_paragraph) cmark_strbuf_puts(out, "</p>");
       if (node->next != GFM_NONE) { id = node->next; break; }
       id = node->parent;
@@ -596,8 +588,8 @@ static int gfm_serialize_tree(gfm_html_tree *tree, cmark_strbuf *out) {
   }
   return 1;
 }
-char *gfm_finalize_serialized_html(const unsigned char *source, size_t length, const char *token) {
-  gfm_html_tree tree = { .source = source, .length = length, .token = token };
+char *gfm_finalize_serialized_html(const unsigned char *source, size_t length, const char *token, const char *table_marker) {
+  gfm_html_tree tree = { .source = source, .length = length, .token = token, .table_marker = table_marker };
   if (!gfm_parse_serialized_html(&tree)) return NULL;
   int changed = gfm_adjust_alerts(&tree);
   if (!gfm_adjust_checkboxes(&tree, &changed)) { free(tree.nodes); return NULL; }
@@ -606,7 +598,11 @@ char *gfm_finalize_serialized_html(const unsigned char *source, size_t length, c
   changed |= gfm_adjust_footnote_nodes(&tree);
   changed |= gfm_flatten_lists(&tree);
   for (size_t i = 1; i < tree.count; i++) {
-    if (!tree.nodes[i].inert && gfm_node_is(&tree, i, "table")) { tree.nodes[i].wrap_table = 1; changed = 1; }
+    if (!tree.nodes[i].inert && gfm_node_is(&tree, i, "table")) {
+      tree.nodes[i].wrap_table = 1;
+      tree.nodes[i].suppress_table_wrapper = table_marker && *table_marker && gfm_get_attribute(&tree, i, table_marker, NULL, NULL);
+      changed = 1;
+    }
     if (!tree.nodes[i].inert && (gfm_node_is(&tree, i, "code") || gfm_node_is(&tree, i, "pre"))) {
       tree.nodes[i].normalize_class = 2; changed = 1;
     }

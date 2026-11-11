@@ -14,7 +14,7 @@ const lib = cc({
     gfm_document_html: { args: ["ptr"], returns: "ptr" },
     gfm_document_xml: { args: ["ptr"], returns: "ptr" },
     gfm_document_free: { args: ["ptr"], returns: "void" },
-    gfm_finalize_serialized_html: { args: ["buffer", "u64", "buffer"], returns: "ptr" },
+    gfm_finalize_serialized_html: { args: ["buffer", "u64", "buffer", "buffer"], returns: "ptr" },
     gfm_math_dom: { args: ["buffer", "u64", "buffer", "buffer"], returns: "ptr" },
     gfm_unicode_lower: { args: ["buffer", "u64"], returns: "ptr" },
     gfm_unicode_lower_length: { args: ["ptr"], returns: "u64" },
@@ -63,9 +63,18 @@ export function nativeRender(source: string): { html: string; astXML: string } {
 }
 
 /** Apply table, list, code and math-spacing adjustments to serialized, sanitized HTML. */
-export function finalizeHtml(html: string, token = "00000000000000000000000000000000"): string {
+export function finalizeHtml(
+  html: string,
+  token = "00000000000000000000000000000000",
+  tableMarker = "",
+): string {
   const bytes = Buffer.from(html, "utf8");
-  const result = s.gfm_finalize_serialized_html(bytes, bytes.byteLength, Buffer.from(token + "\0"));
+  const result = s.gfm_finalize_serialized_html(
+    bytes,
+    bytes.byteLength,
+    Buffer.from(token + "\0"),
+    Buffer.from(tableMarker + "\0"),
+  );
   if (!result) throw Error("Cannot finalize HTML");
   try {
     return String(new CString(result));

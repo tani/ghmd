@@ -96,3 +96,73 @@ test("keeps a raw anchor without href while stripping a rejected destination", a
   expect(html).not.toContain("javascript:");
   expect(html).not.toContain("data-gfm-had-href");
 });
+
+test("unwraps template elements while keeping their parsed content", async () => {
+  expect(await render("<template><code>x</code></template>")).toBe(
+    '<p><code class="notranslate">x</code></p>',
+  );
+  expect(await render("<template><b>x</b><i>y</i></template>")).toBe("<p><b>x</b><i>y</i></p>");
+  expect(await render("<div><template>before <strong>x</strong> after</template></div>")).toBe(
+    "<div>before <strong>x</strong> after</div>",
+  );
+});
+
+test("trims the final newline only when the last raw HTML block remains open", async () => {
+  expect(await render("<div>\n<b>hello\n")).toBe("<div>\n<b>hello</b></div>");
+  expect(await render("<div>\n<b>hello\n</div>")).toBe("<div>\n<b>hello\n</b></div>");
+  expect(await render("<pre>\nfoo\n")).toBe('<pre class="notranslate">foo</pre>');
+  expect(await render("<details><summary>x</summary>\nhello\n")).toBe(
+    "<details><summary>x</summary>\nhello</details>",
+  );
+});
+
+test("sanitizes rejected links and attributes inside templates before unwrapping them", async () => {
+  const html = await render(
+    '<template><img src=x onerror=alert(1)><a href="javascript:alert(1)">x</a></template>',
+  );
+  expect(html).not.toContain("onerror");
+  expect(html).not.toContain("javascript:");
+  expect(html).toContain("</a>x</p>");
+});
+
+test("retains nested template content and the browser-parsed table structure", async () => {
+  const { htmlAst } = await import("./support/html-ast");
+  expect(await render("<template><template>hi <b>x</b></template></template>")).toBe(
+    "<p>hi <b>x</b></p>",
+  );
+  const html = await render("<template><table><tr><td>x</td></tr></table></template>");
+  expect(htmlAst(html)).toEqual(
+    htmlAst(
+      '<p><markdown-accessiblity-table></markdown-accessiblity-table></p><table role="table"><tbody><tr><td>x</td></tr></tbody></table><p></p>',
+    ),
+  );
+});
+
+test("keeps table handling local to the paragraph containing math", async () => {
+  const { htmlAst } = await import("./support/html-ast");
+  const runId = "0123456789abcdef0123456789abcdef";
+  const math = `<math-renderer class="js-inline-math" style="display: inline-block" data-run-id="${runId}">$x$</math-renderer>`;
+  const table = '<table role="table"><tbody><tr><td>x</td></tr></tbody></table>';
+  const same = await render("<template><table><tr><td>x</td></tr></table></template> $x$", {
+    runId,
+  });
+  expect(htmlAst(same)).toEqual(htmlAst(`<p></p>${table} ${math}`));
+  const separate = await render("<template><table><tr><td>x</td></tr></table></template>\n\n$x$", {
+    runId,
+  });
+  expect(htmlAst(separate)).toEqual(
+    htmlAst(
+      `<p><markdown-accessiblity-table></markdown-accessiblity-table></p>${table}<p></p>\n<p>${math}</p>`,
+    ),
+  );
+  const nested = await render(
+    "<div><template><table><tr><td>$x$</td></tr></table></template></div>",
+    { runId },
+  );
+  expect(htmlAst(nested)).toEqual(
+    htmlAst(
+      `<div><markdown-accessiblity-table><table role="table"><tbody><tr><td>${math}</td></tr></tbody></table></markdown-accessiblity-table></div>`,
+    ),
+  );
+  for (const html of [same, separate, nested]) expect(html).not.toContain("data-gfm-table-");
+});

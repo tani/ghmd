@@ -1,0 +1,9 @@
+{
+  "id": "fuzz-aa9550f9ee2d549a4977777c",
+  "origin": "manual",
+  "failure": "fixed",
+  "sourceSha256": "aa9550f9ee2d549a4977777ce553abac6d99443cc342be8dfdfab1392bfe960c",
+  "htmlSha256": "d258824037768637cd227ab4231d45495c97079c8faeee397680e02ea0d3b523",
+  "reference": "GitHub REST /markdown (gfm)",
+  "capturedAt": "2026-11-11T15:28:54.733Z"
+}
