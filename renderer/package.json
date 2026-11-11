@@ -7,7 +7,7 @@
   "scripts": {
     "test": "bun test --timeout 60000",
     "render": "bun src/cli.ts",
-    "audit:styleguide": "bun scripts/styleguide-audit.ts"
+    "test:e2e": "bun test test/e2e.test.ts --timeout 60000"
   },
   "dependencies": {
     "@wooorm/starry-night": "3.11.0",

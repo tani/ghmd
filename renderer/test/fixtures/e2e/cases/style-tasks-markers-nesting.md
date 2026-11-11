@@ -1,0 +1,4 @@
+- [ ] `[x]`
+- [x] done
+  - [ ] nested
+- [ ] literal [x] appears later

@@ -1,0 +1,5 @@
+<details>
+
+$`x`$
+
+</details>

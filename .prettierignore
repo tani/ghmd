@@ -1,8 +1,5 @@
 # Reference inputs and exact GitHub output must remain byte-for-byte unchanged.
 GFM_STYLEGUIDE.md
-github-html/
-github-markdown/
 renderer/test/fixtures/
-renderer/test/styleguide/latest-report.json
 # Keep the vendored upstream release unmodified.
 renderer/vendor/

@@ -1,0 +1,4 @@
+[^:][^ spaced ]
+
+[^:]: colon
+[^ spaced ]: spaces

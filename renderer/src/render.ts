@@ -15,7 +15,21 @@ export async function renderInProcess(source: string, options: RenderOptions): P
     // Remember which anchors had a destination before sanitization. A raw
     // anchor without href must not be mistaken for a rejected dangerous URL.
     const mark = crypto.randomUUID();
-    const tree: any = parseFragment(html);
+    const tree: any = parseFragment(html, { sourceCodeLocationInfo: true });
+    // HTML parsing can reconstruct an unclosed formatting tag around the
+    // final newline. GitHub drops that empty reconstructed fragment.
+    const tail = tree.childNodes.at(-1);
+    if (
+      tail?.tagName &&
+      tail.childNodes?.every((n: any) => n.nodeName === "#text" && !n.value.trim())
+    ) {
+      const start = tail.sourceCodeLocation?.startOffset;
+      const appearsEarlier = (node: any): boolean =>
+        node !== tail &&
+        ((node.tagName === tail.tagName && node.sourceCodeLocation?.startOffset === start) ||
+          (node.childNodes ?? []).some(appearsEarlier));
+      if (start !== undefined && tree.childNodes.some(appearsEarlier)) tree.childNodes.pop();
+    }
     const markLinks = (node: any) => {
       if (node.tagName === "a" && node.attrs?.some((a: any) => a.name === "href")) {
         node.attrs = node.attrs.filter((a: any) => a.name !== "data-gfm-had-href");
@@ -174,7 +188,7 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       const content = (pre.textContent ?? "")
         .replace(/\n$/, "")
         .replace(/(?<!\\)\$/g, "\\$")
-        .replaceAll("\n", "\\\n");
+        .replace(/\\\n/g, "\\\\\n");
       pre.replaceWith(mathElement("$$" + content + "$$", true));
     }
     for (const pre of [...document.querySelectorAll("pre[lang]")]) await highlight(document, pre);
@@ -262,11 +276,7 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       const hasMath =
         last?.nodeType === 1 &&
         (last.nodeName === "MATH-RENDERER" || (last as any).querySelector?.("math-renderer"));
-      const taskCode =
-        last?.nodeName === "CODE" &&
-        !!li.querySelector(':scope > input[type="checkbox"]') &&
-        /\$[^$]*\$/.test(last.textContent ?? "");
-      if (meaningful.length > 1 && (hasMath || taskCode) && !li.textContent?.endsWith("\n"))
+      if (meaningful.length > 1 && hasMath && !li.textContent?.endsWith("\n"))
         li.append(document.createTextNode("\n"));
       // GitHub separates a leading formula when ordinary text follows it.
       if (
