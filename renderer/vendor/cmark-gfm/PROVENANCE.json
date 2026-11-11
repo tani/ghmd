@@ -3,12 +3,8 @@
   "nativeVersion": "0.29.0.gfm.13",
   "sourceArchive": "https://files.pythonhosted.org/packages/source/c/cmarkgfm/cmarkgfm-2025.10.22.tar.gz",
   "archiveSha256": "5bec61007b65b919488442c838c58a6c8bf4741f5103c593b2ef180d39818eda",
-  "contents": "third_party/cmark and generated/unix headers from cmarkgfm 2025.10.22 sdist; local patches are listed below.",
-  "patches": [
-    "../../patches/footnote-xml.patch",
-    "../../patches/tasklist-checked.patch",
-    "../../patches/footnote-labels.patch",
-    "../../patches/footnote-unescape.patch"
-  ],
-  "patchedNodeCSha256": "9b000553c0ec29e3bf65e37dfadf50f4d12938630ccec4cf1998b647a7e06d7b"
+  "contents": "A subset of unmodified source files and COPYING from the official upstream tag; generated headers are unmodified generated/unix files from the recorded cmarkgfm source distribution.",
+  "upstreamTag": "0.29.0.gfm.13",
+  "upstreamCommit": "587a12bb54d95ac37241377e6ddc93ea0e45439b",
+  "verificationManifest": "../../test/fixtures/cmark-gfm-upstream.json"
 }

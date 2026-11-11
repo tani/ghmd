@@ -1,0 +1,1618 @@
+{
+  "target": "GitHub REST /markdown, mode=gfm",
+  "capturedUtc": "2026-11-11",
+  "context": "Each group is one batch; individual excerpts retain batch context. Inputs were independently authored and include additional validation variations captured after initial implementation.",
+  "groups": [
+    {
+      "id": "bare",
+      "cases": [
+        {
+          "id": "bare-prefix-0",
+          "source": "$x$"
+        },
+        {
+          "id": "bare-prefix-1",
+          "source": "a$x$"
+        },
+        {
+          "id": "bare-prefix-2",
+          "source": "A$x$"
+        },
+        {
+          "id": "bare-prefix-3",
+          "source": "1$x$"
+        },
+        {
+          "id": "bare-prefix-4",
+          "source": "あ$x$"
+        },
+        {
+          "id": "bare-prefix-5",
+          "source": "漢$x$"
+        },
+        {
+          "id": "bare-prefix-6",
+          "source": "🙂$x$"
+        },
+        {
+          "id": "bare-prefix-7",
+          "source": "-$x$"
+        },
+        {
+          "id": "bare-prefix-8",
+          "source": "+$x$"
+        },
+        {
+          "id": "bare-prefix-9",
+          "source": "/$x$"
+        },
+        {
+          "id": "bare-prefix-10",
+          "source": "($x$"
+        },
+        {
+          "id": "bare-prefix-11",
+          "source": "[$x$"
+        },
+        {
+          "id": "bare-prefix-12",
+          "source": "{$x$"
+        },
+        {
+          "id": "bare-prefix-13",
+          "source": "\"$x$"
+        },
+        {
+          "id": "bare-prefix-14",
+          "source": "'$x$"
+        },
+        {
+          "id": "bare-prefix-15",
+          "source": "、$x$"
+        },
+        {
+          "id": "bare-prefix-16",
+          "source": "：$x$"
+        },
+        {
+          "id": "bare-prefix-17",
+          "source": "_$x$"
+        },
+        {
+          "id": "bare-prefix-18",
+          "source": "\\$x$"
+        },
+        {
+          "id": "bare-suffix-0",
+          "source": "$x$"
+        },
+        {
+          "id": "bare-suffix-1",
+          "source": "$x$a"
+        },
+        {
+          "id": "bare-suffix-2",
+          "source": "$x$A"
+        },
+        {
+          "id": "bare-suffix-3",
+          "source": "$x$1"
+        },
+        {
+          "id": "bare-suffix-4",
+          "source": "$x$あ"
+        },
+        {
+          "id": "bare-suffix-5",
+          "source": "$x$漢"
+        },
+        {
+          "id": "bare-suffix-6",
+          "source": "$x$🙂"
+        },
+        {
+          "id": "bare-suffix-7",
+          "source": "$x$-"
+        },
+        {
+          "id": "bare-suffix-8",
+          "source": "$x$+"
+        },
+        {
+          "id": "bare-suffix-9",
+          "source": "$x$/"
+        },
+        {
+          "id": "bare-suffix-10",
+          "source": "$x$)"
+        },
+        {
+          "id": "bare-suffix-11",
+          "source": "$x$]"
+        },
+        {
+          "id": "bare-suffix-12",
+          "source": "$x$}"
+        },
+        {
+          "id": "bare-suffix-13",
+          "source": "$x$\""
+        },
+        {
+          "id": "bare-suffix-14",
+          "source": "$x$'"
+        },
+        {
+          "id": "bare-suffix-15",
+          "source": "$x$。"
+        },
+        {
+          "id": "bare-suffix-16",
+          "source": "$x$："
+        },
+        {
+          "id": "bare-suffix-17",
+          "source": "$x$_"
+        },
+        {
+          "id": "bare-suffix-18",
+          "source": "$x$,"
+        }
+      ],
+      "sourceSha256": "672317aa740c89a5fb6778d8d48fa2556c05caa929f339fed0575ba86759c7f1",
+      "expectedSha256": "301bb81bd1ad245245499d7523bf143641ba40c1031a9f15fa4abc7ea3a42e2f"
+    },
+    {
+      "id": "protected",
+      "cases": [
+        {
+          "id": "protected-prefix-0",
+          "source": "$`x`$"
+        },
+        {
+          "id": "protected-prefix-1",
+          "source": "a$`x`$"
+        },
+        {
+          "id": "protected-prefix-2",
+          "source": "A$`x`$"
+        },
+        {
+          "id": "protected-prefix-3",
+          "source": "1$`x`$"
+        },
+        {
+          "id": "protected-prefix-4",
+          "source": "あ$`x`$"
+        },
+        {
+          "id": "protected-prefix-5",
+          "source": "漢$`x`$"
+        },
+        {
+          "id": "protected-prefix-6",
+          "source": "🙂$`x`$"
+        },
+        {
+          "id": "protected-prefix-7",
+          "source": "-$`x`$"
+        },
+        {
+          "id": "protected-prefix-8",
+          "source": "+$`x`$"
+        },
+        {
+          "id": "protected-prefix-9",
+          "source": "/$`x`$"
+        },
+        {
+          "id": "protected-prefix-10",
+          "source": "($`x`$"
+        },
+        {
+          "id": "protected-prefix-11",
+          "source": "[$`x`$"
+        },
+        {
+          "id": "protected-prefix-12",
+          "source": "{$`x`$"
+        },
+        {
+          "id": "protected-prefix-13",
+          "source": "\"$`x`$"
+        },
+        {
+          "id": "protected-prefix-14",
+          "source": "'$`x`$"
+        },
+        {
+          "id": "protected-prefix-15",
+          "source": "、$`x`$"
+        },
+        {
+          "id": "protected-prefix-16",
+          "source": "：$`x`$"
+        },
+        {
+          "id": "protected-prefix-17",
+          "source": "_$`x`$"
+        },
+        {
+          "id": "protected-prefix-18",
+          "source": "\\$`x`$"
+        },
+        {
+          "id": "protected-suffix-0",
+          "source": "$`x`$"
+        },
+        {
+          "id": "protected-suffix-1",
+          "source": "$`x`$a"
+        },
+        {
+          "id": "protected-suffix-2",
+          "source": "$`x`$A"
+        },
+        {
+          "id": "protected-suffix-3",
+          "source": "$`x`$1"
+        },
+        {
+          "id": "protected-suffix-4",
+          "source": "$`x`$あ"
+        },
+        {
+          "id": "protected-suffix-5",
+          "source": "$`x`$漢"
+        },
+        {
+          "id": "protected-suffix-6",
+          "source": "$`x`$🙂"
+        },
+        {
+          "id": "protected-suffix-7",
+          "source": "$`x`$-"
+        },
+        {
+          "id": "protected-suffix-8",
+          "source": "$`x`$+"
+        },
+        {
+          "id": "protected-suffix-9",
+          "source": "$`x`$/"
+        },
+        {
+          "id": "protected-suffix-10",
+          "source": "$`x`$)"
+        },
+        {
+          "id": "protected-suffix-11",
+          "source": "$`x`$]"
+        },
+        {
+          "id": "protected-suffix-12",
+          "source": "$`x`$}"
+        },
+        {
+          "id": "protected-suffix-13",
+          "source": "$`x`$\""
+        },
+        {
+          "id": "protected-suffix-14",
+          "source": "$`x`$'"
+        },
+        {
+          "id": "protected-suffix-15",
+          "source": "$`x`$。"
+        },
+        {
+          "id": "protected-suffix-16",
+          "source": "$`x`$："
+        },
+        {
+          "id": "protected-suffix-17",
+          "source": "$`x`$_"
+        },
+        {
+          "id": "protected-suffix-18",
+          "source": "$`x`$,"
+        }
+      ],
+      "sourceSha256": "a0933f4bbb190c5cecdc97cb382f295fdf6dc5f5e17a3407336870bc156f8604",
+      "expectedSha256": "8729ad0aa62425cb452080d94f407588b0c83f95bc21092ecb08297e3e5b03fe"
+    },
+    {
+      "id": "alphabet",
+      "cases": [
+        {
+          "id": "protected-alpha-0",
+          "source": "a$`x`$"
+        },
+        {
+          "id": "protected-alpha-1",
+          "source": "b$`x`$"
+        },
+        {
+          "id": "protected-alpha-2",
+          "source": "c$`x`$"
+        },
+        {
+          "id": "protected-alpha-3",
+          "source": "d$`x`$"
+        },
+        {
+          "id": "protected-alpha-4",
+          "source": "e$`x`$"
+        },
+        {
+          "id": "protected-alpha-5",
+          "source": "f$`x`$"
+        },
+        {
+          "id": "protected-alpha-6",
+          "source": "g$`x`$"
+        },
+        {
+          "id": "protected-alpha-7",
+          "source": "h$`x`$"
+        },
+        {
+          "id": "protected-alpha-8",
+          "source": "i$`x`$"
+        },
+        {
+          "id": "protected-alpha-9",
+          "source": "j$`x`$"
+        },
+        {
+          "id": "protected-alpha-10",
+          "source": "k$`x`$"
+        },
+        {
+          "id": "protected-alpha-11",
+          "source": "l$`x`$"
+        },
+        {
+          "id": "protected-alpha-12",
+          "source": "m$`x`$"
+        },
+        {
+          "id": "protected-alpha-13",
+          "source": "n$`x`$"
+        },
+        {
+          "id": "protected-alpha-14",
+          "source": "o$`x`$"
+        },
+        {
+          "id": "protected-alpha-15",
+          "source": "p$`x`$"
+        },
+        {
+          "id": "protected-alpha-16",
+          "source": "q$`x`$"
+        },
+        {
+          "id": "protected-alpha-17",
+          "source": "r$`x`$"
+        },
+        {
+          "id": "protected-alpha-18",
+          "source": "s$`x`$"
+        },
+        {
+          "id": "protected-alpha-19",
+          "source": "t$`x`$"
+        },
+        {
+          "id": "protected-alpha-20",
+          "source": "u$`x`$"
+        },
+        {
+          "id": "protected-alpha-21",
+          "source": "v$`x`$"
+        },
+        {
+          "id": "protected-alpha-22",
+          "source": "w$`x`$"
+        },
+        {
+          "id": "protected-alpha-23",
+          "source": "x$`x`$"
+        },
+        {
+          "id": "protected-alpha-24",
+          "source": "y$`x`$"
+        },
+        {
+          "id": "protected-alpha-25",
+          "source": "z$`x`$"
+        },
+        {
+          "id": "protected-alpha-26",
+          "source": "A$`x`$"
+        },
+        {
+          "id": "protected-alpha-27",
+          "source": "B$`x`$"
+        },
+        {
+          "id": "protected-alpha-28",
+          "source": "C$`x`$"
+        },
+        {
+          "id": "protected-alpha-29",
+          "source": "D$`x`$"
+        },
+        {
+          "id": "protected-alpha-30",
+          "source": "E$`x`$"
+        },
+        {
+          "id": "protected-alpha-31",
+          "source": "F$`x`$"
+        },
+        {
+          "id": "protected-alpha-32",
+          "source": "G$`x`$"
+        },
+        {
+          "id": "protected-alpha-33",
+          "source": "H$`x`$"
+        },
+        {
+          "id": "protected-alpha-34",
+          "source": "I$`x`$"
+        },
+        {
+          "id": "protected-alpha-35",
+          "source": "J$`x`$"
+        },
+        {
+          "id": "protected-alpha-36",
+          "source": "K$`x`$"
+        },
+        {
+          "id": "protected-alpha-37",
+          "source": "L$`x`$"
+        },
+        {
+          "id": "protected-alpha-38",
+          "source": "M$`x`$"
+        },
+        {
+          "id": "protected-alpha-39",
+          "source": "N$`x`$"
+        },
+        {
+          "id": "protected-alpha-40",
+          "source": "O$`x`$"
+        },
+        {
+          "id": "protected-alpha-41",
+          "source": "P$`x`$"
+        },
+        {
+          "id": "protected-alpha-42",
+          "source": "Q$`x`$"
+        },
+        {
+          "id": "protected-alpha-43",
+          "source": "R$`x`$"
+        },
+        {
+          "id": "protected-alpha-44",
+          "source": "S$`x`$"
+        },
+        {
+          "id": "protected-alpha-45",
+          "source": "T$`x`$"
+        },
+        {
+          "id": "protected-alpha-46",
+          "source": "U$`x`$"
+        },
+        {
+          "id": "protected-alpha-47",
+          "source": "V$`x`$"
+        },
+        {
+          "id": "protected-alpha-48",
+          "source": "W$`x`$"
+        },
+        {
+          "id": "protected-alpha-49",
+          "source": "X$`x`$"
+        },
+        {
+          "id": "protected-alpha-50",
+          "source": "Y$`x`$"
+        },
+        {
+          "id": "protected-alpha-51",
+          "source": "Z$`x`$"
+        },
+        {
+          "id": "protected-alpha-52",
+          "source": "é$`x`$"
+        },
+        {
+          "id": "protected-alpha-53",
+          "source": "ñ$`x`$"
+        },
+        {
+          "id": "protected-alpha-54",
+          "source": "α$`x`$"
+        },
+        {
+          "id": "protected-alpha-55",
+          "source": "β$`x`$"
+        },
+        {
+          "id": "protected-alpha-56",
+          "source": "я$`x`$"
+        },
+        {
+          "id": "protected-alpha-57",
+          "source": "中$`x`$"
+        },
+        {
+          "id": "protected-alpha-58",
+          "source": "あ$`x`$"
+        }
+      ],
+      "sourceSha256": "21db877ef9c63c0b860418ecc0a96a0fb98c85e03b57cebebb8b4e5cd69b9e44",
+      "expectedSha256": "1427763d61d0382394abe63b1e22e4e2a377b29f6b083646938648e4583f9a43"
+    },
+    {
+      "id": "word",
+      "cases": [
+        {
+          "id": "word-0",
+          "source": "a$`x`$"
+        },
+        {
+          "id": "word-1",
+          "source": "b$`x`$"
+        },
+        {
+          "id": "word-2",
+          "source": "c$`x`$"
+        },
+        {
+          "id": "word-3",
+          "source": "d$`x`$"
+        },
+        {
+          "id": "word-4",
+          "source": "ba$`x`$"
+        },
+        {
+          "id": "word-5",
+          "source": "ca$`x`$"
+        },
+        {
+          "id": "word-6",
+          "source": "za$`x`$"
+        },
+        {
+          "id": "word-7",
+          "source": "ab$`x`$"
+        },
+        {
+          "id": "word-8",
+          "source": "bb$`x`$"
+        },
+        {
+          "id": "word-9",
+          "source": "cb$`x`$"
+        },
+        {
+          "id": "word-10",
+          "source": "bc$`x`$"
+        },
+        {
+          "id": "word-11",
+          "source": "abc$`x`$"
+        },
+        {
+          "id": "word-12",
+          "source": "foo$`x`$"
+        },
+        {
+          "id": "word-13",
+          "source": "alpha$`x`$"
+        },
+        {
+          "id": "word-14",
+          "source": "beta$`x`$"
+        },
+        {
+          "id": "word-15",
+          "source": "xa$`x`$"
+        },
+        {
+          "id": "word-16",
+          "source": "xb$`x`$"
+        },
+        {
+          "id": "word-17",
+          "source": "x1$`x`$"
+        },
+        {
+          "id": "word-18",
+          "source": "hello$`x`$"
+        },
+        {
+          "id": "word-19",
+          "source": "word$`x`$"
+        },
+        {
+          "id": "word-20",
+          "source": "A$`x`$"
+        },
+        {
+          "id": "word-21",
+          "source": "ä$`x`$"
+        },
+        {
+          "id": "word-22",
+          "source": "(a$`x`$"
+        },
+        {
+          "id": "word-23",
+          "source": " a$`x`$"
+        },
+        {
+          "id": "word-24",
+          "source": "a $`x`$"
+        },
+        {
+          "id": "word-25",
+          "source": "aa$`x`$"
+        },
+        {
+          "id": "word-26",
+          "source": "ac$`x`$"
+        },
+        {
+          "id": "word-27",
+          "source": "and$`x`$"
+        },
+        {
+          "id": "word-28",
+          "source": "body$`x`$"
+        },
+        {
+          "id": "word-29",
+          "source": "something$`x`$"
+        }
+      ],
+      "sourceSha256": "4af454738e43162cf369b4ad4b5a2991be03d67a50dbdef60ba5c4ec1b57f1b7",
+      "expectedSha256": "f918f0299a08ccf1b3259533cdc226565e40d8db19ad23d81ffaa84d2d2f3bc9"
+    },
+    {
+      "id": "cross",
+      "cases": [
+        {
+          "id": "cross-0",
+          "source": "a$`x`$"
+        },
+        {
+          "id": "cross-1",
+          "source": "a$`y`$"
+        },
+        {
+          "id": "cross-2",
+          "source": "a$`a`$"
+        },
+        {
+          "id": "cross-3",
+          "source": "a$`b`$"
+        },
+        {
+          "id": "cross-4",
+          "source": "a$`1`$"
+        },
+        {
+          "id": "cross-5",
+          "source": "a$`x+y`$"
+        },
+        {
+          "id": "cross-6",
+          "source": "a$`\\frac{1}{2}`$"
+        },
+        {
+          "id": "cross-7",
+          "source": "b$`x`$"
+        },
+        {
+          "id": "cross-8",
+          "source": "b$`y`$"
+        },
+        {
+          "id": "cross-9",
+          "source": "b$`a`$"
+        },
+        {
+          "id": "cross-10",
+          "source": "b$`b`$"
+        },
+        {
+          "id": "cross-11",
+          "source": "b$`1`$"
+        },
+        {
+          "id": "cross-12",
+          "source": "b$`x+y`$"
+        },
+        {
+          "id": "cross-13",
+          "source": "b$`\\frac{1}{2}`$"
+        },
+        {
+          "id": "cross-14",
+          "source": "c$`x`$"
+        },
+        {
+          "id": "cross-15",
+          "source": "c$`y`$"
+        },
+        {
+          "id": "cross-16",
+          "source": "c$`a`$"
+        },
+        {
+          "id": "cross-17",
+          "source": "c$`b`$"
+        },
+        {
+          "id": "cross-18",
+          "source": "c$`1`$"
+        },
+        {
+          "id": "cross-19",
+          "source": "c$`x+y`$"
+        },
+        {
+          "id": "cross-20",
+          "source": "c$`\\frac{1}{2}`$"
+        },
+        {
+          "id": "cross-21",
+          "source": "z$`x`$"
+        },
+        {
+          "id": "cross-22",
+          "source": "z$`y`$"
+        },
+        {
+          "id": "cross-23",
+          "source": "z$`a`$"
+        },
+        {
+          "id": "cross-24",
+          "source": "z$`b`$"
+        },
+        {
+          "id": "cross-25",
+          "source": "z$`1`$"
+        },
+        {
+          "id": "cross-26",
+          "source": "z$`x+y`$"
+        },
+        {
+          "id": "cross-27",
+          "source": "z$`\\frac{1}{2}`$"
+        },
+        {
+          "id": "cross-28",
+          "source": "A$`x`$"
+        },
+        {
+          "id": "cross-29",
+          "source": "A$`y`$"
+        },
+        {
+          "id": "cross-30",
+          "source": "A$`a`$"
+        },
+        {
+          "id": "cross-31",
+          "source": "A$`b`$"
+        },
+        {
+          "id": "cross-32",
+          "source": "A$`1`$"
+        },
+        {
+          "id": "cross-33",
+          "source": "A$`x+y`$"
+        },
+        {
+          "id": "cross-34",
+          "source": "A$`\\frac{1}{2}`$"
+        },
+        {
+          "id": "cross-35",
+          "source": "1$`x`$"
+        },
+        {
+          "id": "cross-36",
+          "source": "1$`y`$"
+        },
+        {
+          "id": "cross-37",
+          "source": "1$`a`$"
+        },
+        {
+          "id": "cross-38",
+          "source": "1$`b`$"
+        },
+        {
+          "id": "cross-39",
+          "source": "1$`1`$"
+        },
+        {
+          "id": "cross-40",
+          "source": "1$`x+y`$"
+        },
+        {
+          "id": "cross-41",
+          "source": "1$`\\frac{1}{2}`$"
+        },
+        {
+          "id": "cross-42",
+          "source": "あ$`x`$"
+        },
+        {
+          "id": "cross-43",
+          "source": "あ$`y`$"
+        },
+        {
+          "id": "cross-44",
+          "source": "あ$`a`$"
+        },
+        {
+          "id": "cross-45",
+          "source": "あ$`b`$"
+        },
+        {
+          "id": "cross-46",
+          "source": "あ$`1`$"
+        },
+        {
+          "id": "cross-47",
+          "source": "あ$`x+y`$"
+        },
+        {
+          "id": "cross-48",
+          "source": "あ$`\\frac{1}{2}`$"
+        }
+      ],
+      "sourceSha256": "3e9b13d170bf567e68cb12607445a4d6df68056e80345070bec16dd2fbf674c7",
+      "expectedSha256": "c347c65b893dc016c26e31f240128eb0d9215fd753a3a167d1780999f8051350"
+    },
+    {
+      "id": "holdout",
+      "cases": [
+        {
+          "id": "holdout-0",
+          "source": "sea$`q`$"
+        },
+        {
+          "id": "holdout-1",
+          "source": "sea$`p-q`$"
+        },
+        {
+          "id": "holdout-2",
+          "source": "sea$`\\sqrt{z}`$"
+        },
+        {
+          "id": "holdout-3",
+          "source": "cab$`q`$"
+        },
+        {
+          "id": "holdout-4",
+          "source": "cab$`p-q`$"
+        },
+        {
+          "id": "holdout-5",
+          "source": "cab$`\\sqrt{z}`$"
+        },
+        {
+          "id": "holdout-6",
+          "source": "rice$`q`$"
+        },
+        {
+          "id": "holdout-7",
+          "source": "rice$`p-q`$"
+        },
+        {
+          "id": "holdout-8",
+          "source": "rice$`\\sqrt{z}`$"
+        },
+        {
+          "id": "holdout-9",
+          "source": "Δ$`q`$"
+        },
+        {
+          "id": "holdout-10",
+          "source": "Δ$`p-q`$"
+        },
+        {
+          "id": "holdout-11",
+          "source": "Δ$`\\sqrt{z}`$"
+        },
+        {
+          "id": "holdout-12",
+          "source": "Q$`q`$"
+        },
+        {
+          "id": "holdout-13",
+          "source": "Q$`p-q`$"
+        },
+        {
+          "id": "holdout-14",
+          "source": "Q$`\\sqrt{z}`$"
+        },
+        {
+          "id": "holdout-15",
+          "source": "9$`q`$"
+        },
+        {
+          "id": "holdout-16",
+          "source": "9$`p-q`$"
+        },
+        {
+          "id": "holdout-17",
+          "source": "9$`\\sqrt{z}`$"
+        },
+        {
+          "id": "holdout-18",
+          "source": "🤖$`q`$"
+        },
+        {
+          "id": "holdout-19",
+          "source": "🤖$`p-q`$"
+        },
+        {
+          "id": "holdout-20",
+          "source": "🤖$`\\sqrt{z}`$"
+        },
+        {
+          "id": "holdout-21",
+          "source": "$z$_"
+        },
+        {
+          "id": "holdout-22",
+          "source": "$p+q$_"
+        },
+        {
+          "id": "holdout-23",
+          "source": "$z$Z"
+        },
+        {
+          "id": "holdout-24",
+          "source": "$p+q$Z"
+        },
+        {
+          "id": "holdout-25",
+          "source": "$z$8"
+        },
+        {
+          "id": "holdout-26",
+          "source": "$p+q$8"
+        },
+        {
+          "id": "holdout-27",
+          "source": "$z$雪"
+        },
+        {
+          "id": "holdout-28",
+          "source": "$p+q$雪"
+        },
+        {
+          "id": "holdout-29",
+          "source": "$z$;"
+        },
+        {
+          "id": "holdout-30",
+          "source": "$p+q$;"
+        },
+        {
+          "id": "holdout-31",
+          "source": "$z$🙂"
+        },
+        {
+          "id": "holdout-32",
+          "source": "$p+q$🙂"
+        },
+        {
+          "id": "holdout-33",
+          "source": "**P $`q`$ Q**"
+        },
+        {
+          "id": "holdout-34",
+          "source": "*P $`q`$ Q*"
+        },
+        {
+          "id": "holdout-35",
+          "source": "`$q$`"
+        },
+        {
+          "id": "holdout-36",
+          "source": "\\$q\\$"
+        },
+        {
+          "id": "holdout-37",
+          "source": "($q$)"
+        },
+        {
+          "id": "holdout-38",
+          "source": "- $`q`$"
+        },
+        {
+          "id": "holdout-39",
+          "source": "> $`q`$"
+        }
+      ],
+      "sourceSha256": "c536c28d10ac40ee6c5ac0399f519d0f04bba37b8da7b06aacf244997ffc74ba",
+      "expectedSha256": "dfae22bde5690b18ddaac6a29975804d6eec5e24b14bee11e4a4964520e5c6e5"
+    },
+    {
+      "id": "context",
+      "cases": [
+        {
+          "id": "context-0",
+          "source": "- $`x`$"
+        },
+        {
+          "id": "context-1",
+          "source": "- $x$"
+        },
+        {
+          "id": "context-2",
+          "source": "1. $`x`$"
+        },
+        {
+          "id": "context-3",
+          "source": "- before $`x`$ after"
+        },
+        {
+          "id": "context-4",
+          "source": "- **$`x`$**"
+        },
+        {
+          "id": "context-5",
+          "source": "- *$`x`$*"
+        },
+        {
+          "id": "context-6",
+          "source": "- outer\n  - $`x`$"
+        },
+        {
+          "id": "context-7",
+          "source": "- [ ] $`x`$"
+        },
+        {
+          "id": "context-8",
+          "source": "- first\n\n  $`x`$"
+        },
+        {
+          "id": "context-9",
+          "source": "> $`x`$"
+        },
+        {
+          "id": "context-10",
+          "source": "> **$`x`$**"
+        },
+        {
+          "id": "context-11",
+          "source": "### $`x`$"
+        },
+        {
+          "id": "context-12",
+          "source": "[link $`x`$](https://example.com)"
+        },
+        {
+          "id": "context-13",
+          "source": "`$x$`"
+        },
+        {
+          "id": "context-14",
+          "source": "```text\n$`x`$\n```"
+        },
+        {
+          "id": "context-15",
+          "source": "| a |\n| --- |\n| $`x`$ |"
+        },
+        {
+          "id": "context-16",
+          "source": "<details>\n\n$`x`$\n\n</details>"
+        },
+        {
+          "id": "context-17",
+          "source": "text **$`x`$**"
+        },
+        {
+          "id": "context-18",
+          "source": "text *$`x`$*"
+        },
+        {
+          "id": "context-19",
+          "source": "**a $`x`$ b**"
+        },
+        {
+          "id": "context-20",
+          "source": "*a $`x`$ b*"
+        }
+      ],
+      "sourceSha256": "5fd3b8b36da3b30a7480e56b5066d034a8318b896e2b164260cdd5c6dccdf086",
+      "expectedSha256": "a44780634427d8b1d14e28300321753d432639c2d38203c8a0705dd0e78fbba8"
+    },
+    {
+      "id": "tasks",
+      "cases": [
+        {
+          "id": "task-0",
+          "source": "- [ ] $`x`$"
+        },
+        {
+          "id": "task-1",
+          "source": "- [x] $`y`$"
+        },
+        {
+          "id": "task-2",
+          "source": "- [ ] before $`x`$"
+        },
+        {
+          "id": "task-3",
+          "source": "- [ ] $`x`$ after"
+        },
+        {
+          "id": "task-4",
+          "source": "- [ ] $x$"
+        },
+        {
+          "id": "task-5",
+          "source": "- [ ] **$`x`$**"
+        },
+        {
+          "id": "task-6",
+          "source": "- [ ] `$x$`"
+        },
+        {
+          "id": "task-7",
+          "source": "- [ ] text"
+        },
+        {
+          "id": "task-8",
+          "source": "- [ ] $`x`$\n- [ ] after"
+        },
+        {
+          "id": "task-9",
+          "source": "- item $`x`$"
+        },
+        {
+          "id": "task-10",
+          "source": "- [ ] before $`x`$\n\n  second paragraph"
+        },
+        {
+          "id": "task-11",
+          "source": "1. [ ] $`x`$"
+        }
+      ],
+      "sourceSha256": "d4753f7ec305c065e8f6a11d15b85b5dc4ad1c7d0ff4ae27818996eff112ca69",
+      "expectedSha256": "6925af0e739406432ea281a4cf64a78a325dc1f2ced3cec25ee07858c8a0febc"
+    },
+    {
+      "id": "list-end",
+      "cases": [
+        {
+          "id": "end-0",
+          "source": "- `x`"
+        },
+        {
+          "id": "end-1",
+          "source": "- `$x$`"
+        },
+        {
+          "id": "end-2",
+          "source": "- `x$`"
+        },
+        {
+          "id": "end-3",
+          "source": "- **x**"
+        },
+        {
+          "id": "end-4",
+          "source": "- **$x$**"
+        },
+        {
+          "id": "end-5",
+          "source": "- [x](https://example.com)"
+        },
+        {
+          "id": "end-6",
+          "source": "- <em>x</em>"
+        },
+        {
+          "id": "end-7",
+          "source": "- $`x`$"
+        },
+        {
+          "id": "end-8",
+          "source": "- $x$"
+        },
+        {
+          "id": "end-9",
+          "source": "- [ ] `x`"
+        },
+        {
+          "id": "end-10",
+          "source": "- [ ] `$x$`"
+        },
+        {
+          "id": "end-11",
+          "source": "- [ ] **x**"
+        },
+        {
+          "id": "end-12",
+          "source": "- [ ] [x](https://example.com)"
+        },
+        {
+          "id": "end-13",
+          "source": "- [ ] $`x`$"
+        },
+        {
+          "id": "end-14",
+          "source": "- [ ] x\n\n  second"
+        },
+        {
+          "id": "end-15",
+          "source": "- x\n\n  second"
+        }
+      ],
+      "sourceSha256": "2ef12f594b333cc922141ceb53cb8df93a99cd5c2e10166bedde1669b6b28f1e",
+      "expectedSha256": "c232229e7abb8df5e97e72b9742b93851fa4d4de93820c949088a4846c54b152"
+    },
+    {
+      "id": "list-holdout",
+      "cases": [
+        {
+          "id": "list-holdout-0",
+          "source": "- before `$x$`"
+        },
+        {
+          "id": "list-holdout-1",
+          "source": "- before **$x$**"
+        },
+        {
+          "id": "list-holdout-2",
+          "source": "- before `hello`"
+        },
+        {
+          "id": "list-holdout-3",
+          "source": "- before **hello**"
+        },
+        {
+          "id": "list-holdout-4",
+          "source": "- [ ] before `$x$`"
+        },
+        {
+          "id": "list-holdout-5",
+          "source": "- [ ] `$x$` after"
+        },
+        {
+          "id": "list-holdout-6",
+          "source": "- [ ] before **$x$**"
+        },
+        {
+          "id": "list-holdout-7",
+          "source": "- [ ] before [x](https://example.org)"
+        },
+        {
+          "id": "list-holdout-8",
+          "source": "- prefix $`y`$"
+        },
+        {
+          "id": "list-holdout-9",
+          "source": "- $`y`$ suffix"
+        },
+        {
+          "id": "list-holdout-10",
+          "source": "- [x] pre $`y`$"
+        },
+        {
+          "id": "list-holdout-11",
+          "source": "- [ ] pre $`y`$ post"
+        },
+        {
+          "id": "list-holdout-12",
+          "source": "- [ ] `$`"
+        },
+        {
+          "id": "list-holdout-13",
+          "source": "- [ ] `$$`"
+        },
+        {
+          "id": "list-holdout-14",
+          "source": "- first\n- [ ] before $`x`$"
+        },
+        {
+          "id": "list-holdout-15",
+          "source": "> - [ ] $`x`$"
+        },
+        {
+          "id": "list-holdout-16",
+          "source": "- **before $`x`$**"
+        },
+        {
+          "id": "list-holdout-17",
+          "source": "- [ ] **before $`x`$**"
+        }
+      ],
+      "sourceSha256": "2a82928d02be47bd072b7f6a0260e30ac8d96e64601c48846c02ddbf26eb048b",
+      "expectedSha256": "5a24888b4e5e7d11ce2624a6452e0fba3475eeff6557423dd1080d91c9ce6144"
+    },
+    {
+      "id": "footnotes",
+      "cases": [
+        {
+          "id": "footnote-0",
+          "source": "[^aa![img](#)]\n\n[^aa]: A"
+        },
+        {
+          "id": "footnote-1",
+          "source": "[^bb![icon](https://example.com/a(b))]\n\n[^bb]: B"
+        },
+        {
+          "id": "footnote-2",
+          "source": "[^cc![icon](<https://example.com/a(b)>)]\n\n[^cc]: C"
+        },
+        {
+          "id": "footnote-3",
+          "source": "[^dd![nested [alt]](#)]\n\n[^dd]: D"
+        },
+        {
+          "id": "footnote-4",
+          "source": "[^ee![img](url\\)end)]\n\n[^ee]: E"
+        },
+        {
+          "id": "footnote-5",
+          "source": "[^![image](#)]"
+        },
+        {
+          "id": "footnote-6",
+          "source": "`[^ff![x](#)]`"
+        },
+        {
+          "id": "footnote-7",
+          "source": "[^gg\nmore]\n\n[^gg]: G"
+        },
+        {
+          "id": "footnote-8",
+          "source": "text [^hh\nmore] end\n\n[^hh]: H"
+        },
+        {
+          "id": "footnote-9",
+          "source": "[^ii\nmore]: text\n\n[^ii]: I"
+        },
+        {
+          "id": "footnote-10",
+          "source": "[a [^jj] b](https://example.org)\n\n[^jj]: J"
+        },
+        {
+          "id": "footnote-11",
+          "source": "[^xx\\]yy]"
+        }
+      ],
+      "sourceSha256": "fe3e9f34438c080145b88de818e9491012436873508b2764099f82304000f386",
+      "expectedSha256": "495b93b9f945dce4e4117ca12a2fb9fa4056a8933187c10627ddc6d25d40d84d"
+    },
+    {
+      "id": "footnote-holdout",
+      "cases": [
+        {
+          "id": "footnote-holdout-0",
+          "source": "[^ka![alt](url(a(b)c))]\n\n[^ka]: K"
+        },
+        {
+          "id": "footnote-holdout-1",
+          "source": "[^kb![a [b [c]]](url)]\n\n[^kb]: L"
+        },
+        {
+          "id": "footnote-holdout-2",
+          "source": "[^kc![a\\]b](url)]\n\n[^kc]: M"
+        },
+        {
+          "id": "footnote-holdout-3",
+          "source": "[^kd![a](<url(with)paren>)]\n\n[^kd]: N"
+        },
+        {
+          "id": "footnote-holdout-4",
+          "source": "[^ke![alt](url \"title (x)\")]\n\n[^ke]: O"
+        },
+        {
+          "id": "footnote-holdout-5",
+          "source": "`[^kf![alt](url(a))]`\n\n[^kf]: P"
+        },
+        {
+          "id": "footnote-holdout-6",
+          "source": "[^kg![alt](unclosed]\n\n[^kg]: Q"
+        },
+        {
+          "id": "footnote-holdout-7",
+          "source": "\\[^kh![alt](url)]\n\n[^kh]: R"
+        },
+        {
+          "id": "footnote-holdout-8",
+          "source": "[^ki![alt](url)] then [^ki]\n\n[^ki]: S"
+        },
+        {
+          "id": "footnote-holdout-9",
+          "source": "[^kj\nother]\n\n[^kj]: T"
+        }
+      ],
+      "sourceSha256": "b45cb6310a6377fe03f034755fc835d23266d4afdaaf84dfb1527d679f2e84f1",
+      "expectedSha256": "3822dcf1e8bedee0e19c7e271ce436289de0cdef5c948cb5eac37b092511fed8"
+    },
+    {
+      "id": "nested-tasks",
+      "cases": [
+        {
+          "id": "nested-task-0",
+          "source": "> - [ ] item"
+        },
+        {
+          "id": "nested-task-1",
+          "source": "> - [x] item"
+        },
+        {
+          "id": "nested-task-2",
+          "source": "> - [X] item"
+        },
+        {
+          "id": "nested-task-3",
+          "source": "> + [ ] item"
+        },
+        {
+          "id": "nested-task-4",
+          "source": "> + [x] item"
+        },
+        {
+          "id": "nested-task-5",
+          "source": "> + [X] item"
+        },
+        {
+          "id": "nested-task-6",
+          "source": "> * [ ] item"
+        },
+        {
+          "id": "nested-task-7",
+          "source": "> * [x] item"
+        },
+        {
+          "id": "nested-task-8",
+          "source": "> * [X] item"
+        },
+        {
+          "id": "nested-task-9",
+          "source": "> 1. [ ] item"
+        },
+        {
+          "id": "nested-task-10",
+          "source": "> 1. [x] item"
+        },
+        {
+          "id": "nested-task-11",
+          "source": "> 1. [X] item"
+        },
+        {
+          "id": "nested-task-12",
+          "source": "> 2) [ ] item"
+        },
+        {
+          "id": "nested-task-13",
+          "source": "> 2) [x] item"
+        },
+        {
+          "id": "nested-task-14",
+          "source": "> 2) [X] item"
+        },
+        {
+          "id": "nested-task-15",
+          "source": "> > - [ ] item"
+        },
+        {
+          "id": "nested-task-16",
+          "source": "> > - [x] item"
+        },
+        {
+          "id": "nested-task-17",
+          "source": "> > - [X] item"
+        },
+        {
+          "id": "nested-task-18",
+          "source": "> > + [ ] item"
+        },
+        {
+          "id": "nested-task-19",
+          "source": "> > + [x] item"
+        },
+        {
+          "id": "nested-task-20",
+          "source": "> > + [X] item"
+        },
+        {
+          "id": "nested-task-21",
+          "source": "> > * [ ] item"
+        },
+        {
+          "id": "nested-task-22",
+          "source": "> > * [x] item"
+        },
+        {
+          "id": "nested-task-23",
+          "source": "> > * [X] item"
+        },
+        {
+          "id": "nested-task-24",
+          "source": "> > 1. [ ] item"
+        },
+        {
+          "id": "nested-task-25",
+          "source": "> > 1. [x] item"
+        },
+        {
+          "id": "nested-task-26",
+          "source": "> > 1. [X] item"
+        },
+        {
+          "id": "nested-task-27",
+          "source": "> > 2) [ ] item"
+        },
+        {
+          "id": "nested-task-28",
+          "source": "> > 2) [x] item"
+        },
+        {
+          "id": "nested-task-29",
+          "source": "> > 2) [X] item"
+        },
+        {
+          "id": "nested-task-30",
+          "source": "> - \\[ \\] literal"
+        },
+        {
+          "id": "nested-task-31",
+          "source": "> - `[ ]` literal"
+        },
+        {
+          "id": "nested-task-32",
+          "source": "> 1. [ ] first\n>    - [x] child"
+        },
+        {
+          "id": "nested-task-33",
+          "source": "> - [ ] a\n>\n>   continuation"
+        },
+        {
+          "id": "nested-task-34",
+          "source": "- top\n  > - [x] nested"
+        },
+        {
+          "id": "nested-task-35",
+          "source": "> - [ ]"
+        },
+        {
+          "id": "nested-task-36",
+          "source": "> - [X] `done`"
+        }
+      ],
+      "sourceSha256": "332199cce6eb6ccd0d7d4c6d544b040bb179a8d230bcc7920b5b4cceaf99fd3f",
+      "expectedSha256": "278b1d90bd827d08c20426445a2fd24eaf3f58d889f17e25a45d602beeebad4d"
+    }
+  ]
+}

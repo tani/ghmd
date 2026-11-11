@@ -250,10 +250,6 @@ const char *cmark_node_get_type_string(cmark_node *node) {
     return "none";
   case CMARK_NODE_DOCUMENT:
     return "document";
-  case CMARK_NODE_FOOTNOTE_DEFINITION:
-    return "footnote_definition";
-  case CMARK_NODE_FOOTNOTE_REFERENCE:
-    return "footnote_reference";
   case CMARK_NODE_BLOCK_QUOTE:
     return "block_quote";
   case CMARK_NODE_LIST:

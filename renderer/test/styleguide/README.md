@@ -55,3 +55,9 @@ bun scripts/styleguide-audit.ts --isolate tasks-markers-nesting \
 ```
 
 `--isolate` also accepts an upstream filename when `--acid-dir` is supplied. Its result is labeled **whole document** and the input is the exact individual file, rather than an excerpt from a batch. Live mode sends that selected input to GitHub. It does not silently issue 24 requests; isolate only the cases that require it. The report includes each case's status, comparison scope, and first differing line, column and values. If a boundary is missing, duplicated or reordered, case attribution is marked `not-run` and the full document must be inspected. A `--only` selection still checks the entire original batch, so another case's failure can make the command exit nonzero.
+
+## Differential variation matrix
+
+`bun test test/quirks-matrix.test.ts` checks independently authored boundary and context variations against captured GitHub GFM responses. Each `.md` input and `.html` response is stored under `../fixtures/quirks-matrix/`; the manifest records group membership and hashes. Cases cover ASCII and Unicode characters around math, different expressions, list/heading/table/link/code contexts, loose and nested tasks, and escaped or nested footnote image syntax. Additional validation groups were captured after the first implementation to expose overly narrow assumptions.
+
+Each result is a slice from its original batch, not a separately rendered GitHub document. The saved responses are empirical observations, not a specification or proof for untested inputs; in particular, the observed `a`/`b` protected-math boundary is documented without claiming its internal cause. Full-document comparisons and the optional isolated audit remain useful for detecting cross-case interactions.

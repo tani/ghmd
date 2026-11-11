@@ -51,8 +51,8 @@ export async function renderInProcess(source:string,options:RenderOptions):Promi
     const summary=document.createElement('summary');summary.textContent='Details';details.prepend(summary);
    }
   }
-  for(const paragraph of [...document.querySelectorAll('p, p strong, p em')]){
-   if(blocked(paragraph) && !(paragraph.tagName==='STRONG' && !paragraph.closest('b,section'))) continue;
+  for(const paragraph of [...document.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6, td, th, strong, em')]){
+   if(blocked(paragraph) && !(paragraph.tagName==='STRONG' && !paragraph.closest('b,section,a,pre,code'))) continue;
    const children=[...paragraph.childNodes];
    // GitHub reconstructs underscore emphasis in display math after Markdown
    // parsing, adding a blank line around the reconstructed expression.
@@ -79,7 +79,9 @@ export async function renderInProcess(source:string,options:RenderOptions):Promi
    for(const code of [...paragraph.querySelectorAll(':scope > code')]){
     const before=code.previousSibling,after=code.nextSibling;
     if(before?.nodeType!==3 || after?.nodeType!==3 || !before.textContent?.endsWith('$') || !after.textContent?.startsWith('$')) continue;
-    if(/[A-Za-z]$/.test(before.textContent.slice(0,-1)))continue;
+    // GitHub GFM's current protected-math boundary differs for lowercase
+    // a/b; the differential matrix records the tested letters and words.
+    if(/[ab]$/.test(before.textContent.slice(0,-1)))continue;
     if(paragraph.tagName==='EM' && after.textContent==='$')continue;
     const value=code.textContent??'';
     before.textContent=before.textContent.slice(0,-1);after.textContent=after.textContent.slice(1);
@@ -93,7 +95,7 @@ export async function renderInProcess(source:string,options:RenderOptions):Promi
     let match:RegExpExecArray|null,last=0;const fragment=document.createDocumentFragment();
     while((match=re.exec(text))){
      const before=text[match.index-1],after=text[match.index+match[0].length];
-     if((before && !/[\s(]/.test(before)) || (after && /[A-Za-z0-9]/.test(after)) || /^\s/.test(match[1]) || (/\s$/.test(match[1]) && after!=='$') || match[1].includes('&')){
+     if((before && !/[\s(]/.test(before)) || (after && /[A-Za-z0-9_]/.test(after)) || /^\s/.test(match[1]) || (/\s$/.test(match[1]) && after!=='$') || match[1].includes('&')){
       // A rejected opening dollar can contain the next valid candidate.
       re.lastIndex=match.index+1;continue;
      }
@@ -145,6 +147,33 @@ export async function renderInProcess(source:string,options:RenderOptions):Promi
    input.classList.add('task-list-item-checkbox');
    input.setAttribute('aria-label',checked?'Completed task':'Incomplete task');
    if(checked) input.setAttribute('checked','');
+  }
+  // For loose task items, GitHub places the checkbox inside the first
+  // paragraph rather than before it.
+  for(const li of document.querySelectorAll('li.task-list-item')){
+   const input=li.firstElementChild;
+   if(input?.matches('input[type="checkbox"]')){
+    const paragraph=[...li.children].find(e=>e.tagName==='P');
+    if(paragraph && input.nextElementSibling===paragraph){
+     const space=input.nextSibling;
+     if(space?.nodeType===3 && !space.textContent?.trim())space.remove();
+     input.remove();paragraph.prepend(document.createTextNode(' '));paragraph.prepend(input);
+     if(!li.firstChild || li.firstChild.nodeType!==3 || !li.firstChild.textContent?.startsWith('\n'))li.prepend(document.createTextNode('\n'));
+    }
+   }
+  }
+  // GitHub's serializer separates a final math-related inline element from
+  // the closing list tag when other inline content precedes it.
+  for(const li of document.querySelectorAll('li')){
+   const meaningful=[...li.childNodes].filter(n=>n.nodeType!==3 || !!n.textContent?.trim());
+   const last=meaningful.at(-1);
+   const hasMath=last?.nodeType===1 && (last.nodeName==='MATH-RENDERER'||(last as any).querySelector?.('math-renderer'));
+   const taskCode=last?.nodeName==='CODE' && !!li.querySelector(':scope > input[type="checkbox"]') && /\$[^$]*\$/.test(last.textContent??'');
+   if(meaningful.length>1 && (hasMath||taskCode) && !li.textContent?.endsWith('\n'))li.append(document.createTextNode('\n'));
+   // GitHub separates a leading formula when ordinary text follows it.
+   if(meaningful[0]?.nodeName==='MATH-RENDERER' && meaningful.length>1 &&
+      meaningful[1]?.nodeType===3 && meaningful[1].textContent?.trim() &&
+      [...li.childNodes].slice(0,[...li.childNodes].indexOf(meaningful[0])).every(n=>n.nodeType===3 && !n.textContent))li.insertBefore(document.createTextNode('\n'),meaningful[0]);
   }
   // GitHub removes links whose destination was removed by sanitization.
   for(const link of [...document.querySelectorAll('a[data-gfm-had-href]')]){
