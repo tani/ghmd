@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 const root = join(import.meta.dir, "../..");
 const { symbols } = cc({
-  source: join(root, "src/quirks/cmark-bun.c"),
+  source: join(root, "src/quirks/cmark/bun.c"),
   include: ["src", "extensions", "generated"].map((dir) => join(root, "vendor/cmark-gfm", dir)),
   symbols: {
     gfm_bun_call: {
@@ -40,23 +40,6 @@ export const renderAstXml = (source: string, filter?: RawHtmlFilter): string =>
   call("ast", source, undefined, undefined, undefined, filter);
 export const unicodeLower = (source: string): string => call("lowercase", source);
 export const decodeHtml = (source: string): string => call("decode", source);
-export const finalizeHtml = (html: string, token?: string, tableMarker?: string): string =>
-  call("finalize", html, token, tableMarker);
-export const renderMathHtml = (html: string, token: string, boundary: string): string =>
-  call("math", html, token, boundary);
-export const processLinks = (html: string, marker: string): string => call("links", html, marker);
-export const prepareDetails = (html: string): string => call("details", html);
-export const flattenTemplates = (html: string, boundary: string): string =>
-  call("templates", html, boundary);
-export const removeBoundaries = (html: string, boundary: string): string =>
-  call("boundaries", html, boundary);
-export const prepareMathTables = (
-  html: string,
-  token: string,
-  boundary: string,
-  tableMarker: string,
-): string => call("mathTables", html, token, boundary, tableMarker);
-
 export interface HtmlStage {
   html: string;
   needsReparse: boolean;
@@ -80,3 +63,11 @@ export const finishHtml = (
   boundary: string,
   tableMarker: string,
 ): string => call("finish", html, token, boundary, tableMarker);
+
+/** Experimental pipeline with no intervening DOM reparsing. */
+export const postprocessStreamingHtml = (
+  html: string,
+  token: string,
+  boundary: string,
+  tableMarker: string,
+): string => call("stream", html, token, boundary, tableMarker);

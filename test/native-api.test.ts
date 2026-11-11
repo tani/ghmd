@@ -4,8 +4,8 @@ import {
   renderAstXml,
   unicodeLower,
   decodeHtml,
-  finalizeHtml,
-  renderMathHtml,
+  finishHtml,
+  renderMathStage,
 } from "../src/quirks/native-core";
 
 const source = "before <b>raw</b> after\n";
@@ -21,14 +21,12 @@ test("native string API validates arguments without exposing pointers", () => {
     expect(() => renderMarkdown(value as any)).toThrow(TypeError);
     expect(() => unicodeLower(value as any)).toThrow(TypeError);
   }
-  expect(() => renderMathHtml("<p>x</p>", undefined as any, "boundary")).toThrow(TypeError);
+  expect(() => renderMathStage("<p>x</p>", undefined as any, "boundary", "")).toThrow(TypeError);
 });
 
-test("optional native modifiers retain their defaults even when a later one is supplied", () => {
-  const html = '<table data-table=""><tbody><tr><td>x</td></tr></tbody></table>';
-  expect(finalizeHtml(html, undefined, "data-table")).toBe(
-    '<table role="table"><tbody><tr><td>x</td></tr></tbody></table>',
-  );
+test("stages require their string modifiers explicitly", () => {
+  expect(() => finishHtml("<p>x</p>", undefined as any, "boundary", "")).toThrow(TypeError);
+  expect(() => finishHtml("<p>x</p>", "token", "boundary", undefined as any)).toThrow(TypeError);
 });
 
 test("raw HTML callbacks exchange strings while C owns the AST", () => {

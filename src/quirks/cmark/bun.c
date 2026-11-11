@@ -1,6 +1,6 @@
 /* Bun-specific ownership and exception adapter. The included core has no N-API
- * dependency and is usable through cmark-api.h from an ordinary C program. */
-#include "cmark-unity.c"
+ * dependency and is usable through api.h from an ordinary C program. */
+#include "unity.c"
 #include <node/node_api.h>
 
 typedef struct { napi_env env; napi_value function; } gfm_bun_filter;

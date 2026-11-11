@@ -52,7 +52,7 @@ for (const [name, ranges] of [
   lines.push("};");
 }
 await Bun.write(
-  new URL("../src/quirks/unicode-lower-data.h", import.meta.url),
+  new URL("../src/quirks/cmark/unicode-lower-data.h", import.meta.url),
   lines.join("\n") + "\n",
 );
 console.log(

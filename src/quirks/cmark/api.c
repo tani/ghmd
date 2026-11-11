@@ -1,7 +1,5 @@
 /* Runtime-independent string API. Node-API and JavaScript types stay outside. */
-#include "cmark-api.h"
-
-static const char *gfm_empty_token = "00000000000000000000000000000000";
+#include "api.h"
 
 static gfm_status gfm_render_string(gfm_view source, int xml, gfm_html_filter filter,
                                      void *context, gfm_result *result) {
@@ -51,27 +49,20 @@ gfm_status gfm_call(const char *operation, const gfm_view *arguments, size_t cou
   if (!operation || !arguments || count < 1 || count > 4) {
     result->error = "Expected one to four string arguments"; return GFM_BAD_ARGUMENT;
   }
-  for (size_t i = 0; i < count; i++) {
-    if ((!arguments[i].data && arguments[i].length) || (i == 0 && !arguments[i].data)) {
-      result->error = "String data is missing"; return GFM_BAD_ARGUMENT;
-    }
-  }
-  gfm_view source = arguments[0];
-  size_t minimum = 1, maximum = 1;
-  if (!strcmp(operation, "finalize")) maximum = 3;
-  else if (!strcmp(operation, "math")) minimum = maximum = 3;
-  else if (!strcmp(operation, "links") || !strcmp(operation, "templates") || !strcmp(operation, "boundaries") || !strcmp(operation, "prepareStage")) minimum = maximum = 2;
-  else if (!strcmp(operation, "mathTables") || !strcmp(operation, "mathStage") || !strcmp(operation, "finish")) minimum = maximum = 4;
+  size_t expected = 1;
+  if (!strcmp(operation, "prepareStage")) expected = 2;
+  else if (!strcmp(operation, "mathStage") || !strcmp(operation, "finish") || !strcmp(operation, "stream")) expected = 4;
   else if (strcmp(operation, "render") && strcmp(operation, "ast") && strcmp(operation, "version") &&
-           strcmp(operation, "lowercase") && strcmp(operation, "decode") && strcmp(operation, "details")) {
+           strcmp(operation, "lowercase") && strcmp(operation, "decode")) {
     result->error = "Unknown native operation"; return GFM_BAD_ARGUMENT;
   }
-  if (count < minimum || count > maximum) {
+  if (count != expected) {
     result->error = "Unexpected number of string arguments"; return GFM_BAD_ARGUMENT;
   }
-  for (size_t i = 1; i < minimum; i++) {
+  for (size_t i = 0; i < count; i++) {
     if (!arguments[i].data) { result->error = "Required string argument is missing"; return GFM_BAD_ARGUMENT; }
   }
+  gfm_view source = arguments[0];
   if (!strcmp(operation, "render") || !strcmp(operation, "ast"))
     return gfm_render_string(source, !strcmp(operation, "ast"), filter, context, result);
   if (!strcmp(operation, "lowercase") || !strcmp(operation, "decode") || !strcmp(operation, "version")) {
@@ -86,7 +77,6 @@ gfm_status gfm_call(const char *operation, const gfm_view *arguments, size_t cou
      * independently of the runtime's input allocation strategy. */
     char *modifiers[3] = {0};
     for (size_t i = 1; i < count; i++) {
-      if (!arguments[i].data) continue;
       if (arguments[i].length != SIZE_MAX) modifiers[i - 1] = malloc(arguments[i].length + 1);
       if (!modifiers[i - 1]) {
         for (size_t n = 0; n < 3; n++) free(modifiers[n]);
@@ -95,20 +85,14 @@ gfm_status gfm_call(const char *operation, const gfm_view *arguments, size_t cou
       memcpy(modifiers[i - 1], arguments[i].data, arguments[i].length);
       modifiers[i - 1][arguments[i].length] = 0;
     }
-    const char *a = modifiers[0] ? modifiers[0] : gfm_empty_token;
+    const char *a = modifiers[0] ? modifiers[0] : "";
     const char *b = modifiers[1] ? modifiers[1] : "";
     const char *c = modifiers[2] ? modifiers[2] : "";
     char *output = NULL;
-    if (!strcmp(operation, "finalize")) output = gfm_finalize_serialized_html(source.data, source.length, a, b);
-    else if (!strcmp(operation, "math")) output = gfm_math_dom(source.data, source.length, a, b);
-    else if (!strcmp(operation, "links")) output = gfm_process_links(source.data, source.length, a);
-    else if (!strcmp(operation, "details")) output = gfm_prepare_details(source.data, source.length);
-    else if (!strcmp(operation, "templates")) output = gfm_flatten_templates(source.data, source.length, a);
-    else if (!strcmp(operation, "boundaries")) output = gfm_remove_boundaries(source.data, source.length, a);
-    else if (!strcmp(operation, "mathTables")) output = gfm_prepare_math_tables(source.data, source.length, a, b, c);
-    else if (!strcmp(operation, "prepareStage")) output = gfm_prepare_html_stage(source.data, source.length, a);
+    if (!strcmp(operation, "prepareStage")) output = gfm_prepare_html_stage(source.data, source.length, a);
     else if (!strcmp(operation, "mathStage")) output = gfm_render_math_stage(source.data, source.length, a, b, c);
     else if (!strcmp(operation, "finish")) output = gfm_finish_html(source.data, source.length, a, b, c);
+    else if (!strcmp(operation, "stream")) output = gfm_postprocess_streaming_html(source.data, source.length, a, b, c);
     for (size_t i = 0; i < 3; i++) free(modifiers[i]);
     result->text.data = (unsigned char *)output;
     if (output) result->text.length = strlen(output);

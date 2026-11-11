@@ -192,7 +192,7 @@ const report = {
         "scripts/html-scope-cases.ts",
         "test/support/unsafe-html.ts",
         ...Array.from(
-          new Bun.Glob("src/quirks/cmark-*.c").scanSync({ cwd: join(import.meta.dir, "..") }),
+          new Bun.Glob("src/quirks/cmark/*.c").scanSync({ cwd: join(import.meta.dir, "..") }),
         ),
       ].map(async (path) => [path, sha(await Bun.file(join(import.meta.dir, "..", path)).text())]),
     ),

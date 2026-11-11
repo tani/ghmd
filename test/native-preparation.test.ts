@@ -1,36 +1,34 @@
 import { describe, expect, test } from "bun:test";
-import {
-  flattenTemplates,
-  prepareMathTables,
-  removeBoundaries,
-  renderMathHtml,
-} from "../src/quirks/native";
+import { prepareHtmlStage, renderMathStage } from "../src/quirks/native";
 
 const boundary = "test-boundary";
 const token = "a".repeat(32);
 const tableMarker = "data-test-table";
-const prepare = (html: string) =>
-  prepareMathTables(flattenTemplates(html, boundary), token, boundary, tableMarker);
+const math = `<math-renderer class="js-inline-math" style="display: inline-block" data-run-id="${token}">$x$</math-renderer>`;
+const processMath = (html: string) => renderMathStage(html, token, boundary, tableMarker);
 
 describe("native HTML preparation", () => {
   test("preserves text boundaries across nested templates and removed comments", () => {
-    const html = prepare(
+    const prepared = prepareHtmlStage(
       "<p>$<template>x<template>y</template></template><!-- one --><!-- two -->$</p>",
+      boundary,
     );
-    expect(html).toBe("<p>$<!--test-boundary-->x<!--test-boundary-->y<!--test-boundary-->$</p>");
-    expect(removeBoundaries(html, boundary)).toBe("<p>$xy$</p>");
-    // No single text node contains the entire expression.
-    expect(renderMathHtml(html, token, boundary)).toBe("<p>$xy$</p>");
+    expect(prepared.needsReparse).toBe(false);
+    expect(prepared.html).not.toContain("<template>");
+    expect(prepared.html).toContain("$<!--test-boundary-->x<!--test-boundary-->y");
+    // The expression spans separate text nodes, so it must stay literal.
+    expect(processMath(prepared.html)).toEqual({ html: "<p>$xy$</p>", needsReparse: false });
   });
 
   test("retains comment-shaped literal text in raw text elements", () => {
-    const html = prepare("<textarea><!--literal--><b>text</b></textarea><p>a<!--removed-->b</p>");
-    expect(html).toBe(
-      "<textarea><!--literal--><b>text</b></textarea><p>a<!--test-boundary-->b</p>",
+    const prepared = prepareHtmlStage(
+      "<textarea><!--literal--><b>text</b></textarea><p>a<!--removed-->b</p>",
+      boundary,
     );
-    expect(removeBoundaries(html, boundary)).toContain(
-      "<textarea><!--literal--><b>text</b></textarea>",
-    );
+    expect(processMath(prepared.html)).toEqual({
+      html: "<textarea><!--literal--><b>text</b></textarea><p>ab</p>",
+      needsReparse: false,
+    });
   });
 
   test("wraps tables according to math in their paragraph and enclosing elements", () => {
@@ -38,17 +36,19 @@ describe("native HTML preparation", () => {
     const markedTable = table.replace("<table>", '<table data-test-table="">');
     const wrapper = (value: string) =>
       `<markdown-accessiblity-table>${value}</markdown-accessiblity-table>`;
-    expect(prepare(`<p>$x$${table}</p>`)).toBe(`<p>$x$${markedTable}</p>`);
-    expect(prepare(`<p>plain${table}</p>`)).toBe(`<p>plain${wrapper(markedTable)}</p>`);
-    expect(prepare(`<b><p>$x$${table}</p></b>`)).toBe(`<b><p>$x$${wrapper(markedTable)}</p></b>`);
-    expect(prepare(`<details><p>$x$${table}</p></details>`)).toBe(
-      `<details><p>$x$${markedTable}</p></details>`,
+    expect(processMath(`<p>$x$${table}</p>`).html).toBe(`<p>${math}${markedTable}</p>`);
+    expect(processMath(`<p>plain${table}</p>`).html).toBe(`<p>plain${wrapper(markedTable)}</p>`);
+    expect(processMath(`<b><p>$x$${table}</p></b>`).html).toBe(
+      `<b><p>$x$${wrapper(markedTable)}</p></b>`,
     );
-    expect(prepare(`<b><details><p>$x$${table}</p></details></b>`)).toBe(
-      `<b><details><p>$x$${markedTable}</p></details></b>`,
+    expect(processMath(`<details><p>$x$${table}</p></details>`).html).toBe(
+      `<details><p>${math}${markedTable}</p></details>`,
     );
-    expect(prepare(`<p>$x$${table}</p><p>plain${table}</p>`)).toBe(
-      `<p>$x$${markedTable}</p><p>plain${wrapper(markedTable)}</p>`,
+    expect(processMath(`<b><details><p>$x$${table}</p></details></b>`).html).toBe(
+      `<b><details><p>${math}${markedTable}</p></details></b>`,
+    );
+    expect(processMath(`<p>$x$${table}</p><p>plain${table}</p>`).html).toBe(
+      `<p>${math}${markedTable}</p><p>plain${wrapper(markedTable)}</p>`,
     );
   });
 });

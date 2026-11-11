@@ -1,14 +1,5 @@
 /** Bun-only HTML experiment. Not a security-audited replacement for the default renderer. */
-import {
-  finalizeHtml,
-  flattenTemplates,
-  renderMarkdown,
-  prepareDetails,
-  prepareMathTables,
-  processLinks,
-  removeBoundaries,
-  renderMathHtml,
-} from "../quirks/native-core";
+import { renderMarkdown, postprocessStreamingHtml } from "../quirks/native-core";
 import { removeRawInputs, sanitize } from "./sanitize";
 import { annotateImplicitClosures } from "./scopes";
 import type { RenderOptions } from "../quirks/index";
@@ -34,12 +25,9 @@ export async function render(source: string, options: ExperimentalOptions = {}):
           mark.replaceAll("-", ""),
           options.strategy === "closure-events-aggressive",
         );
-  const flattened = flattenTemplates(scoped.html, mark);
-  const prepared = prepareDetails(flattened);
-  const marked = prepareMathTables(prepared, token, mark, tableMarker);
-  const math = renderMathHtml(marked, token, mark);
-  const linked = processLinks(removeBoundaries(math, mark), mark);
-  const output = scoped.restore(finalizeHtml(linked, token, tableMarker)).replace(/\n$/, "");
+  const output = scoped
+    .restore(postprocessStreamingHtml(scoped.html, token, mark, tableMarker))
+    .replace(/\n$/, "");
   if (Buffer.byteLength(output) > 32 * 1024 * 1024)
     throw new RangeError("Rendered HTML exceeds 32 MB");
   return output;

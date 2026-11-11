@@ -5,10 +5,10 @@ import { join, resolve } from "node:path";
 const root = resolve(import.meta.dir, "..");
 describe("in-process C compilation", () => {
   test("preprocessor entry point covers every upstream C translation unit", async () => {
-    const text = await readFile(join(root, "src/quirks/cmark-unity.c"), "utf8");
+    const text = await readFile(join(root, "src/quirks/cmark/unity.c"), "utf8");
     const found = [
       ...text.matchAll(
-        /^#include "\.\.\/\.\.\/vendor\/cmark-gfm\/(src|extensions)\/([^"/]+\.c)"$/gm,
+        /^#include "\.\.\/\.\.\/\.\.\/vendor\/cmark-gfm\/(src|extensions)\/([^"/]+\.c)"$/gm,
       ),
     ].map((m) => `${m[1]}/${m[2]}`);
     const expected: string[] = [];

@@ -3,7 +3,11 @@ import { createHash } from "node:crypto";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import manifest from "./fixtures/cmark-gfm-upstream.json";
-import { renderMarkdown, renderMathHtml, finalizeHtml } from "../src/quirks/native";
+import { renderMarkdown, renderMathStage, finishHtml } from "../src/quirks/native";
+const mathHtml = (html: string, token: string, boundary: string) =>
+  renderMathStage(html, token, boundary, "").html;
+const finish = (html: string, token = "00000000000000000000000000000000") =>
+  finishHtml(html, token, "boundary", "");
 
 const vendor = join(import.meta.dir, "../vendor/cmark-gfm");
 describe("unmodified upstream cmark-gfm", () => {
@@ -48,14 +52,14 @@ describe("unmodified upstream cmark-gfm", () => {
   });
   test("matches inline math boundaries around Unicode whitespace", () => {
     const token = "00000000000000000000000000000000";
-    const html = renderMathHtml("<p>日本語 $x$&nbsp;$y$ z$x$</p>", token, "boundary");
+    const html = mathHtml("<p>日本語 $x$&nbsp;$y$ z$x$</p>", token, "boundary");
     expect(html.match(/class="js-inline-math"/g)).toHaveLength(2);
     expect(html).toContain(" z$x$");
-    expect(renderMathHtml("<p>a$x$</p>", token, "boundary")).toBe("<p>a$x$</p>");
+    expect(mathHtml("<p>a$x$</p>", token, "boundary")).toBe("<p>a$x$</p>");
   });
   test("wraps serialized tables without modifying raw-text content", () => {
     expect(
-      finalizeHtml(
+      finish(
         '<style>a{content:"<table>"}</style><table class="x" role="grid"><tr><td>1</td></tr></table>',
       ),
     ).toBe(
@@ -65,7 +69,7 @@ describe("unmodified upstream cmark-gfm", () => {
   test("leaves tables in inert template contents unchanged", () => {
     const html =
       "<template><table><tbody><tr><td>x</td></tr></tbody></table></template><table></table>";
-    expect(finalizeHtml(html)).toBe(
+    expect(finish(html)).toBe(
       '<template><table><tbody><tr><td>x</td></tr></tbody></table></template><markdown-accessiblity-table><table role="table"></table></markdown-accessiblity-table>',
     );
   });
@@ -74,7 +78,7 @@ describe("unmodified upstream cmark-gfm", () => {
       "<ul><li>parent".repeat(10) +
       '<ul><li class="task-list-item other other">child</li></ul>' +
       "</li></ul>".repeat(10);
-    const output = finalizeHtml(deep);
+    const output = finish(deep);
     expect(output.match(/<ul>/g)).toHaveLength(10);
     expect(output).toContain('<li class="other">child</li>');
     expect(output).not.toContain("task-list-item");
@@ -82,11 +86,11 @@ describe("unmodified upstream cmark-gfm", () => {
   test("leaves deep lists in template contents unchanged", () => {
     const deep = "<ul><li>".repeat(12) + "child" + "</li></ul>".repeat(12);
     const input = `<template>${deep}</template>`;
-    expect(finalizeHtml(input)).toBe(input);
+    expect(finish(input)).toBe(input);
   });
   test("normalizes code classes and preserves inert template content", () => {
     expect(
-      finalizeHtml(
+      finish(
         '<pre lang="math" class="a a"><code class="x x">z</code></pre><template><code>z</code></template>',
       ),
     ).toBe(
@@ -95,7 +99,7 @@ describe("unmodified upstream cmark-gfm", () => {
   });
   test("matches list spacing around rendered math", () => {
     expect(
-      finalizeHtml(
+      finish(
         "<ul><li><math-renderer>$x$</math-renderer> y</li><li>x <em><math-renderer>$y$</math-renderer></em></li></ul>",
       ),
     ).toBe(
@@ -106,7 +110,7 @@ describe("unmodified upstream cmark-gfm", () => {
     const token = "0123456789abcdef0123456789abcdef";
     const input =
       '<p><sup class="footnote-ref"><a href="#fn-a&amp;b" id="fnref-a" data-footnote-ref="">1</a></sup></p><section class="old" data-footnotes=""><ol><li id="fn-a"><p>note <a href="#fnref-a" data-footnote-backref="" data-footnote-backref-idx="1" class="old">↩</a></p></li></ol></section>';
-    const output = finalizeHtml(input, token);
+    const output = finish(input, token);
     expect(output).toContain(`href="#user-content-fn-a&amp;b-${token}"`);
     expect(output).toContain(
       `id="user-content-fnref-a-${token}" data-footnote-ref="" aria-describedby="footnote-label"`,
@@ -122,7 +126,7 @@ describe("unmodified upstream cmark-gfm", () => {
   test("applies image and checkbox corrections without changing inert contents", () => {
     const input =
       '<ul><li><input type="checkbox" checked="" disabled=""> <p><img src="a?x=1&amp;y=2"></p></li></ul><template><img src="b"><input type="checkbox"></template>';
-    const output = finalizeHtml(input);
+    const output = finish(input);
     expect(output).toContain(
       '<ul class="contains-task-list"><li class="task-list-item">\n<p><input type="checkbox" id="" disabled="" class="task-list-item-checkbox" aria-label="Completed task" checked=""> ',
     );

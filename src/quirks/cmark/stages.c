@@ -1,7 +1,7 @@
 /* Consecutive native steps are grouped around the DOM reparse boundaries.
  * Stages return an ASCII '0' or '1' followed by HTML; '1' requests a DOM reparse.
  * Keeping this small framing in the string API avoids runtime-specific values. */
-#include "cmark-api.h"
+#include "api.h"
 
 static gfm_status gfm_complete_html(gfm_result *result) {
   size_t length = result->text.length;
@@ -66,5 +66,29 @@ static char *gfm_finish_html(const unsigned char *source, size_t length, const c
   if (!linked) return NULL;
   char *result = gfm_finalize_serialized_html((const unsigned char *)linked, strlen(linked), token, table_marker);
   free(linked);
+  return result;
+}
+
+/* Experimental streaming renderer: no DOM reparse between these operations.
+ * Return untrimmed HTML so its caller can first restore temporary scope hints. */
+static char *gfm_postprocess_streaming_html(const unsigned char *source, size_t length,
+                                           const char *token, const char *boundary,
+                                           const char *table_marker) {
+  char *flattened = gfm_flatten_templates(source, length, boundary);
+  if (!flattened) return NULL;
+  char *details = gfm_prepare_details((const unsigned char *)flattened, strlen(flattened));
+  free(flattened);
+  if (!details) return NULL;
+  char *marked = gfm_prepare_math_tables((const unsigned char *)details, strlen(details), token, boundary, table_marker);
+  free(details);
+  if (!marked) return NULL;
+  char *math = gfm_math_dom((const unsigned char *)marked, strlen(marked), token, boundary);
+  free(marked);
+  if (!math) return NULL;
+  char *clean = gfm_remove_boundaries((const unsigned char *)math, strlen(math), boundary);
+  free(math);
+  if (!clean) return NULL;
+  char *result = gfm_finish_html((const unsigned char *)clean, strlen(clean), token, boundary, table_marker);
+  free(clean);
   return result;
 }

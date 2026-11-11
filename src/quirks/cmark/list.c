@@ -547,7 +547,7 @@ static void gfm_write_checkbox(cmark_strbuf *out, gfm_html_tree *tree, gfm_html_
   cmark_strbuf_putc(out, '>');
 }
 
-#include "cmark-footnote-html.c"
+#include "footnote-html.c"
 
 static int gfm_write_table_tag(cmark_strbuf *out, gfm_html_tree *tree, gfm_html_node *node) {
   gfm_attributes attrs = {0};
