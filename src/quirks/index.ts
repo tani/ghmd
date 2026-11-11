@@ -3,8 +3,6 @@ import { renderInProcess } from "./render";
 export interface RenderOptions {
   /** Use a specific GitHub-style 32-character lowercase hexadecimal render ID. */
   runId?: string;
-  /** Resolve a canonical image URL to a signed image proxy URL. */
-  imageProxy?: (url: string) => string | Promise<string>;
 }
 
 /** Render a GitHub-style HTML fragment in the calling Bun process. */

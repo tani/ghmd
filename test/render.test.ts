@@ -54,7 +54,7 @@ describe("HTML and math compatibility", () => {
   });
 });
 
-describe("GitHub code blocks and image proxy", () => {
+describe("GitHub code blocks and images", () => {
   test("preserves code and language without syntax highlighting", async () => {
     const html = await render(
       '```mermaid\nflowchart TD\n A --> B\n```\n\n```json\n{"type":"FeatureCollection"}\n```',
@@ -67,29 +67,17 @@ describe("GitHub code blocks and image proxy", () => {
     );
     expect(html).not.toContain('class="pl-');
   });
-  test("uses a caller-supplied signed image URL and rejects unsafe schemes", async () => {
-    const input = "![alt](https://example.com/a.png)";
-    const html = await render(input, {
-      imageProxy: (url) => `https://proxy.example/${encodeURIComponent(url)}`,
-    });
-    expect(html).toContain(
-      '<a target="_blank" rel="noopener noreferrer nofollow" href="https://proxy.example/',
-    );
-    expect(html).toContain(
-      'data-canonical-src="https://example.com/a.png" style="max-width: 100%;"',
-    );
-    await expect(render(input, { imageProxy: () => "javascript:alert(1)" })).rejects.toBeInstanceOf(
-      TypeError,
-    );
+  test("preserves remote image URLs without a proxy", async () => {
+    const html = await render("![alt](https://example.com/a.png)");
+    expect(html).toContain('<img src="https://example.com/a.png" alt="alt">');
+    expect(html).not.toContain("data-canonical-src");
   });
 });
 
-test("linked images retain their original link when proxied", async () => {
-  const html = await render("[![alt](https://example.com/a.png)](https://example.com)", {
-    imageProxy: () => "https://proxy.example/a",
-  });
+test("linked images retain their original link and image URL", async () => {
+  const html = await render("[![alt](https://example.com/a.png)](https://example.com)");
   expect(html).toBe(
-    '<p><a href="https://example.com" rel="nofollow"><img src="https://proxy.example/a" alt="alt" data-canonical-src="https://example.com/a.png" style="max-width: 100%;"></a></p>',
+    '<p><a href="https://example.com" rel="nofollow"><img src="https://example.com/a.png" alt="alt"></a></p>',
   );
 });
 

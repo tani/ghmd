@@ -50,7 +50,7 @@ The CLI uses the GitHub-compatible renderer and also accepts standard input. Bot
 
 The offline E2E tests cover 617 distinct inputs, representing 665 named cases, with responses individually captured from GitHub's Markdown API in GFM mode. The cases cover positive and negative syntax, math in different contexts, task-list and document boundaries, HTML sanitization, code highlighting, images, widgets, and larger documents. Each input and its exact response are stored as an `.md`/`.html` pair; the manifest records aliases, source, rule IDs, hashes, and capture time. Run `bun run test:e2e` to run only these tests; no API request is made by the tests.
 
-The comparison parses HTML into a tree, sorts attributes, normalizes generated footnote and math IDs, and collapses ordinary HTML whitespace. It ignores formatting whitespace at block boundaries but keeps meaningful inline spacing and preserves whitespace inside code, preformatted text, and math. It checks tags, nesting, attributes, and content; it does not establish visual equivalence or validate the browser's rendering of math or diagrams. Saved signed image URLs are supplied via `imageProxy`.
+The comparison parses HTML into a tree, sorts attributes, normalizes generated footnote and math IDs, and collapses ordinary HTML whitespace. It ignores formatting whitespace at block boundaries but keeps meaningful inline spacing and preserves whitespace inside code, preformatted text, and math. It checks tags, nesting, attributes, and content; it does not establish visual equivalence or validate the browser's rendering of math or diagrams. For captured GitHub responses, proxied image URLs and proxy-only wrappers are normalized back to the original image URLs before comparison.
 
 Neither renderer performs syntax highlighting. E2E comparison ignores GitHub’s highlighting wrappers, token spans, code-block language attributes, and one trailing code-block newline, while still checking code contents; language preservation is covered separately by unit tests.
 
@@ -60,18 +60,10 @@ For example, `matrix-bare-prefix-0` captures recognized `$x$`, while `matrix-bar
 
 The original inputs include cases split from the Markdown batches previously provided in this workspace, including examples attributed there to the markdown-math-acid-test project. The independently captured outputs reflect each case on its own; document-wide interactions can produce different results.
 
-Applications can supply a synchronous or asynchronous image proxy resolver:
-
-```ts
-const html = await render(markdown, {
-  imageProxy: async (canonicalUrl) => getSignedProxyUrl(canonicalUrl),
-});
-```
-
 For reproducible output, pass a 32-character lowercase hexadecimal `runId` to `render`, or use `--run-id ID` on the CLI. Normally the renderer generates a fresh ID for each fragment, as GitHub does; reusing an ID in the same page can cause anchor collisions.
 
-The resolver must return an HTTP(S) URL. Without one, the renderer leaves remote image URLs unproxied. Matching these fixtures does not prove compatibility with every possible Markdown input; math, sanitization, and GitHub's other server-side transformations have broader behavior than the cases covered here. Raw HTML passes through an HTML5 parser and DOMPurify before renderer transformations; this prototype is not a security-audited service.
+The renderer leaves remote image URLs unproxied. Matching these fixtures does not prove compatibility with every possible Markdown input; math, sanitization, and GitHub's other server-side transformations have broader behavior than the cases covered here. Raw HTML passes through an HTML5 parser and DOMPurify before renderer transformations; this prototype is not a security-audited service.
 
-The native compatibility layer owns the cmark parser and AST, adjusts task items and footnote references, and implements math boundary recognition and the post-sanitization handling of alerts, lists, tables, code blocks, footnotes, and images in C. TypeScript still coordinates HTML5 parsing and sanitization, constructs math DOM nodes, performs JavaScript-compatible Unicode lowercase conversion, and invokes the optional asynchronous image proxy. The post-sanitization C tree consumes HTML serialized by the DOM rather than parsing arbitrary input directly.
+The native compatibility layer owns the cmark parser and AST, adjusts task items and footnote references, and implements math boundary recognition and the post-sanitization handling of alerts, lists, tables, code blocks, footnotes, and images in C. TypeScript still coordinates HTML5 parsing and sanitization, constructs math DOM nodes, performs JavaScript-compatible Unicode lowercase conversion. The post-sanitization C tree consumes HTML serialized by the DOM rather than parsing arbitrary input directly.
 
 The native source is based on cmark-gfm 0.29.0.gfm.13. The vendored upstream C files are unmodified and are checked against the release hashes in `test/fixtures/cmark-gfm-upstream.json`. Compatibility adjustments live in `src/quirks/cmark-*.c` and the TypeScript rendering pipeline; cmark sources remain unmodified. Multiline footnote compatibility can require reparsing transformed source, so AST XML source positions in those cases refer to the transformed input. See `vendor/cmark-gfm/PROVENANCE.json` and `COPYING` for provenance and licensing. Original prototype code is MIT licensed; third-party code retains its own license.

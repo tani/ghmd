@@ -222,32 +222,6 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       if (/^(?:https?:)?\/\//i.test(href) || /^mailto:/i.test(href))
         link.setAttribute("rel", "nofollow");
     }
-    if (options.imageProxy) {
-      for (const image of [...document.querySelectorAll("img[src]")]) {
-        const canonical = image.getAttribute("src")!;
-        if (!/^https?:\/\//i.test(canonical)) continue;
-        // Proxy anchors are created here, so adjust their future parent first.
-        if (image.parentElement === document.body || image.parentElement?.tagName === "B") {
-          const paragraph = document.createElement("p");
-          image.replaceWith(paragraph);
-          paragraph.append(image);
-        }
-        const proxy = await options.imageProxy(canonical);
-        if (!/^https?:\/\//i.test(proxy))
-          throw new TypeError("imageProxy must return an HTTP(S) URL");
-        image.setAttribute("src", proxy);
-        image.setAttribute("data-canonical-src", canonical);
-        image.setAttribute("style", "max-width: 100%;");
-        if (!image.closest("a")) {
-          const link = document.createElement("a");
-          link.setAttribute("target", "_blank");
-          link.setAttribute("rel", "noopener noreferrer nofollow");
-          link.setAttribute("href", proxy);
-          image.replaceWith(link);
-          link.append(image);
-        }
-      }
-    }
     // JavaScript retains responsibility for full Unicode lowercase mappings.
     for (const anchor of document.querySelectorAll("a[data-footnote-ref][id]")) {
       const id = anchor.getAttribute("id");
