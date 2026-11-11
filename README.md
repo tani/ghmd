@@ -21,7 +21,13 @@ The CLI also accepts standard input. The library returns a Promise containing an
 
 ## Compatibility status
 
-The offline E2E tests compare 465 distinct inputs, representing 501 named cases, with responses individually captured from GitHub's Markdown API in GFM mode. They cover both recognized syntax and cases where syntax remains literal. Each input and its exact response are stored as an `.md`/`.html` pair; the manifest records aliases, source, rule IDs, hashes, and capture time. Run `bun run test:e2e` to run only these tests. Generated footnote and math IDs are normalized, and saved signed image URLs are supplied via `imageProxy`; no API request is made by the tests.
+The offline E2E tests cover 580 distinct inputs, representing 624 named cases, with responses individually captured from GitHub's Markdown API in GFM mode. The cases cover positive and negative syntax, math in different contexts, task-list and document boundaries, HTML sanitization, code highlighting, images, widgets, and larger documents. Each input and its exact response are stored as an `.md`/`.html` pair; the manifest records aliases, source, rule IDs, hashes, and capture time. Run `bun run test:e2e` to run only these tests; no API request is made by the tests.
+
+The comparison parses HTML into a tree, sorts attributes, normalizes generated footnote and math IDs, and collapses ordinary HTML whitespace. It ignores formatting whitespace at block boundaries but keeps meaningful inline spacing and preserves whitespace inside code, preformatted text, and math. It checks tags, nesting, attributes, and content; it does not establish visual equivalence or validate the browser's rendering of math or diagrams. Saved signed image URLs are supplied via `imageProxy`.
+
+Known differences are listed with their reasons in `test/fixtures/e2e/known-differences.json`. Those tests still verify the GitHub fixture and the current output tree, so an unrelated regression or an improvement requires review rather than silently passing. The current list includes syntax highlighting for several languages, raw checkboxes in lists, SVG text, and deep list nesting.
+
+To capture missing cases from `scripts/new-e2e-cases.ts`, set `GITHUB_PAT` or `GITHUB_TOKEN` and run `bun scripts/capture-e2e.ts`. The script reuses existing references, waits at least 650 ms between requests by default, saves each successful response before continuing, and stops on an HTTP error so it can be resumed. `GFM_CAPTURE_DELAY_MS` may increase the interval (minimum 250 ms). GitHub's authenticated rate limit is typically 5,000 requests per hour, and secondary limits can apply.
 
 For example, `matrix-bare-prefix-0` captures recognized `$x$`, while `matrix-bare-prefix-1` captures `a$x$` remaining literal. Both expected responses come from GitHub, rather than being inferred from the renderer.
 

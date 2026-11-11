@@ -1,0 +1,1 @@
+![alt](https://example.com/a.png?a=1&b=2)

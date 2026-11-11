@@ -1,0 +1,1 @@
+<span style="color:red">$x$</span>

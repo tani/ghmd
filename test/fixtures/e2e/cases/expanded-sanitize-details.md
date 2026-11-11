@@ -1,0 +1,1 @@
+<details><summary>Title</summary>text</details>

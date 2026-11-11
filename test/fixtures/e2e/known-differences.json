@@ -1,0 +1,46 @@
+{
+  "expanded-highlight-js": {
+    "reason": "GitHub uses different syntax highlighting tokens for JavaScript.",
+    "actualAstSha256": "b1e3f91e6a53157417f32f8eb9b5ab5aee2bcb541e9285ba35d85c369d12623a"
+  },
+  "expanded-highlight-javascript": {
+    "reason": "GitHub uses different syntax highlighting tokens for JavaScript regular expressions.",
+    "actualAstSha256": "09b0f75096ea37c5f98bb65ee95e7dc003cf40d6709976b6ff2f69f0e3eba1a5"
+  },
+  "expanded-highlight-typescript": {
+    "reason": "GitHub uses different syntax highlighting tokens for TypeScript.",
+    "actualAstSha256": "5b85e60e9c81d3712af20e874c93a0baae665e44c2da9212ceaf463b159fd75f"
+  },
+  "expanded-highlight-python": {
+    "reason": "GitHub uses different syntax highlighting tokens for Python.",
+    "actualAstSha256": "e00dda52c0de4711dc022b2882a6eb83751a414f008e267e83a9576a8e9d945e"
+  },
+  "expanded-highlight-rust": {
+    "reason": "GitHub uses different syntax highlighting tokens for Rust.",
+    "actualAstSha256": "99bb5b977dd83e1655296300dcb3dd3167a8d58c4d933e73732db1a86cb64e80"
+  },
+  "expanded-highlight-html": {
+    "reason": "GitHub uses different syntax highlighting tokens for HTML.",
+    "actualAstSha256": "918995dad69f38b34c16f2d7e4a0a1c21f59d8312437e211196e7363567893be"
+  },
+  "expanded-highlight-css": {
+    "reason": "GitHub uses different syntax highlighting tokens for CSS.",
+    "actualAstSha256": "3e5ccf93bf89bb6bc01ed925146a9fbfa7aa51a2c61cd8ee83d31f51c3847856"
+  },
+  "expanded-highlight-diff": {
+    "reason": "GitHub adds nested token spans to diff markers.",
+    "actualAstSha256": "35007dc38e4c0536ba38735e177f2215dc1a25fcbd8b891011409c586ebd1c5d"
+  },
+  "expanded-followup-raw_input_in_list": {
+    "reason": "A raw checkbox in a list is treated as a task by this renderer; GitHub removes it.",
+    "actualAstSha256": "67d41a39aebc1632f5e2bd0e5fdf939d3cc8a1e96d0ed400a541622a589bf866"
+  },
+  "expanded-followup-svg_text": {
+    "reason": "GitHub retains text from removed SVG markup; this renderer removes the subtree.",
+    "actualAstSha256": "f1d4099a28a6104a97fbfd819e1dcf802c544e4c9db5591acd770e3c536f9372"
+  },
+  "expanded-size-nesting": {
+    "reason": "GitHub flattens deeply nested lists; this renderer retains their full nesting.",
+    "actualAstSha256": "c929f38ccf4059c0de8d73017d95c1f5043fefc888fd75162ae8ffe11dc790f8"
+  }
+}

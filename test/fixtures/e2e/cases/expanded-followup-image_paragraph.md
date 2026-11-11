@@ -1,0 +1,1 @@
+before <img src="https://example.com/b.png"> after

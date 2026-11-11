@@ -1,0 +1,1 @@
+<span style="color:red" onclick="alert(1)">text</span>

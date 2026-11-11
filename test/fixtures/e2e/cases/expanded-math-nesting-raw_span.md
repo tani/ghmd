@@ -1,0 +1,1 @@
+<span>$x$</span> and $x$

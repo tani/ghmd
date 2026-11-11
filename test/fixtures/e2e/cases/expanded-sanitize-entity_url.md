@@ -1,0 +1,1 @@
+<a href="jav&#x61;script:alert(1)">bad</a>

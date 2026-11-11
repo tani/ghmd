@@ -16,6 +16,24 @@ export async function renderInProcess(source: string, options: RenderOptions): P
     // anchor without href must not be mistaken for a rejected dangerous URL.
     const mark = crypto.randomUUID();
     const tree: any = parseFragment(html, { sourceCodeLocationInfo: true });
+    // GitHub closes an unclosed link at a block boundary instead of keeping
+    // the HTML parser's reconstructed link around later blocks.
+    const seenAnchors = new Set<number>();
+    const unwrapReconstructedAnchors = (node: any) => {
+      for (let i = 0; i < (node.childNodes?.length ?? 0); i++) {
+        const child = node.childNodes[i];
+        const start = child.sourceCodeLocation?.startOffset;
+        if (child.tagName === "a" && start !== undefined && seenAnchors.has(start)) {
+          const children = child.childNodes ?? [];
+          node.childNodes.splice(i, 1, ...children);
+          i--;
+          continue;
+        }
+        if (child.tagName === "a" && start !== undefined) seenAnchors.add(start);
+        unwrapReconstructedAnchors(child);
+      }
+    };
+    unwrapReconstructedAnchors(tree);
     // HTML parsing can reconstruct an unclosed formatting tag around the
     // final newline. GitHub drops that empty reconstructed fragment.
     const tail = tree.childNodes.at(-1);
@@ -39,6 +57,8 @@ export async function renderInProcess(source: string, options: RenderOptions): P
     };
     markLinks(tree);
     document.body.innerHTML = createDOMPurify(window as any).sanitize(serialize(tree), {
+      FORBID_ATTR: ["style"],
+      FORBID_TAGS: ["svg"],
       ADD_ATTR: [
         "data-footnote-ref",
         "data-footnote-backref",
@@ -57,8 +77,7 @@ export async function renderInProcess(source: string, options: RenderOptions): P
     const blocked = (element: any) => {
       for (let p = element.parentElement; p; p = p.parentElement) {
         if (p.tagName === "DETAILS") return false;
-        if (["B", "STRONG", "EM", "I", "A", "CODE", "PRE", "SECTION"].includes(p.tagName))
-          return true;
+        if (["B", "STRONG", "EM", "A", "CODE", "PRE", "SECTION"].includes(p.tagName)) return true;
       }
       return false;
     };
@@ -78,7 +97,9 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       }
     }
     for (const paragraph of [
-      ...document.querySelectorAll("p, li, h1, h2, h3, h4, h5, h6, td, th, strong, em"),
+      ...document.querySelectorAll(
+        "p, li, h1, h2, h3, h4, h5, h6, td, th, strong, em, i, del, span, summary",
+      ),
     ]) {
       if (
         blocked(paragraph) &&
@@ -107,7 +128,7 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       // Display formulas contain only text and hard-break elements.
       if (children.every((n) => n.nodeType === 3 || n.nodeName === "BR")) {
         const text = paragraph.textContent ?? "";
-        if (!paragraph.closest("b,details")) {
+        if (paragraph.tagName !== "LI" && !paragraph.closest("b,details")) {
           const blocks = [...text.matchAll(/\$\$\n[\s\S]*?\n\$\$/g)];
           if (blocks.length && blocks.map((m) => m[0]).join("\n") === text) {
             const nodes: any[] = [];
@@ -234,6 +255,10 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       quote.replaceWith(alert);
     }
     for (const input of document.querySelectorAll('input[type="checkbox"]')) {
+      if (!input.closest("li")) {
+        input.remove();
+        continue;
+      }
       input.closest("li")?.classList.add("task-list-item");
       input.closest("ul,ol")?.classList.add("contains-task-list");
       const checked = input.hasAttribute("checked");
@@ -305,18 +330,20 @@ export async function renderInProcess(source: string, options: RenderOptions): P
     // GitHub wraps standalone relative images and adds the responsive style.
     for (const image of [...document.querySelectorAll("img[src]")]) {
       const src = image.getAttribute("src")!;
-      if (/^(?:https?:)?\/\//i.test(src)) continue;
-      image.setAttribute("style", "max-width: 100%;");
       if (image.parentElement === document.body || image.parentElement?.tagName === "B") {
         const paragraph = document.createElement("p");
         image.replaceWith(paragraph);
         paragraph.append(image);
       }
+      if (/^(?:https?:)?\/\//i.test(src)) continue;
+      image.setAttribute("style", "max-width: 100%;");
+      const rejected = /^data:/i.test(src);
+      if (rejected) image.removeAttribute("src");
       if (!image.closest("a")) {
         const link = document.createElement("a");
         link.setAttribute("target", "_blank");
         link.setAttribute("rel", "noopener noreferrer");
-        link.setAttribute("href", src);
+        link.setAttribute("href", rejected ? "" : src);
         image.replaceWith(link);
         link.append(image);
       }
