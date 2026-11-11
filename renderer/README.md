@@ -9,18 +9,17 @@ const html = await render('# Hello');
 
 ## Setup and use
 
-Bun 1.4.4 and a POSIX C compiler are required. Run setup on each platform to build a platform-specific native library:
+Bun 1.4.4 is required. On first import, `bun:ffi` compiles the unmodified cmark-gfm sources in-process via `cc()`. A small C entry point uses preprocessor includes and isolates colliding internal names; it is not a pre-generated copy of the source files. No separate compiler, CMake, make, or setup step is required. Standard C headers must be available to Bun’s C compiler.
 
 ```sh
 bun install --frozen-lockfile
-bun run setup
 bun test
 bun run render input.md > output.html
 # Resolve signed image URLs through GitHub (requires network access):
 bun run render --github-image-proxy input.md > output.html
 ```
 
-The CLI also accepts standard input. The library returns a Promise containing an HTML fragment. It uses the vendored cmark-gfm parser and happy-dom, and limits input to 1 MB and output to 32 MB.
+The CLI also accepts standard input. The library returns a Promise containing an HTML fragment. The native compilation at import and native parsing are synchronous in the calling process; the Promise also covers the asynchronous HTML transformations. It uses the vendored cmark-gfm parser and happy-dom, and limits input to 1 MB and output to 32 MB. The `cc()` integration has been tested here with Bun 1.4.4 on Linux ARM64; other platforms have not been verified in this project.
 
 ## Compatibility status
 

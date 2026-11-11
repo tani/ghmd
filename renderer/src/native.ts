@@ -1,8 +1,10 @@
-import {dlopen,CString} from 'bun:ffi';
+import {cc,CString} from 'bun:ffi';
 import {join} from 'node:path';
 const root=join(import.meta.dir,'..');
-const nativePath=join(root,'native',`libcmark-gfm-${process.platform}-${process.arch}.${process.platform==='darwin'?'dylib':'so'}`);
-const lib=dlopen(nativePath,{
+const lib=cc({
+ source:join(root,'src/cmark-unity.c'),
+ include:['src','extensions','generated'].map(dir=>join(root,'vendor/cmark-gfm',dir)),
+ symbols:{
  cmark_version_string:{args:[],returns:'cstring'},
  cmark_gfm_core_extensions_ensure_registered:{args:[],returns:'void'},
  cmark_find_syntax_extension:{args:['buffer'],returns:'ptr'},
@@ -27,6 +29,7 @@ const lib=dlopen(nativePath,{
  cmark_node_free:{args:['ptr'],returns:'void'},
  cmark_parser_free:{args:['ptr'],returns:'void'},
  gfm_free:{args:['ptr'],returns:'void'},
+ },
 });
 const s=lib.symbols;
 s.cmark_gfm_core_extensions_ensure_registered();

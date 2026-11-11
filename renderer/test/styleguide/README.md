@@ -2,7 +2,7 @@
 
 This audit compares the renderer with GitHub's GFM HTML response, including cases where GitHub's behavior is surprising. A mismatch is reported as `fail`; it is not automatically classified as a GitHub bug. Batch outcomes apply to the whole batch, not each member separately.
 
-After `bun install --frozen-lockfile` and `bun run setup`:
+After `bun install --frozen-lockfile`:
 
 ```sh
 # Uses saved responses for the authored synthetic cases; makes no network calls.
