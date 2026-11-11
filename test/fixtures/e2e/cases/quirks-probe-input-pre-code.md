@@ -1,0 +1,1 @@
+<pre><code>before &lt;input&gt; after</code></pre>

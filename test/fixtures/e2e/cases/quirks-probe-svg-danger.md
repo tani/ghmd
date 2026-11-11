@@ -1,0 +1,1 @@
+<svg><text>before</text><script>alert(1)</script><text>after</text></svg>

@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import manifest from "./fixtures/cmark-gfm-upstream.json";
-import { nativeRender } from "../src/native";
+import { nativeRender } from "../src/quirks/native";
 
 const vendor = join(import.meta.dir, "../vendor/cmark-gfm");
 describe("unmodified upstream cmark-gfm", () => {

@@ -1,0 +1,1 @@
+<svg><text>$x$</text></svg>

@@ -1,0 +1,12 @@
+- [ ] item 0
+  - [x] item 1
+    - [ ] item 2
+      - [x] item 3
+        - [ ] item 4
+          - [x] item 5
+            - [ ] item 6
+              - [x] item 7
+                - [ ] item 8
+                  - [x] item 9
+                    - [ ] item 10
+                      - [x] item 11

@@ -5,9 +5,11 @@ import { join, resolve } from "node:path";
 const root = resolve(import.meta.dir, "..");
 describe("in-process C compilation", () => {
   test("preprocessor entry point covers every upstream C translation unit", async () => {
-    const text = await readFile(join(root, "src/cmark-unity.c"), "utf8");
+    const text = await readFile(join(root, "src/quirks/cmark-unity.c"), "utf8");
     const found = [
-      ...text.matchAll(/^#include "\.\.\/vendor\/cmark-gfm\/(src|extensions)\/([^"/]+\.c)"$/gm),
+      ...text.matchAll(
+        /^#include "\.\.\/\.\.\/vendor\/cmark-gfm\/(src|extensions)\/([^"/]+\.c)"$/gm,
+      ),
     ].map((m) => `${m[1]}/${m[2]}`);
     const expected: string[] = [];
     for (const dir of ["src", "extensions"])
@@ -19,7 +21,7 @@ describe("in-process C compilation", () => {
     const script = `
    Bun.spawn=()=>{throw Error('unexpected subprocess')};
    Bun.spawnSync=()=>{throw Error('unexpected subprocess')};
-   const {render}=await import('./src/index.ts');
+   const {render}=await import('./src/quirks/index.ts');
    const values=await Promise.all([render(''),render('日本語'),render('a\\0b')]);
    if(JSON.stringify(values)!==JSON.stringify(['','<p>日本語</p>','<p>a�b</p>']))throw Error('unexpected output');
   `;

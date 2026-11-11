@@ -1,0 +1,1 @@
+before <input type="text" value="x"> after

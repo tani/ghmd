@@ -1,0 +1,1 @@
+<svg><foreignObject><p>Safe <b>bold</b></p></foreignObject></svg>

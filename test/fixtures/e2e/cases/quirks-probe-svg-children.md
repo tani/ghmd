@@ -1,0 +1,1 @@
+<svg><title>title</title><text>text<tspan> nested</tspan></text><desc>description</desc><circle r="2"/></svg>

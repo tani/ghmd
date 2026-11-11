@@ -4,6 +4,7 @@ import { parseFragment, serialize } from "parse5";
 import createDOMPurify from "dompurify";
 import { alertTitles } from "./alerts";
 import { highlight } from "./highlight";
+import { flattenDeepLists } from "./list-depth";
 import type { RenderOptions } from "./index";
 
 // GitHub assigns a unique suffix to footnote anchors for each rendered fragment.
@@ -15,7 +16,24 @@ export async function renderInProcess(source: string, options: RenderOptions): P
     // Remember which anchors had a destination before sanitization. A raw
     // anchor without href must not be mistaken for a rejected dangerous URL.
     const mark = crypto.randomUUID();
-    const tree: any = parseFragment(html, { sourceCodeLocationInfo: true });
+    let tree: any = parseFragment(html, { sourceCodeLocationInfo: true });
+    // GitHub strips SVG markup while retaining allowed descendants and text.
+    // Reparse those descendants as HTML, then run the normal sanitizer.
+    let hadSvg = false;
+    const unwrapSvg = (node: any) => {
+      for (let i = 0; i < (node.childNodes?.length ?? 0); i++) {
+        const child = node.childNodes[i];
+        if (child.namespaceURI === "http://www.w3.org/2000/svg" && child.tagName !== "a") {
+          hadSvg = true;
+          const children = child.childNodes ?? [];
+          for (const element of children) element.parentNode = node;
+          node.childNodes.splice(i, 1, ...children);
+          i--;
+          continue;
+        }
+        unwrapSvg(child);
+      }
+    };
     // GitHub closes an unclosed link at a block boundary instead of keeping
     // the HTML parser's reconstructed link around later blocks.
     const seenAnchors = new Set<number>();
@@ -48,6 +66,8 @@ export async function renderInProcess(source: string, options: RenderOptions): P
           (node.childNodes ?? []).some(appearsEarlier));
       if (start !== undefined && tree.childNodes.some(appearsEarlier)) tree.childNodes.pop();
     }
+    unwrapSvg(tree);
+    if (hadSvg) tree = parseFragment(serialize(tree), { sourceCodeLocationInfo: true });
     const markLinks = (node: any) => {
       if (node.tagName === "a" && node.attrs?.some((a: any) => a.name === "href")) {
         node.attrs = node.attrs.filter((a: any) => a.name !== "data-gfm-had-href");
@@ -417,6 +437,7 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       )
         next.remove();
     }
+    flattenDeepLists(document as unknown as Document);
     const output = document.body.innerHTML.replace(/\n$/, "");
     if (Buffer.byteLength(output) > 32 * 1024 * 1024)
       throw new RangeError("Rendered HTML exceeds 32 MB");

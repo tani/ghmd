@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { parseFragment } from "parse5";
-import { render } from "../src/index";
+import { render } from "../src/quirks/index";
 import manifest from "./fixtures/e2e/manifest.json";
 import { htmlAst } from "./support/html-ast";
 import knownDifferences from "./fixtures/e2e/known-differences.json";

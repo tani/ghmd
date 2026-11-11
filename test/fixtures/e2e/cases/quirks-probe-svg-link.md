@@ -1,0 +1,1 @@
+<svg><a href="https://example.com"><text>linked</text></a></svg>

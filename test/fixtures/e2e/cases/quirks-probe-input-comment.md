@@ -1,0 +1,1 @@
+<div><!-- <input type="checkbox"> -->safe</div>

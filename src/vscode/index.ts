@@ -1,0 +1,54 @@
+import MarkdownIt from "markdown-it";
+import math from "@vscode/markdown-it-katex";
+import hljs from "highlight.js";
+
+export interface RenderOptions {
+  /** VS Code's markdown.preview.linkify setting. Default: true. */
+  linkify?: boolean;
+  /** VS Code's markdown.preview.breaks setting. Default: false. */
+  breaks?: boolean;
+  /** VS Code's markdown.math.enabled setting. Default: true. */
+  math?: boolean;
+}
+
+/** Approximate VS Code's built-in Markdown preview. The output is not sanitized. */
+export async function render(source: string, options: RenderOptions = {}): Promise<string> {
+  if (typeof source !== "string") throw new TypeError("render expects a string");
+  if (Buffer.byteLength(source) > 1_000_000) throw new RangeError("Markdown exceeds 1 MB");
+  const md = new MarkdownIt({
+    html: true,
+    linkify: options.linkify ?? true,
+    breaks: options.breaks ?? false,
+    typographer: false,
+    highlight: (source: string, language?: string) => {
+      const normalized =
+        (
+          {
+            shell: "sh",
+            py3: "python",
+            tsx: "jsx",
+            typescriptreact: "jsx",
+            json5: "json",
+            jsonc: "json",
+            "c#": "cs",
+            csharp: "cs",
+          } as Record<string, string>
+        )[language?.toLowerCase() ?? ""] ?? language?.toLowerCase();
+      if (normalized && hljs.getLanguage(normalized)) {
+        try {
+          return hljs.highlight(source, { language: normalized, ignoreIllegals: true }).value;
+        } catch {
+          /* Use escaped source. */
+        }
+      }
+      return md.utils.escapeHtml(source);
+    },
+  });
+  md.linkify.set({ fuzzyLink: false });
+  if (options.math !== false)
+    md.use(math, { enableFencedBlocks: true, globalGroup: true, macros: {} });
+  const result = md.render(source);
+  if (Buffer.byteLength(result) > 32 * 1024 * 1024) throw new RangeError("HTML exceeds 32 MB");
+  return result;
+}
+export default render;

@@ -1,0 +1,142 @@
+{
+  "description": "Manually selected existing examples where the stated author intent is not represented in the saved GitHub response, plus controls. Intention is an annotation, not ground truth obtained from the author. The development fixtures are not an independent or representative sample.",
+  "profile": "github-rich",
+  "cases": [
+    {
+      "id": "style-table-cell-count",
+      "positive": true,
+      "rules": [
+        "TABLE-001"
+      ],
+      "reason": "Assumed intent: retain every table value. GitHub drops the third cell, 3.",
+      "sourceSha256": "65629b48141cb3f977d09efeceff562f0f7274f57d052c688a523ae23bfffa5b"
+    },
+    {
+      "id": "style-footnote-case-repeat",
+      "positive": true,
+      "rules": [
+        "FOOT-001"
+      ],
+      "reason": "Assumed intent: A and a denote different notes. GitHub resolves both to the first definition.",
+      "sourceSha256": "2cf853e35a59f2012dc133c482dda4ca65f976c5f4bdd4bf90767da788a4552f"
+    },
+    {
+      "id": "style-footnote-math",
+      "positive": true,
+      "rules": [
+        "FOOT-003"
+      ],
+      "reason": "Assumed intent: render both expressions inside the footnote. GitHub leaves them literal.",
+      "sourceSha256": "b0695422339509494bc42b45532949661d1505c32b1cfeb49ec50ff3d9836978"
+    },
+    {
+      "id": "style-html-misnested",
+      "positive": true,
+      "rules": [
+        "RENDER-001"
+      ],
+      "reason": "Assumed intent: render the first expression as math and the following formula independently. GitHub parses a bold tag and leaves both unrendered.",
+      "sourceSha256": "7150b1ee99161da973fc6a5af62f67549269c38412c3bc3877b4da021a2aa6d9"
+    },
+    {
+      "id": "matrix-protected-prefix-1",
+      "positive": true,
+      "rules": [
+        "MATH-006"
+      ],
+      "reason": "Assumed intent: render protected x as inline math following a. GitHub renders code and literal dollar signs.",
+      "sourceSha256": "fa69122204c52af7d76cc67f941914eb9959c055a75d37cd0666f12f9c12cf90"
+    },
+    {
+      "id": "matrix-protected-alpha-1",
+      "positive": true,
+      "rules": [
+        "MATH-006"
+      ],
+      "reason": "Assumed intent: render protected x as inline math following b. GitHub renders code and literal dollar signs.",
+      "sourceSha256": "32bd412d0f215e2bbf0e735888bcfd970174b8e50f6e025513e696e8cebdb08a"
+    },
+    {
+      "id": "expanded-html-context-unclosed_b",
+      "positive": true,
+      "rules": [
+        "RENDER-001"
+      ],
+      "reason": "Assumed intent: render both formulas independently. GitHub parses a bold tag in the first and leaves the following formula unrendered.",
+      "sourceSha256": "1c90ea6433ebece7642b5264cca25a44e46fcc2fe860f25df6806f26250b8b4c"
+    },
+    {
+      "id": "style-footnote-bracket-multiline",
+      "positive": true,
+      "rules": [
+        "FOOT-001",
+        "FOOT-002"
+      ],
+      "reason": "Assumed intent: retain the written footnote references and definitions. GitHub instead produces a link and leaves a reference unresolved.",
+      "sourceSha256": "3040e5e654e2b4e47635564bc6d019f01f7b7c13c09ed652f4b31af2b06933e1"
+    },
+    {
+      "id": "style-footnote-link-image",
+      "positive": true,
+      "rules": [
+        "FOOT-002"
+      ],
+      "reason": "Assumed intent: preserve the link label and image. GitHub breaks the link and drops the image.",
+      "sourceSha256": "d2c8731d0116837c000542d3ef8cc6dafa0349d1406a7f3bbf3531f0dc2895c5"
+    },
+    {
+      "id": "style-autolink-brackets",
+      "positive": true,
+      "rules": [
+        "AUTO-001"
+      ],
+      "reason": "Assumed intent: make the full example URLs navigable. GitHub leaves some unlinked and links the incomplete text www.",
+      "sourceSha256": "520dd8e42100cfe32b53bdc59900eb6d50d4647c7808394cdc9a236365fbdf36"
+    },
+    {
+      "id": "expanded-size-nesting",
+      "positive": true,
+      "rules": [
+        "BLOCK-002"
+      ],
+      "reason": "Assumed intent: retain all 12 levels of list nesting. The saved GitHub response flattens the deepest levels.",
+      "sourceSha256": "84f5ba88b27c8ce7d47b53ede82e0090d2b1735d943375cb61a80f919687dbe6"
+    },
+    {
+      "id": "matrix-protected-prefix-0",
+      "positive": false,
+      "rules": [
+        "MATH-003"
+      ],
+      "reason": "Control: GitHub displays protected inline math x.",
+      "sourceSha256": "a3405d240238e206e5e6cb2bc932cb0db309757c9ceac83cb51c782d33eec39d"
+    },
+    {
+      "id": "style-alerts-five",
+      "positive": false,
+      "rules": [
+        "ALERT-001"
+      ],
+      "reason": "Control: all five top-level alerts are displayed.",
+      "sourceSha256": "6dbb732cfcba96a7d2d1e1e252bc6fff63fb56aa3954747d1aa441fbf4b7fc9b"
+    },
+    {
+      "id": "style-literal-source",
+      "positive": false,
+      "rules": [
+        "CODE-001"
+      ],
+      "reason": "Control: dollar signs and markup in code are displayed literally.",
+      "sourceSha256": "46f8e8cda47c8eaa4e489c73fcde67ed9b9efc70d6971fdb1035a0ad3eb174fa"
+    },
+    {
+      "id": "expanded-highlight-js",
+      "positive": false,
+      "rules": [
+        "CODE-001"
+      ],
+      "reason": "Control: the JavaScript source is present in a highlighted code block.",
+      "sourceSha256": "ffc0cb3ef2ba3fa19337d2cd03e6cf4bb2af09259b780f0e6bb9cbec938253a3"
+    }
+  ]
+}

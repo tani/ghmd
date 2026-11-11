@@ -1,0 +1,105 @@
+{
+  "description": "Small manually selected convenience sample where the saved GitHub output is problematic and the local VS Code-style renderer preserves the stated content. Intent is assumed; this is neither author-confirmed nor representative, and related examples share root causes.",
+  "profile": "VS Code default Markdown preview vs GitHub Markdown API",
+  "cases": [
+    {
+      "id": "style-html-misnested",
+      "positive": true,
+      "rules": [
+        "RENDER-001"
+      ],
+      "reason": "VS Code renders the HTML-like math and the subsequent formulas; the GitHub reference leaves formulas literal and creates a bold tag.",
+      "sourceSha256": "7150b1ee99161da973fc6a5af62f67549269c38412c3bc3877b4da021a2aa6d9"
+    },
+    {
+      "id": "expanded-html-context-unclosed_b",
+      "positive": true,
+      "rules": [
+        "RENDER-001"
+      ],
+      "reason": "VS Code renders both formulas; GitHub interprets a tag and leaves them literal.",
+      "sourceSha256": "1c90ea6433ebece7642b5264cca25a44e46fcc2fe860f25df6806f26250b8b4c"
+    },
+    {
+      "id": "original-0024",
+      "positive": true,
+      "rules": [
+        "RENDER-001"
+      ],
+      "reason": "VS Code renders the formula containing angle brackets; GitHub treats part of it as HTML.",
+      "sourceSha256": "04b1ef35e3c56b442211900155ec5e68a55829b36daaa5df8f18affce7c3d517"
+    },
+    {
+      "id": "original-0027",
+      "positive": true,
+      "rules": [
+        "MATH-009"
+      ],
+      "reason": "VS Code preserves TeX escapes; the GitHub reference loses them.",
+      "sourceSha256": "09c58bcd035d85d158cb0395d159e484e98eff0f7d890efb6436a72475737109"
+    },
+    {
+      "id": "original-0029",
+      "positive": true,
+      "rules": [
+        "MATH-005"
+      ],
+      "reason": "VS Code retains the newline following the TeX comment; GitHub collapses it.",
+      "sourceSha256": "5f892aa9765e10290329432fa2c9881fd33ef3e0880332f96c4e2770532fc74e"
+    },
+    {
+      "id": "original-0030",
+      "positive": true,
+      "rules": [
+        "MATH-005"
+      ],
+      "reason": "VS Code retains newline-sensitive TeX; GitHub collapses it.",
+      "sourceSha256": "e1899b2c8b1f605b4515493c9556c7421e7858323127d8e24c60c2cd429e8e6f"
+    },
+    {
+      "id": "expanded-size-nesting",
+      "positive": true,
+      "rules": [
+        "BLOCK-002"
+      ],
+      "reason": "VS Code preserves all list levels; the saved GitHub response flattens the deepest levels.",
+      "sourceSha256": "84f5ba88b27c8ce7d47b53ede82e0090d2b1735d943375cb61a80f919687dbe6"
+    },
+    {
+      "id": "matrix-protected-prefix-0",
+      "positive": false,
+      "rules": [
+        "MATH-003"
+      ],
+      "reason": "Control: both render the same protected math.",
+      "sourceSha256": "a3405d240238e206e5e6cb2bc932cb0db309757c9ceac83cb51c782d33eec39d"
+    },
+    {
+      "id": "expanded-highlight-js",
+      "positive": false,
+      "rules": [
+        "CODE-001"
+      ],
+      "reason": "Control: both retain the JavaScript source.",
+      "sourceSha256": "ffc0cb3ef2ba3fa19337d2cd03e6cf4bb2af09259b780f0e6bb9cbec938253a3"
+    },
+    {
+      "id": "style-literal-source",
+      "positive": false,
+      "rules": [
+        "CODE-001"
+      ],
+      "reason": "Control: both retain the literal code samples.",
+      "sourceSha256": "46f8e8cda47c8eaa4e489c73fcde67ed9b9efc70d6971fdb1035a0ad3eb174fa"
+    },
+    {
+      "id": "matrix-context-8",
+      "positive": false,
+      "rules": [
+        "MATH-003"
+      ],
+      "reason": "Control: both render protected math inside a list.",
+      "sourceSha256": "394e006cba13b0571ea64c60f3d3946b87ffe170038a06b8927e5d0e38487d9e"
+    }
+  ]
+}

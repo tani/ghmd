@@ -1,8 +1,9 @@
 import { cc, CString } from "bun:ffi";
 import { join } from "node:path";
-const root = join(import.meta.dir, "..");
+import { removeRawInputs } from "./raw-html";
+const root = join(import.meta.dir, "../..");
 const lib = cc({
-  source: join(root, "src/cmark-unity.c"),
+  source: join(root, "src/quirks/cmark-unity.c"),
   include: ["src", "extensions", "generated"].map((dir) => join(root, "vendor/cmark-gfm", dir)),
   symbols: {
     cmark_version_string: { args: [], returns: "cstring" },
@@ -202,7 +203,12 @@ function adaptNodes(doc: any, source: string) {
   const positions = lineOffsets(source);
   walk(doc, (node) => {
     const type = typeOf(node);
-    if (type === "tasklist") {
+    if (type === "html_inline" || type === "html_block") {
+      const original = String(s.cmark_node_get_literal(node));
+      const filtered = removeRawInputs(original);
+      if (filtered !== original && !s.cmark_node_set_literal(node, Buffer.from(filtered + "\0")))
+        throw Error("Cannot remove raw input elements");
+    } else if (type === "tasklist") {
       const line = s.cmark_node_get_start_line(node),
         column = s.cmark_node_get_start_column(node);
       if (line < 1 || column < 1) return;

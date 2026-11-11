@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { render } from "../src/index";
+import { render } from "../src/quirks/index";
 
 // These short, independently authored cases exercise behaviors observed in
 // the GitHub GFM reference batches. The ID is fixed for stable comparisons.

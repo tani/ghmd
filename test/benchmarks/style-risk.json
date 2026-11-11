@@ -1,0 +1,173 @@
+{
+  "description": "Small manually labeled convenience set from existing fixtures. Positive means at least one explicit guide policy is violated under github-rich; negative means the listed policy is followed. It is not a representative or independent estimate of all violations.",
+  "profile": "github-rich",
+  "cases": [
+    {
+      "id": "style-table-cell-count",
+      "positive": true,
+      "rules": [
+        "TABLE-001"
+      ],
+      "reason": "Rows contain extra or missing cells.",
+      "sourceSha256": "65629b48141cb3f977d09efeceff562f0f7274f57d052c688a523ae23bfffa5b"
+    },
+    {
+      "id": "style-autolink-brackets",
+      "positive": true,
+      "rules": [
+        "LINK-001",
+        "AUTO-001"
+      ],
+      "reason": "Relies on bare URLs in ambiguous bracket contexts.",
+      "sourceSha256": "520dd8e42100cfe32b53bdc59900eb6d50d4647c7808394cdc9a236365fbdf36"
+    },
+    {
+      "id": "style-links-relative-unicode",
+      "positive": true,
+      "rules": [
+        "LINK-001"
+      ],
+      "reason": "Uses bare URLs adjacent to Unicode text.",
+      "sourceSha256": "ec2dc745760a25be7b7bdfacb2a034f62c23584547135b9648d723b50541b44b"
+    },
+    {
+      "id": "style-tasks-markers-nesting",
+      "positive": true,
+      "rules": [
+        "TASK-003"
+      ],
+      "reason": "Task text contains an additional literal checkbox marker.",
+      "sourceSha256": "e45a4d59d58ef3de11efa2f3110aceff56c9922e0a5cbdb86d5f371cb1108a8e"
+    },
+    {
+      "id": "style-strike-delimiters",
+      "positive": true,
+      "rules": [
+        "STRIKE-001"
+      ],
+      "reason": "Includes single-tilde strikeout.",
+      "sourceSha256": "ac2bab3e832c29da428dee5150bc56209e6d0bb9fea7d79870d413ecfa94717b"
+    },
+    {
+      "id": "style-footnote-case-repeat",
+      "positive": true,
+      "rules": [
+        "FOOT-001"
+      ],
+      "reason": "Uses uppercase and conflicting case variants of a footnote identifier.",
+      "sourceSha256": "2cf853e35a59f2012dc133c482dda4ca65f976c5f4bdd4bf90767da788a4552f"
+    },
+    {
+      "id": "style-footnote-whitespace-colon",
+      "positive": true,
+      "rules": [
+        "FOOT-001"
+      ],
+      "reason": "Uses colon and whitespace in footnote identifiers.",
+      "sourceSha256": "e15e20479e4278acd97b993c6192816b0d5b1b5bf59f2d0f2249adc627b69a7c"
+    },
+    {
+      "id": "style-footnote-bracket-multiline",
+      "positive": true,
+      "rules": [
+        "FOOT-001",
+        "FOOT-002"
+      ],
+      "reason": "Uses a multiline label and escaped bracket in footnote identifiers.",
+      "sourceSha256": "3040e5e654e2b4e47635564bc6d019f01f7b7c13c09ed652f4b31af2b06933e1"
+    },
+    {
+      "id": "style-footnote-link-image",
+      "positive": true,
+      "rules": [
+        "FOOT-002"
+      ],
+      "reason": "Places a footnote reference in link text and footnote-like brackets around an image.",
+      "sourceSha256": "d2c8731d0116837c000542d3ef8cc6dafa0349d1406a7f3bbf3531f0dc2895c5"
+    },
+    {
+      "id": "style-footnote-math",
+      "positive": true,
+      "rules": [
+        "FOOT-003",
+        "MATH-002"
+      ],
+      "reason": "Places math in a footnote and includes bare dollar math.",
+      "sourceSha256": "b0695422339509494bc42b45532949661d1505c32b1cfeb49ec50ff3d9836978"
+    },
+    {
+      "id": "style-alerts-invalid-nested",
+      "positive": true,
+      "rules": [
+        "ALERT-001"
+      ],
+      "reason": "Includes an unsupported alert marker and a nested alert.",
+      "sourceSha256": "b6ed1b630492bd3006f19c416fe58d6a2f398eda70ff31808e0da44382262a6a"
+    },
+    {
+      "id": "style-data-widgets",
+      "positive": true,
+      "rules": [
+        "WIDGET-001",
+        "WIDGET-002"
+      ],
+      "reason": "Includes invalid TopoJSON without a useful textual summary.",
+      "sourceSha256": "bf0f559da8f1db5ac79242b8d5be50c225ac28a1a11c29ebd8f3a2eb8b3b77a7"
+    },
+    {
+      "id": "style-html-dangerous",
+      "positive": true,
+      "rules": [
+        "HTML-001"
+      ],
+      "reason": "Contains a script and an inline event handler.",
+      "sourceSha256": "8f536918511193b602cb5c673a818ef7d03e53f6a5ac69807e17e8440293b825"
+    },
+    {
+      "id": "style-html-misnested",
+      "positive": true,
+      "rules": [
+        "MATH-002",
+        "RENDER-001"
+      ],
+      "reason": "Contains bare dollar math and an HTML-like tag in a formula.",
+      "sourceSha256": "7150b1ee99161da973fc6a5af62f67549269c38412c3bc3877b4da021a2aa6d9"
+    },
+    {
+      "id": "matrix-protected-prefix-0",
+      "positive": false,
+      "rules": [
+        "MATH-002"
+      ],
+      "reason": "Uses protected dollar-backtick math rather than a bare dollar formula.",
+      "sourceSha256": "a3405d240238e206e5e6cb2bc932cb0db309757c9ceac83cb51c782d33eec39d"
+    },
+    {
+      "id": "style-alerts-five",
+      "positive": false,
+      "rules": [
+        "ALERT-001"
+      ],
+      "reason": "Uses the five supported alert markers at the start of top-level quotes.",
+      "sourceSha256": "6dbb732cfcba96a7d2d1e1e252bc6fff63fb56aa3954747d1aa441fbf4b7fc9b"
+    },
+    {
+      "id": "style-literal-source",
+      "positive": false,
+      "rules": [
+        "CODE-001"
+      ],
+      "reason": "Keeps multiline literal Markdown in a fenced code block.",
+      "sourceSha256": "46f8e8cda47c8eaa4e489c73fcde67ed9b9efc70d6971fdb1035a0ad3eb174fa"
+    },
+    {
+      "id": "expanded-highlight-js",
+      "positive": false,
+      "rules": [
+        "CODE-001"
+      ],
+      "reason": "Uses a fenced block with a lowercase language identifier.",
+      "sourceSha256": "ffc0cb3ef2ba3fa19337d2cd03e6cf4bb2af09259b780f0e6bb9cbec938253a3"
+    }
+  ]
+}

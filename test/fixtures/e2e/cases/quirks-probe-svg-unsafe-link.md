@@ -1,0 +1,1 @@
+<svg><a href="javascript:alert(1)" onclick="alert(1)"><text>unsafe</text></a><text>after</text></svg>
