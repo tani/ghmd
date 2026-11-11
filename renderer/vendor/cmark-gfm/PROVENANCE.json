@@ -1,0 +1,11 @@
+{
+  "upstream": "https://github.com/github/cmark-gfm",
+  "nativeVersion": "0.29.0.gfm.13",
+  "sourceArchive": "https://files.pythonhosted.org/packages/source/c/cmarkgfm/cmarkgfm-2025.10.22.tar.gz",
+  "archiveSha256": "5bec61007b65b919488442c838c58a6c8bf4741f5103c593b2ef180d39818eda",
+  "contents": "third_party/cmark and generated/unix headers from cmarkgfm 2025.10.22 sdist. src/node.c has the documented footnote XML naming patch; all other copied source/header/license bytes are unmodified.",
+  "patches": [
+    "../../patches/footnote-xml.patch"
+  ],
+  "patchedNodeCSha256": "9b000553c0ec29e3bf65e37dfadf50f4d12938630ccec4cf1998b647a7e06d7b"
+}
