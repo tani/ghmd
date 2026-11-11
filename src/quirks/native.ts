@@ -15,6 +15,14 @@ const lib = cc({
     gfm_document_xml: { args: ["ptr"], returns: "ptr" },
     gfm_document_free: { args: ["ptr"], returns: "void" },
     gfm_finalize_serialized_html: { args: ["buffer", "u64", "buffer", "buffer"], returns: "ptr" },
+    gfm_flatten_templates: { args: ["buffer", "u64", "buffer"], returns: "ptr" },
+    gfm_remove_boundaries: { args: ["buffer", "u64", "buffer"], returns: "ptr" },
+    gfm_prepare_math_tables: {
+      args: ["buffer", "u64", "buffer", "buffer", "buffer"],
+      returns: "ptr",
+    },
+    gfm_prepare_details: { args: ["buffer", "u64"], returns: "ptr" },
+    gfm_process_links: { args: ["buffer", "u64", "buffer"], returns: "ptr" },
     gfm_math_dom: { args: ["buffer", "u64", "buffer", "buffer"], returns: "ptr" },
     gfm_unicode_lower: { args: ["buffer", "u64"], returns: "ptr" },
     gfm_unicode_lower_length: { args: ["ptr"], returns: "u64" },
@@ -118,5 +126,61 @@ export function renderMathHtml(html: string, token: string, boundary: string): s
     ),
   );
   if (result === undefined) throw Error("Cannot transform math HTML");
+  return result;
+}
+
+/** Apply sanitized link transformations. */
+export function processLinks(html: string, marker: string): string {
+  const bytes = Buffer.from(html, "utf8");
+  const result = consumeNativeString(
+    s.gfm_process_links(bytes, bytes.byteLength, Buffer.from(marker + "\0")),
+  );
+  if (result === undefined) throw Error("Cannot process links");
+  return result;
+}
+
+/** Insert missing details summaries. */
+export function prepareDetails(html: string): string {
+  const bytes = Buffer.from(html, "utf8");
+  const result = consumeNativeString(s.gfm_prepare_details(bytes, bytes.byteLength));
+  if (result === undefined) throw Error("Cannot prepare details");
+  return result;
+}
+
+export function flattenTemplates(html: string, boundary: string): string {
+  const bytes = Buffer.from(html, "utf8");
+  const result = consumeNativeString(
+    s.gfm_flatten_templates(bytes, bytes.length, Buffer.from(boundary + "\0")),
+  );
+  if (result === undefined) throw Error("Cannot flatten templates");
+  return result;
+}
+
+export function removeBoundaries(html: string, boundary: string): string {
+  const bytes = Buffer.from(html, "utf8");
+  const result = consumeNativeString(
+    s.gfm_remove_boundaries(bytes, bytes.length, Buffer.from(boundary + "\0")),
+  );
+  if (result === undefined) throw Error("Cannot remove text boundaries");
+  return result;
+}
+
+export function prepareMathTables(
+  html: string,
+  token: string,
+  boundary: string,
+  tableMarker: string,
+): string {
+  const bytes = Buffer.from(html, "utf8");
+  const result = consumeNativeString(
+    s.gfm_prepare_math_tables(
+      bytes,
+      bytes.length,
+      Buffer.from(token + "\0"),
+      Buffer.from(boundary + "\0"),
+      Buffer.from(tableMarker + "\0"),
+    ),
+  );
+  if (result === undefined) throw Error("Cannot prepare math and tables");
   return result;
 }

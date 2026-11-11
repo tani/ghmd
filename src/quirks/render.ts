@@ -1,5 +1,14 @@
 import { createDOM } from "./dom";
-import { finalizeHtml, nativeRender, renderMathHtml } from "./native";
+import {
+  finalizeHtml,
+  flattenTemplates,
+  nativeRender,
+  prepareDetails,
+  prepareMathTables,
+  processLinks,
+  removeBoundaries,
+  renderMathHtml,
+} from "./native";
 import { parseFragment, serialize } from "parse5";
 import createDOMPurify from "dompurify";
 import type { RenderOptions } from "./index";
@@ -97,90 +106,26 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       ],
       ADD_TAGS: ["input"],
     });
-    // GitHub removes template elements while retaining their sanitized contents.
-    const unwrapTemplates = (root: any) => {
-      for (const child of [...root.childNodes]) {
-        if (child.nodeType !== 1) continue;
-        if (child.tagName === "TEMPLATE") {
-          unwrapTemplates(child.content);
-          child.replaceWith(...child.content.childNodes);
-        } else unwrapTemplates(child);
-      }
-    };
-    unwrapTemplates(document.body);
-    const comments = document.createTreeWalker(document.body, window.NodeFilter.SHOW_COMMENT);
-    const removeComments = [];
-    while (comments.nextNode()) removeComments.push(comments.currentNode);
-    for (const comment of removeComments) comment.remove();
+    // Native preparation preserves text-node boundaries left by templates and comments.
+    const flattened = flattenTemplates(document.body.innerHTML, mark);
+    const withDetails = prepareDetails(flattened);
+    let prepared = flattened;
+    if (withDetails !== flattened) {
+      // The previous DOM mutation reparsed here; preserve that behavior.
+      document.body.innerHTML = removeBoundaries(withDetails, mark);
+      prepared = document.body.innerHTML;
+    }
     const token = options.runId ?? crypto.randomUUID().replaceAll("-", "");
-    // Details must be populated before math reads descendant textContent.
-    for (const details of document.querySelectorAll("details")) {
-      if (!details.querySelector(":scope > summary")) {
-        const summary = document.createElement("summary");
-        summary.textContent = "Details";
-        details.prepend(summary);
-      }
-    }
-    // A table moved out of a template can temporarily be inside a paragraph.
-    // GitHub processes math within that paragraph before applying its table
-    // wrapper; unrelated paragraphs retain their own table wrapper.
     const tableMarker = `data-gfm-table-${mark.replaceAll("-", "")}`;
-    for (const paragraph of document.querySelectorAll("p")) {
-      const tables = [...paragraph.querySelectorAll("table")];
-      if (!tables.length) continue;
-      let blocked = false;
-      for (let parent = paragraph.parentElement; parent; parent = parent.parentElement) {
-        if (parent.tagName === "DETAILS") break;
-        if (["B", "STRONG", "EM", "A", "CODE", "PRE", "SECTION"].includes(parent.tagName)) {
-          blocked = true;
-          break;
-        }
-      }
-      const before = paragraph.outerHTML;
-      const hasMath = !blocked && renderMathHtml(before, token, mark) !== before;
-      for (const table of tables) {
-        table.setAttribute(tableMarker, "");
-        if (!hasMath) {
-          const wrapper = document.createElement("markdown-accessiblity-table");
-          table.replaceWith(wrapper);
-          wrapper.append(table);
-        }
-      }
-    }
-    const htmlBeforeMath = document.body.innerHTML;
-    // Preserve adjacent text-node boundaries left by removed comments.
-    const textNodes = document.createTreeWalker(document.body, window.NodeFilter.SHOW_TEXT);
-    const markers: any[] = [];
-    while (textNodes.nextNode()) {
-      const node = textNodes.currentNode;
-      if (node.previousSibling?.nodeType === 3) {
-        const marker = document.createComment(mark);
-        node.parentNode!.insertBefore(marker, node);
-        markers.push(marker);
-      }
-    }
-    const markedHtml = markers.length ? document.body.innerHTML : htmlBeforeMath;
-    for (const marker of markers) marker.remove();
+    const markedHtml = prepareMathTables(prepared, token, mark, tableMarker);
+    const htmlBeforeMath = removeBoundaries(markedHtml, mark);
     const mathHtml = renderMathHtml(markedHtml, token, mark);
-    if (mathHtml !== htmlBeforeMath) document.body.innerHTML = mathHtml;
-    // GitHub removes links whose destination was removed by sanitization.
-    for (const link of [...document.querySelectorAll("a[data-gfm-had-href]")]) {
-      const hadHref = link.getAttribute("data-gfm-had-href") === mark;
-      link.removeAttribute("data-gfm-had-href");
-      if (
-        hadHref &&
-        !link.hasAttribute("href") &&
-        !link.hasAttribute("id") &&
-        !link.hasAttribute("name")
-      )
-        link.replaceWith(...link.childNodes);
-    }
-    for (const link of document.querySelectorAll("a[href]")) {
-      const href = link.getAttribute("href")!;
-      if (/^(?:https?:)?\/\//i.test(href) || /^mailto:/i.test(href))
-        link.setAttribute("rel", "nofollow");
-    }
-    const output = finalizeHtml(document.body.innerHTML, token, tableMarker).replace(/\n$/, "");
+    let linkedHtml: string;
+    if (mathHtml !== htmlBeforeMath) {
+      document.body.innerHTML = mathHtml;
+      linkedHtml = processLinks(document.body.innerHTML, mark);
+    } else linkedHtml = processLinks(htmlBeforeMath, mark);
+    const output = finalizeHtml(linkedHtml, token, tableMarker).replace(/\n$/, "");
     if (Buffer.byteLength(output) > 32 * 1024 * 1024)
       throw new RangeError("Rendered HTML exceeds 32 MB");
     return output;

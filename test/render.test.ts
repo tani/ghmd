@@ -180,3 +180,41 @@ test("keeps empty safe links while removing encoded dangerous URLs", async () =>
     expect(html).toContain("bad");
   }
 });
+
+test("processes link markers and external destinations after sanitization", async () => {
+  const html = await render(
+    '<a href="https://example.com/?a=1&amp;b=2" rel="ugc">web</a> <a href="//example.com">protocol relative</a> <a href="MAILTO:a@example.com">mail</a> <a href="/local" rel="ugc">local</a> <a href="javascript:alert(1)" id="anchor">kept</a> <a href="javascript:alert(1)"><strong>unwrapped</strong></a>',
+  );
+  expect(html).toContain('href="https://example.com/?a=1&amp;b=2" rel="nofollow"');
+  expect(html).toContain('href="//example.com" rel="nofollow"');
+  expect(html).toContain('href="MAILTO:a@example.com" rel="nofollow"');
+  expect(html).toContain('href="/local" rel="ugc"');
+  expect(html).toContain('id="anchor">kept</a>');
+  expect(html).toContain("<strong>unwrapped</strong>");
+  expect(html).not.toContain("data-gfm-had-href");
+});
+
+test("inserts a default details summary only when no direct summary exists", async () => {
+  const html = await render(
+    "<details><div><summary>Nested</summary></div>body</details>\n\n<details><summary>Own</summary>body</details>",
+  );
+  expect(html).toContain(
+    "<details><summary>Details</summary><div><summary>Nested</summary></div>body</details>",
+  );
+  expect(html).toContain("<details><summary>Own</summary>body</details>");
+});
+
+test("preserves math text boundaries across unwrapped templates", async () => {
+  expect(await render("$<template>x</template>$")).toBe("<p>$x$</p>");
+  expect(await render("a<template>b<template>c</template></template>d")).toBe("<p>abcd</p>");
+});
+
+test("handles details, a template table and math together", async () => {
+  expect(
+    await render("<details><template><table><tr><td>x</td></tr></table></template> $x$</details>", {
+      runId: "a".repeat(32),
+    }),
+  ).toBe(
+    '<details><summary>Details</summary><markdown-accessiblity-table><table role="table"><tbody><tr><td>x</td></tr></tbody></table></markdown-accessiblity-table> $x$</details>',
+  );
+});

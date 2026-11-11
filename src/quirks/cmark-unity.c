@@ -173,3 +173,4 @@ void gfm_free(void *p) { free(p); }
 #include "cmark-alerts.c"
 #include "cmark-list.c"
 #include "cmark-math-dom.c"
+#include "cmark-postprocess.c"

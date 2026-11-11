@@ -2,8 +2,8 @@
  * byte except for the list moves and classList edits performed below. */
 typedef struct {
   size_t start, open_end, close_start, end, tag_start, tag_end;
-  size_t parent, first, last, prev, next;
-  unsigned char element, inert, removed, normalize_class, before_newline, append_newline, wrap_table, suppress_table_wrapper, checkbox, checked, synthetic, alert, footnote, arrow, relative_image, image_link, image_rejected, image_paragraph;
+  size_t parent, first, last, prev, next, table_wrappers;
+  unsigned char element, inert, removed, normalize_class, before_newline, append_newline, wrap_table, suppress_table_wrapper, checkbox, checked, synthetic, alert, footnote, arrow, relative_image, image_link, image_rejected, image_paragraph, comment, table_marks;
 } gfm_html_node;
 typedef struct {
   const unsigned char *source;
@@ -12,7 +12,7 @@ typedef struct {
   const char *token;
   const char *table_marker;
   const char *text_boundary;
-  int had_text_boundary;
+  int had_text_boundary, split_comments;
 } gfm_html_tree;
 #define GFM_NONE SIZE_MAX
 
@@ -38,7 +38,7 @@ static int gfm_void_element(const unsigned char *name, size_t length) {
   return 0;
 }
 static int gfm_raw_element(const unsigned char *name, size_t length) {
-  static const char *const tags[] = {"script", "style"};
+  static const char *const tags[] = {"script", "style", "textarea", "title", "xmp", "iframe", "noembed", "noframes", "plaintext"};
   for (size_t i = 0; i < sizeof(tags) / sizeof(tags[0]); i++)
     if (gfm_ascii_equal(name, length, tags[i])) return 1;
   return 0;
@@ -57,11 +57,36 @@ static int gfm_parse_serialized_html(gfm_html_tree *tree) {
   size_t i = 0, text_start = 0;
   while (i < tree->length) {
     if (s[i] != '<') { i++; continue; }
+    size_t active = stack[depth - 1];
+    if (active && gfm_raw_element(s + tree->nodes[active].tag_start, tree->nodes[active].tag_end - tree->nodes[active].tag_start)) {
+      size_t name_length = tree->nodes[active].tag_end - tree->nodes[active].tag_start;
+      size_t after = i + 2 + name_length;
+      int closes = i + 2 <= tree->length && s[i + 1] == '/' && after <= tree->length &&
+        (after == tree->length || gfm_ascii_space(s[after]) || s[after] == '>' || s[after] == '/');
+      for (size_t k = 0; closes && k < name_length; k++) {
+        unsigned char a = s[i + 2 + k], b = s[tree->nodes[active].tag_start + k];
+        if (a >= 'A' && a <= 'Z') a += 'a' - 'A';
+        if (b >= 'A' && b <= 'Z') b += 'a' - 'A';
+        if (a != b) closes = 0;
+      }
+      if (!closes) { i++; continue; }
+    }
     if (i + 4 <= tree->length && !memcmp(s + i, "<!--", 4)) {
       size_t marker_start = i;
       i += 4;
       while (i + 3 <= tree->length && memcmp(s + i, "-->", 3)) i++;
       size_t end = i + 3 <= tree->length ? i + 3 : tree->length;
+      if (tree->split_comments) {
+        size_t current = stack[depth - 1];
+        if (marker_start > text_start) {
+          gfm_html_node text = { .start=text_start, .end=marker_start };
+          if (gfm_tree_append(tree, current, text) == GFM_NONE) goto fail;
+        }
+        gfm_html_node comment = { .start=marker_start, .end=end, .comment=1 };
+        if (gfm_tree_append(tree, current, comment) == GFM_NONE) goto fail;
+        i = text_start = end;
+        continue;
+      }
       if (tree->text_boundary && end >= text_start + 7 &&
           end - marker_start == strlen(tree->text_boundary) + 7 &&
           !memcmp(s + marker_start + 4, tree->text_boundary, strlen(tree->text_boundary))) {
