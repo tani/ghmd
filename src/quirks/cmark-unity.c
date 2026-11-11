@@ -167,6 +167,7 @@ void gfm_free(void *p) { free(p); }
 #include "cmark-quirks.c"
 #include "cmark-footnotes.c"
 #include "cmark-math.c"
+#include "cmark-unicode.c"
 #include "cmark-html.c"
 #include "cmark-runtime.c"
 #include "cmark-alerts.c"

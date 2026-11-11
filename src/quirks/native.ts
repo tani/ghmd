@@ -15,6 +15,9 @@ const lib = cc({
     gfm_document_xml: { args: ["ptr"], returns: "ptr" },
     gfm_document_free: { args: ["ptr"], returns: "void" },
     gfm_finalize_serialized_html: { args: ["buffer", "u64", "buffer"], returns: "ptr" },
+    gfm_unicode_lower: { args: ["buffer", "u64"], returns: "ptr" },
+    gfm_unicode_lower_length: { args: ["ptr"], returns: "u64" },
+    gfm_unicode_lower_data: { args: ["ptr"], returns: "ptr" },
     gfm_inline_math: { args: ["buffer", "u64"], returns: "ptr" },
     gfm_display_math: { args: ["buffer", "u64"], returns: "ptr" },
     gfm_display_block: { args: ["buffer", "u64"], returns: "ptr" },
@@ -155,4 +158,19 @@ export function protectedMath(
   return consumeNativeString(
     s.gfm_protected_math(a, a.byteLength, b, b.byteLength, c, c.byteLength, +emphasis),
   );
+}
+
+/** Unicode 17 default lowercase, including context-sensitive Greek sigma. */
+export function unicodeLower(text: string): string {
+  const input = Buffer.from(text, "utf8");
+  const result = s.gfm_unicode_lower(input, input.byteLength);
+  if (!result) throw Error("Cannot lowercase Unicode text");
+  try {
+    const size = Number(s.gfm_unicode_lower_length(result));
+    return size
+      ? new TextDecoder().decode(toArrayBuffer(s.gfm_unicode_lower_data(result), 0, size))
+      : "";
+  } finally {
+    s.gfm_free(result);
+  }
 }

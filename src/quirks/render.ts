@@ -222,11 +222,6 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       if (/^(?:https?:)?\/\//i.test(href) || /^mailto:/i.test(href))
         link.setAttribute("rel", "nofollow");
     }
-    // JavaScript retains responsibility for full Unicode lowercase mappings.
-    for (const anchor of document.querySelectorAll("a[data-footnote-ref][id]")) {
-      const id = anchor.getAttribute("id");
-      if (id) anchor.setAttribute("id", id.toLowerCase());
-    }
     const output = finalizeHtml(document.body.innerHTML, token).replace(/\n$/, "");
     if (Buffer.byteLength(output) > 32 * 1024 * 1024)
       throw new RangeError("Rendered HTML exceeds 32 MB");

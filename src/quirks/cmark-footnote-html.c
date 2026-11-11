@@ -89,7 +89,7 @@ static void gfm_slice_utf16(cmark_strbuf *out, const unsigned char *text, size_t
 }
 static int gfm_make_reference_value(gfm_html_tree *tree, gfm_attributes *attrs, const char *name,
                                     const char *prefix, size_t slice, const char *token,
-                                    int colon_removes) {
+                                    int colon_removes, int lowercase) {
   gfm_attribute *attr = gfm_attribute_find(attrs, name);
   if (!attr) return 1;
   cmark_strbuf *value = gfm_attribute_value(tree, attr);
@@ -101,7 +101,8 @@ static int gfm_make_reference_value(gfm_html_tree *tree, gfm_attributes *attrs, 
   }
   cmark_strbuf output = CMARK_BUF_INIT(cmark_get_default_mem_allocator());
   cmark_strbuf_puts(&output, prefix);
-  cmark_strbuf_put(&output, sliced.ptr, sliced.size);
+  if (lowercase) gfm_unicode_lower_into(&output, sliced.ptr, sliced.size);
+  else cmark_strbuf_put(&output, sliced.ptr, sliced.size);
   cmark_strbuf_putc(&output, '-'); cmark_strbuf_puts(&output, token);
   int ok = gfm_attribute_set(attrs, name, output.ptr, output.size);
   cmark_strbuf_free(&sliced); cmark_strbuf_free(&output);
@@ -186,8 +187,8 @@ static int gfm_write_footnote_tag(cmark_strbuf *out, gfm_html_tree *tree, gfm_ht
   int ok = 1;
   if (node->footnote & 4) gfm_attribute_remove(&attrs, "class");
   if (node->footnote & 1) {
-    ok = gfm_make_reference_value(tree, &attrs, "href", "#user-content-fn-", 4, token, 1) &&
-         gfm_make_reference_value(tree, &attrs, "id", "user-content-", 0, token, 0) &&
+    ok = gfm_make_reference_value(tree, &attrs, "href", "#user-content-fn-", 4, token, 1, 0) &&
+         gfm_make_reference_value(tree, &attrs, "id", "user-content-", 0, token, 0, 1) &&
          gfm_attribute_set(&attrs, "aria-describedby", (const unsigned char *)"footnote-label", 14);
   }
   if (ok && (node->footnote & 2)) {
@@ -198,7 +199,7 @@ static int gfm_write_footnote_tag(cmark_strbuf *out, gfm_html_tree *tree, gfm_ht
       gfm_slice_utf16(&sliced, value->ptr, value->size, 7);
       *arrow = sliced.size == 1 && sliced.ptr[0] == ':';
       cmark_strbuf_free(&sliced);
-      if (!*arrow) ok = gfm_make_reference_value(tree, &attrs, "href", "#user-content-", 1, token, 0);
+      if (!*arrow) ok = gfm_make_reference_value(tree, &attrs, "href", "#user-content-", 1, token, 0, 0);
     }
     if (!*arrow) {
       gfm_attribute_remove(&attrs, "class");
