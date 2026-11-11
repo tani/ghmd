@@ -166,3 +166,17 @@ test("keeps table handling local to the paragraph containing math", async () => 
   );
   for (const html of [same, separate, nested]) expect(html).not.toContain("data-gfm-table-");
 });
+
+test("keeps empty safe links while removing encoded dangerous URLs", async () => {
+  expect(await render('<a href="">empty</a>')).toContain('<a href="">empty</a>');
+  for (const url of [
+    "javascript:alert(1)",
+    "jav&#x61;script:alert(1)",
+    "javascript&#58;alert(1)",
+    "vbscript:alert(1)",
+  ]) {
+    const html = await render(`<a href="${url}">bad</a>`);
+    expect(html).not.toContain("href=");
+    expect(html).toContain("bad");
+  }
+});
