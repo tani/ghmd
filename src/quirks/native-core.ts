@@ -39,7 +39,6 @@ export const renderMarkdown = (source: string, filter?: RawHtmlFilter): string =
 export const renderAstXml = (source: string, filter?: RawHtmlFilter): string =>
   call("ast", source, undefined, undefined, undefined, filter);
 export const unicodeLower = (source: string): string => call("lowercase", source);
-export const decodeHtml = (source: string): string => call("decode", source);
 export interface HtmlStage {
   html: string;
   needsReparse: boolean;
@@ -63,11 +62,3 @@ export const finishHtml = (
   boundary: string,
   tableMarker: string,
 ): string => call("finish", html, token, boundary, tableMarker);
-
-/** Experimental pipeline with no intervening DOM reparsing. */
-export const postprocessStreamingHtml = (
-  html: string,
-  token: string,
-  boundary: string,
-  tableMarker: string,
-): string => call("stream", html, token, boundary, tableMarker);

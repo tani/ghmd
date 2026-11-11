@@ -45,7 +45,7 @@ int gfm_api_probe(void) {
   free(result.text.data);
   if (!ok) return 6;
   if (gfm_call("unknown", args, 1, NULL, NULL, &result) != GFM_BAD_ARGUMENT || !result.error || result.text.data) return 7;
-  const char *removed[] = {"finalize", "math", "links", "details", "templates", "boundaries", "mathTables"};
+  const char *removed[] = {"finalize", "math", "links", "details", "templates", "boundaries", "mathTables", "stream", "decode"};
   for (size_t i = 0; i < sizeof(removed) / sizeof(removed[0]); i++) {
     if (gfm_call(removed[i], args, 4, NULL, NULL, &result) != GFM_BAD_ARGUMENT ||
         !result.error || strcmp(result.error, "Unknown native operation") || result.text.data) return 9;

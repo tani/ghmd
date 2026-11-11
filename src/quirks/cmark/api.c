@@ -51,9 +51,9 @@ gfm_status gfm_call(const char *operation, const gfm_view *arguments, size_t cou
   }
   size_t expected = 1;
   if (!strcmp(operation, "prepareStage")) expected = 2;
-  else if (!strcmp(operation, "mathStage") || !strcmp(operation, "finish") || !strcmp(operation, "stream")) expected = 4;
+  else if (!strcmp(operation, "mathStage") || !strcmp(operation, "finish")) expected = 4;
   else if (strcmp(operation, "render") && strcmp(operation, "ast") && strcmp(operation, "version") &&
-           strcmp(operation, "lowercase") && strcmp(operation, "decode")) {
+           strcmp(operation, "lowercase")) {
     result->error = "Unknown native operation"; return GFM_BAD_ARGUMENT;
   }
   if (count != expected) {
@@ -65,10 +65,9 @@ gfm_status gfm_call(const char *operation, const gfm_view *arguments, size_t cou
   gfm_view source = arguments[0];
   if (!strcmp(operation, "render") || !strcmp(operation, "ast"))
     return gfm_render_string(source, !strcmp(operation, "ast"), filter, context, result);
-  if (!strcmp(operation, "lowercase") || !strcmp(operation, "decode") || !strcmp(operation, "version")) {
+  if (!strcmp(operation, "lowercase") || !strcmp(operation, "version")) {
     cmark_strbuf out = CMARK_BUF_INIT(cmark_get_default_mem_allocator());
     if (!strcmp(operation, "lowercase")) gfm_unicode_lower_into(&out, source.data, source.length);
-    else if (!strcmp(operation, "decode")) houdini_unescape_html_f(&out, source.data, source.length);
     else cmark_strbuf_puts(&out, cmark_version_string());
     result->text.length = out.size;
     result->text.data = cmark_strbuf_detach(&out);
@@ -92,7 +91,6 @@ gfm_status gfm_call(const char *operation, const gfm_view *arguments, size_t cou
     if (!strcmp(operation, "prepareStage")) output = gfm_prepare_html_stage(source.data, source.length, a);
     else if (!strcmp(operation, "mathStage")) output = gfm_render_math_stage(source.data, source.length, a, b, c);
     else if (!strcmp(operation, "finish")) output = gfm_finish_html(source.data, source.length, a, b, c);
-    else if (!strcmp(operation, "stream")) output = gfm_postprocess_streaming_html(source.data, source.length, a, b, c);
     for (size_t i = 0; i < 3; i++) free(modifiers[i]);
     result->text.data = (unsigned char *)output;
     if (output) result->text.length = strlen(output);

@@ -21,8 +21,7 @@ typedef gfm_status (*gfm_html_filter)(gfm_view input, gfm_string *output, void *
  * The finish operation removes one final LF, then enforces the UTF-8 output
  * size limit. GFM_LIMIT_EXCEEDED returns no owned output and a static error.
  * Views need not be NUL-terminated. All arguments must have non-NULL data.
- * The experimental stream operation runs the C stages without DOM reparsing
- * and leaves scope restoration and final output checks to its caller. */
+ */
 gfm_status gfm_call(const char *operation, const gfm_view *arguments, size_t count,
                     gfm_html_filter filter, void *context, gfm_result *result);
 #endif

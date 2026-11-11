@@ -3,7 +3,6 @@ import {
   renderMarkdown,
   renderAstXml,
   unicodeLower,
-  decodeHtml,
   finishHtml,
   renderMathStage,
 } from "../src/quirks/native-core";
@@ -14,8 +13,6 @@ test("native string API validates arguments without exposing pointers", () => {
   expect(renderMarkdown("")).toBe("");
   expect(renderMarkdown("日本語\0😀")).toBe("<p>日本語�😀</p>\n");
   expect(unicodeLower("A\0ΟΣ😀")).toBe("a\0ος😀");
-  expect(decodeHtml("&amp; 日本語 &#x1f600;")).toBe("& 日本語 😀");
-  expect(decodeHtml("a\0b")).toBe("a\0b");
   expect(unicodeLower("\ud800")).toBe("�");
   for (const value of [null, undefined, 1, {}, Buffer.from("x")]) {
     expect(() => renderMarkdown(value as any)).toThrow(TypeError);
