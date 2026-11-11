@@ -47,11 +47,19 @@ test("preserves multiple display blocks and escapes fenced math", async () => {
 });
 
 test("recognizes an empty display-math text block", async () => {
-  const { displayMathBlocks } = await import("../src/quirks/native");
-  expect(displayMathBlocks("$$\n\n$$")).toEqual(["$$\n\n$$"]);
+  const { renderMathHtml } = await import("../src/quirks/native");
+  expect(renderMathHtml("<p>$$\n\n$$</p>", runId, "boundary")).toContain('class="js-display-math"');
 });
 
 test("adds details summaries before reading fenced math text", async () => {
   const html = await render('<div>\n<pre lang="math"><details></details></pre>\n</div>', { runId });
   expect(html).toContain("$$Details$$");
+});
+
+test("preserves adjacent text node boundaries after removing comments", async () => {
+  const source =
+    '<div>\n$$\nx\n$$<!-- <table> --><input type="checkbox" checked>$`x`$<div>😀</div>[!NOTE]<br><span class="task-list-item x x">$`x`$<!-- <table> -->$`x`$$$\nx\n$$x</span>\n</div>';
+  const html = await render(source, { runId });
+  expect(html.match(/class="js-inline-math"/g)).toHaveLength(2);
+  expect(html).not.toContain("<!--");
 });

@@ -58,8 +58,6 @@ gfm_math_matches *gfm_inline_math(const unsigned char *s, size_t length) {
   }
   return result;
 }
-size_t gfm_inline_math_count(const gfm_math_matches *m) { return m->count; }
-const uint32_t *gfm_inline_math_ranges(const gfm_math_matches *m) { return m->ranges; }
 void gfm_inline_math_free(gfm_math_matches *m) { if (m) { free(m->ranges); free(m); } }
 
 /* Return consecutive display blocks only when they cover the entire text. */
@@ -102,12 +100,6 @@ static void gfm_math_put_lines(cmark_strbuf *out, const unsigned char *s, size_t
     cmark_strbuf_putc(out, s[i]);
   }
 }
-char *gfm_display_block(const unsigned char *s, size_t length) {
-  cmark_strbuf out = CMARK_BUF_INIT(cmark_get_default_mem_allocator());
-  gfm_math_put_lines(&out, s, length);
-  return (char *)cmark_strbuf_detach(&out);
-}
-
 /* Display math containing Markdown emphasis is reconstructed with blank lines. */
 char *gfm_emphasis_display(const unsigned char *s, size_t length) {
   if (length < 6 || memcmp(s, "$$\n", 3) || memcmp(s + length - 3, "\n$$", 3)) return NULL;

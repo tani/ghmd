@@ -10,6 +10,8 @@ typedef struct {
   size_t length, count, capacity;
   gfm_html_node *nodes;
   const char *token;
+  const char *text_boundary;
+  int had_text_boundary;
 } gfm_html_tree;
 #define GFM_NONE SIZE_MAX
 
@@ -55,9 +57,22 @@ static int gfm_parse_serialized_html(gfm_html_tree *tree) {
   while (i < tree->length) {
     if (s[i] != '<') { i++; continue; }
     if (i + 4 <= tree->length && !memcmp(s + i, "<!--", 4)) {
+      size_t marker_start = i;
       i += 4;
       while (i + 3 <= tree->length && memcmp(s + i, "-->", 3)) i++;
-      i = i + 3 <= tree->length ? i + 3 : tree->length;
+      size_t end = i + 3 <= tree->length ? i + 3 : tree->length;
+      if (tree->text_boundary && end >= text_start + 7 &&
+          end - marker_start == strlen(tree->text_boundary) + 7 &&
+          !memcmp(s + marker_start + 4, tree->text_boundary, strlen(tree->text_boundary))) {
+        size_t marker = marker_start;
+        if (marker > text_start) {
+          gfm_html_node text = { .start=text_start, .end=marker };
+          if (gfm_tree_append(tree, stack[depth - 1], text) == GFM_NONE) goto fail;
+        }
+        tree->had_text_boundary = 1;
+        text_start = end;
+      }
+      i = end;
       continue;
     }
     size_t tag_start = i + 1;

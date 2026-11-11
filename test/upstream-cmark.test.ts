@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import manifest from "./fixtures/cmark-gfm-upstream.json";
-import { nativeRender, splitInlineMath, finalizeHtml } from "../src/quirks/native";
+import { nativeRender, renderMathHtml, finalizeHtml } from "../src/quirks/native";
 
 const vendor = join(import.meta.dir, "../vendor/cmark-gfm");
 describe("unmodified upstream cmark-gfm", () => {
@@ -47,14 +47,11 @@ describe("unmodified upstream cmark-gfm", () => {
     expect(html).toContain("<p>note ");
   });
   test("matches inline math boundaries around Unicode whitespace", () => {
-    expect(splitInlineMath("日本語 $x$\u00a0$y$ z$x$")).toEqual([
-      { text: "日本語 ", math: false },
-      { text: "$x$", math: true },
-      { text: "\u00a0", math: false },
-      { text: "$y$", math: true },
-      { text: " z$x$", math: false },
-    ]);
-    expect(splitInlineMath("a$x$")).toBeUndefined();
+    const token = "00000000000000000000000000000000";
+    const html = renderMathHtml("<p>日本語 $x$&nbsp;$y$ z$x$</p>", token, "boundary");
+    expect(html.match(/class="js-inline-math"/g)).toHaveLength(2);
+    expect(html).toContain(" z$x$");
+    expect(renderMathHtml("<p>a$x$</p>", token, "boundary")).toBe("<p>a$x$</p>");
   });
   test("wraps serialized tables without modifying raw-text content", () => {
     expect(

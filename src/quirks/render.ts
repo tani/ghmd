@@ -1,13 +1,5 @@
 import { createDOM } from "./dom";
-import {
-  displayMathBlocks,
-  emphasisDisplayMath,
-  fencedMath,
-  finalizeHtml,
-  nativeRender,
-  protectedMath,
-  splitInlineMath,
-} from "./native";
+import { finalizeHtml, nativeRender, renderMathHtml } from "./native";
 import { parseFragment, serialize } from "parse5";
 import createDOMPurify from "dompurify";
 import type { RenderOptions } from "./index";
@@ -97,23 +89,6 @@ export async function renderInProcess(source: string, options: RenderOptions): P
     while (comments.nextNode()) removeComments.push(comments.currentNode);
     for (const comment of removeComments) comment.remove();
     const token = options.runId ?? crypto.randomUUID().replaceAll("-", "");
-    // The API leaves TeX for its client-side math renderer. It does not render
-    // math inside footnotes, links, code, or inline formatting elements.
-    const blocked = (element: any) => {
-      for (let p = element.parentElement; p; p = p.parentElement) {
-        if (p.tagName === "DETAILS") return false;
-        if (["B", "STRONG", "EM", "A", "CODE", "PRE", "SECTION"].includes(p.tagName)) return true;
-      }
-      return false;
-    };
-    const mathElement = (content: string, display: boolean) => {
-      const math = document.createElement("math-renderer");
-      math.className = display ? "js-display-math" : "js-inline-math";
-      math.setAttribute("style", display ? "display: block" : "display: inline-block");
-      math.setAttribute("data-run-id", token);
-      math.textContent = content;
-      return math;
-    };
     // Details must be populated before math reads descendant textContent.
     for (const details of document.querySelectorAll("details")) {
       if (!details.querySelector(":scope > summary")) {
@@ -122,89 +97,22 @@ export async function renderInProcess(source: string, options: RenderOptions): P
         details.prepend(summary);
       }
     }
-    for (const paragraph of [
-      ...document.querySelectorAll(
-        "p, li, h1, h2, h3, h4, h5, h6, td, th, strong, em, i, del, span, summary",
-      ),
-    ]) {
-      if (
-        blocked(paragraph) &&
-        !(paragraph.tagName === "STRONG" && !paragraph.closest("b,section,a,pre,code"))
-      )
-        continue;
-      const children = [...paragraph.childNodes];
-      // GitHub reconstructs underscore emphasis in display math after Markdown
-      // parsing, adding a blank line around the reconstructed expression.
-      if (
-        !paragraph.closest("b") &&
-        children.some((n) => n.nodeName === "EM") &&
-        children.every((n) => n.nodeType === 3 || n.nodeName === "BR" || n.nodeName === "EM")
-      ) {
-        const reconstructed = children
-          .map((n) =>
-            n.nodeName === "EM" ? "_" + n.textContent + "_" : n.nodeType === 3 ? n.textContent : "",
-          )
-          .join("");
-        const display = emphasisDisplayMath(reconstructed);
-        if (display !== undefined) {
-          paragraph.replaceChildren(mathElement(display, true));
-          continue;
-        }
-      }
-      // Display formulas contain only text and hard-break elements.
-      if (children.every((n) => n.nodeType === 3 || n.nodeName === "BR")) {
-        const text = paragraph.textContent ?? "";
-        if (paragraph.tagName !== "LI" && !paragraph.closest("b,details")) {
-          const blocks = displayMathBlocks(text);
-          if (blocks) {
-            const nodes: any[] = [];
-            for (const block of blocks) {
-              if (nodes.length) nodes.push(document.createTextNode("\n"));
-              nodes.push(mathElement(block, true));
-            }
-            paragraph.replaceChildren(...nodes);
-            continue;
-          }
-        }
-      }
-      // Dollar-backtick spans are parsed as a code element surrounded by dollars.
-      for (const code of [...paragraph.querySelectorAll(":scope > code")]) {
-        const before = code.previousSibling,
-          after = code.nextSibling;
-        if (before?.nodeType !== 3 || after?.nodeType !== 3) continue;
-        const value = protectedMath(
-          before.textContent ?? "",
-          after.textContent ?? "",
-          code.textContent ?? "",
-          paragraph.tagName === "EM",
-        );
-        if (value === undefined) continue;
-        before.textContent = before.textContent!.slice(0, -1);
-        after.textContent = after.textContent!.slice(1);
-        code.replaceWith(mathElement(value, false));
-      }
-      if (paragraph.tagName === "EM" || (paragraph.tagName === "STRONG" && paragraph.closest("em")))
-        continue;
-      for (const node of [...paragraph.childNodes]) {
-        if (node.nodeType !== 3 || !node.textContent?.includes("$")) continue;
-        const segments = splitInlineMath(node.textContent);
-        if (segments) {
-          const fragment = document.createDocumentFragment();
-          for (const segment of segments) {
-            fragment.append(
-              segment.math
-                ? mathElement(segment.text.replaceAll("<", "&lt;").replaceAll(">", "&gt;"), false)
-                : document.createTextNode(segment.text),
-            );
-          }
-          node.replaceWith(fragment);
-        }
+    const htmlBeforeMath = document.body.innerHTML;
+    // Preserve adjacent text-node boundaries left by removed comments.
+    const textNodes = document.createTreeWalker(document.body, window.NodeFilter.SHOW_TEXT);
+    const markers: any[] = [];
+    while (textNodes.nextNode()) {
+      const node = textNodes.currentNode;
+      if (node.previousSibling?.nodeType === 3) {
+        const marker = document.createComment(mark);
+        node.parentNode!.insertBefore(marker, node);
+        markers.push(marker);
       }
     }
-    for (const pre of [...document.querySelectorAll('pre[lang="math"]')]) {
-      if (blocked(pre)) continue;
-      pre.replaceWith(mathElement(fencedMath(pre.textContent ?? ""), true));
-    }
+    const markedHtml = markers.length ? document.body.innerHTML : htmlBeforeMath;
+    for (const marker of markers) marker.remove();
+    const mathHtml = renderMathHtml(markedHtml, token, mark);
+    if (mathHtml !== htmlBeforeMath) document.body.innerHTML = mathHtml;
     // GitHub removes links whose destination was removed by sanitization.
     for (const link of [...document.querySelectorAll("a[data-gfm-had-href]")]) {
       const hadHref = link.getAttribute("data-gfm-had-href") === mark;
