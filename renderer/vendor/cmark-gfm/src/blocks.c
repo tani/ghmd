@@ -517,6 +517,7 @@ static void process_footnotes(cmark_parser *parser) {
         cmark_strbuf buf = CMARK_BUF_INIT(parser->mem);
         cmark_strbuf_puts(&buf, "[^");
         cmark_strbuf_put(&buf, cur->as.literal.data, cur->as.literal.len);
+        cmark_strbuf_unescape(&buf);
         cmark_strbuf_putc(&buf, ']');
 
         text->as.literal = cmark_chunk_buf_detach(&buf);

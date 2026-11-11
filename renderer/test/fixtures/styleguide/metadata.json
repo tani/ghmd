@@ -1,0 +1,7 @@
+{
+  "captured_utc": "2026-11-11T02:34:58.780140+00:00",
+  "target": "GitHub REST API /markdown, mode=gfm",
+  "source": "synthetic inputs in test/styleguide/cases.ts",
+  "scope": "HTML fragments; batch-level comparisons; GitHub-generated IDs normalized",
+  "notes": "The snapshot contains synthetic input responses only; no upstream acid-test files are redistributed."
+}

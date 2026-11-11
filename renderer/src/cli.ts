@@ -13,6 +13,6 @@ try{
   }else path=arg;
  }
  const source=path&&path!=='-'?await Bun.file(path).text():await Bun.stdin.text();
- const imageProxy=useGitHub?createGitHubImageProxy({token:process.env.GITHUB_TOKEN}):undefined;
+ const imageProxy=useGitHub?createGitHubImageProxy({token:process.env.GITHUB_PAT||process.env.GITHUB_TOKEN}):undefined;
  process.stdout.write(await render(source,{imageProxy,runId}));
 }catch(error){console.error(String(error));process.exitCode=1}

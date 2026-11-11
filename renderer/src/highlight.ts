@@ -15,6 +15,20 @@ export async function highlight(document:any, pre:any):Promise<boolean>{
   const element=document.createElement(node.tagName);
   if(node.properties.className) element.className=node.properties.className.join(' ');
   for(const child of node.children??[]) element.append(convert(child));
+  // GitHub's Mermaid highlighter retains the nested scopes around quoted
+  // node labels, while starry-night collapses the equivalent token scopes.
+  if(scope==='source.mermaid' && element.className==='pl-s'){
+   const children=[...element.childNodes] as any[];
+   const first=children[0],last=children.at(-1);
+   if(first?.className==='pl-sg' && first.textContent==='[' && last?.className==='pl-sg' && last.textContent===']' &&
+      children[1]?.className==='pl-pds' && children.at(-2)?.className==='pl-pds'){
+    const open=document.createElement('span');open.className='pl-pds';open.append(first);
+    const content=document.createElement('span');content.className='pl-s';
+    for(const child of children.slice(1,-1))content.append(child);
+    const close=document.createElement('span');close.className='pl-pds';close.append(last);
+    element.replaceChildren(open,content,close);
+   }
+  }
   return element;
  };
  const wrapper=document.createElement('div');

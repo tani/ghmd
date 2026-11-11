@@ -12,7 +12,19 @@ export async function renderInProcess(source:string,options:RenderOptions):Promi
  const window=createDOM();
  const document=window.document;
  try {
-  document.body.innerHTML=createDOMPurify(window as any).sanitize(serialize(parseFragment(html)), {ADD_ATTR:['data-footnote-ref','data-footnote-backref','data-footnote-backref-idx','data-footnotes'], ADD_TAGS:['input']});
+  // Remember which anchors had a destination before sanitization. A raw
+  // anchor without href must not be mistaken for a rejected dangerous URL.
+  const mark=crypto.randomUUID();
+  const tree:any=parseFragment(html);
+  const markLinks=(node:any)=>{
+   if(node.tagName==='a' && node.attrs?.some((a:any)=>a.name==='href')){
+    node.attrs=node.attrs.filter((a:any)=>a.name!=='data-gfm-had-href');
+    node.attrs.push({name:'data-gfm-had-href',value:mark});
+   }
+   for(const child of node.childNodes??[])markLinks(child);
+  };
+  markLinks(tree);
+  document.body.innerHTML=createDOMPurify(window as any).sanitize(serialize(tree), {ADD_ATTR:['data-footnote-ref','data-footnote-backref','data-footnote-backref-idx','data-footnotes'], ADD_TAGS:['input']});
   const comments=document.createTreeWalker(document.body, window.NodeFilter.SHOW_COMMENT);
   const removeComments=[]; while(comments.nextNode()) removeComments.push(comments.currentNode);
   for(const comment of removeComments) comment.remove();
@@ -39,8 +51,8 @@ export async function renderInProcess(source:string,options:RenderOptions):Promi
     const summary=document.createElement('summary');summary.textContent='Details';details.prepend(summary);
    }
   }
-  for(const paragraph of [...document.querySelectorAll('p')]){
-   if(blocked(paragraph)) continue;
+  for(const paragraph of [...document.querySelectorAll('p, p strong, p em')]){
+   if(blocked(paragraph) && !(paragraph.tagName==='STRONG' && !paragraph.closest('b,section'))) continue;
    const children=[...paragraph.childNodes];
    // GitHub reconstructs underscore emphasis in display math after Markdown
    // parsing, adding a blank line around the reconstructed expression.
@@ -54,26 +66,38 @@ export async function renderInProcess(source:string,options:RenderOptions):Promi
    // Display formulas contain only text and hard-break elements.
    if(children.every(n=>n.nodeType===3 || n.nodeName==='BR')){
     const text=paragraph.textContent??'';
-    if(/^\$\$\n[\s\S]*\n\$\$$/.test(text) && !paragraph.closest('b')){
-     paragraph.replaceChildren(mathElement(text.replace(/\\\n/g,'\\\\\n'),true));continue;
+    if(!paragraph.closest('b,details')){
+     const blocks=[...text.matchAll(/\$\$\n[\s\S]*?\n\$\$/g)];
+     if(blocks.length && blocks.map(m=>m[0]).join('\n')===text){
+      const nodes:any[]=[];
+      for(const block of blocks){if(nodes.length)nodes.push(document.createTextNode('\n'));nodes.push(mathElement(block[0].replace(/\\\n/g,'\\\\\n'),true))}
+      paragraph.replaceChildren(...nodes);continue;
+     }
     }
    }
    // Dollar-backtick spans are parsed as a code element surrounded by dollars.
    for(const code of [...paragraph.querySelectorAll(':scope > code')]){
     const before=code.previousSibling,after=code.nextSibling;
     if(before?.nodeType!==3 || after?.nodeType!==3 || !before.textContent?.endsWith('$') || !after.textContent?.startsWith('$')) continue;
+    if(/[A-Za-z]$/.test(before.textContent.slice(0,-1)))continue;
+    if(paragraph.tagName==='EM' && after.textContent==='$')continue;
     const value=code.textContent??'';
     before.textContent=before.textContent.slice(0,-1);after.textContent=after.textContent.slice(1);
     // GitHub's math filter escapes an ampersand already escaped by HTML.
-    code.replaceWith(mathElement('$'+value.replaceAll('&','&amp;')+'$',false));
+    code.replaceWith(mathElement('$'+value.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')+'$',false));
    }
+   if(paragraph.tagName==='EM' || (paragraph.tagName==='STRONG' && paragraph.closest('em')))continue;
    for(const node of [...paragraph.childNodes]){
     if(node.nodeType!==3 || !node.textContent?.includes('$')) continue;
     const text=node.textContent, re=/\$(?!\$)([^$\n]+?)\$/g;
     let match:RegExpExecArray|null,last=0;const fragment=document.createDocumentFragment();
     while((match=re.exec(text))){
-     if(/^\s|\s$/.test(match[1]) || match[1].includes('&')) continue;
-     fragment.append(document.createTextNode(text.slice(last,match.index)),mathElement(match[0],false));
+     const before=text[match.index-1],after=text[match.index+match[0].length];
+     if((before && !/[\s(]/.test(before)) || (after && /[A-Za-z0-9]/.test(after)) || /^\s/.test(match[1]) || (/\s$/.test(match[1]) && after!=='$') || match[1].includes('&')){
+      // A rejected opening dollar can contain the next valid candidate.
+      re.lastIndex=match.index+1;continue;
+     }
+     fragment.append(document.createTextNode(text.slice(last,match.index)),mathElement(match[0].replaceAll('<','&lt;').replaceAll('>','&gt;'),false));
      last=match.index+match[0].length;
     }
     if(last){fragment.append(document.createTextNode(text.slice(last)));node.replaceWith(fragment)}
@@ -81,7 +105,7 @@ export async function renderInProcess(source:string,options:RenderOptions):Promi
   }
   for(const pre of [...document.querySelectorAll('pre[lang="math"]')]){
    if(blocked(pre)) continue;
-   const content=(pre.textContent??'').replace(/\n$/,'').replaceAll('\n','\\\n');
+   const content=(pre.textContent??'').replace(/\n$/,'').replace(/(?<!\\)\$/g,'\\$').replaceAll('\n','\\\n');
    pre.replaceWith(mathElement('$$'+content+'$$',true));
   }
   for(const pre of [...document.querySelectorAll('pre[lang]')]) await highlight(document,pre);
@@ -96,6 +120,7 @@ export async function renderInProcess(source:string,options:RenderOptions):Promi
    table.replaceWith(wrapper); wrapper.append(table);
   }
   for(const quote of [...document.querySelectorAll('blockquote')]){
+   if(quote.parentElement?.closest('blockquote')) continue;
    const paragraph=quote.firstElementChild;
    if(!paragraph || paragraph.tagName!=='P' || !paragraph.firstChild || paragraph.firstChild.nodeType!==3) continue;
    const marker=paragraph.firstChild.textContent?.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]$/);
@@ -116,10 +141,30 @@ export async function renderInProcess(source:string,options:RenderOptions):Promi
    const checked=input.hasAttribute('checked');
    input.removeAttribute('checked'); input.removeAttribute('disabled');
    input.setAttribute('id','');
-   if(checked) input.setAttribute('checked','');
    input.setAttribute('disabled','');
    input.classList.add('task-list-item-checkbox');
-   input.setAttribute('aria-label',input.hasAttribute('checked')?'Completed task':'Incomplete task');
+   input.setAttribute('aria-label',checked?'Completed task':'Incomplete task');
+   if(checked) input.setAttribute('checked','');
+  }
+  // GitHub removes links whose destination was removed by sanitization.
+  for(const link of [...document.querySelectorAll('a[data-gfm-had-href]')]){
+   const hadHref=link.getAttribute('data-gfm-had-href')===mark;
+   link.removeAttribute('data-gfm-had-href');
+   if(hadHref && !link.hasAttribute('href') && !link.hasAttribute('id') && !link.hasAttribute('name')) link.replaceWith(...link.childNodes);
+  }
+  // GitHub wraps standalone relative images and adds the responsive style.
+  for(const image of [...document.querySelectorAll('img[src]')]){
+   const src=image.getAttribute('src')!;
+   if(/^(?:https?:)?\/\//i.test(src)) continue;
+   image.setAttribute('style','max-width: 100%;');
+   if(image.parentElement===document.body || image.parentElement?.tagName==='B'){
+    const paragraph=document.createElement('p');image.replaceWith(paragraph);paragraph.append(image);
+   }
+   if(!image.closest('a')){
+    const link=document.createElement('a');link.setAttribute('target','_blank');
+    link.setAttribute('rel','noopener noreferrer');link.setAttribute('href',src);
+    image.replaceWith(link);link.append(image);
+   }
   }
   for(const link of document.querySelectorAll('a[href]')){
    const href=link.getAttribute('href')!;

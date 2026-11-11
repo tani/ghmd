@@ -7,7 +7,8 @@
   "scripts": {
     "setup": "bun scripts/build-native.ts",
     "test": "bun test --timeout 60000",
-    "render": "bun src/cli.ts"
+    "render": "bun src/cli.ts",
+    "audit:styleguide": "bun scripts/styleguide-audit.ts"
   },
   "dependencies": {
     "@mathjax/src": "4.1.3",

@@ -1,0 +1,31 @@
+{
+  "repository": "https://github.com/nschloe/markdown-math-acid-test",
+  "commit": "1a672974525509f26da28abbae230999b49e2f3d",
+  "license": "No LICENSE file in the pinned repository; input files are not redistributed.",
+  "files": {
+    "01-basic-example.md": "ee4467c7a108f9db94bba76eff85c8f18710387dd1586bc27a7f882397c0cd30",
+    "02-consecutive-math.md": "887c08acf610c0bc74edaed9be53327dc8fe4bf6e6819c702f1f03c7fe841613",
+    "03-indented-math.md": "fb4bbd26faf122190df38f98ff1001556a34341a6a1ef0bff1cd72e906e31b0f",
+    "04-math-in-quote-blocks.md": "f2583ebc181024b621aa8e463be157b1f6ffacacf910ac5a507667822ea900c8",
+    "05-escaped-dollar-sign.md": "6e94f2f87d1a7082660435b3cb3293f5e49c627c959630df6305cdc60fd754d3",
+    "06-math-in-footnotes.md": "f625c4613374dd92b87ab01e5fc0658129ee839f28c6d448142d9a15d566e2e7",
+    "07-math-in-links.md": "d8c7fed175b1b55768334b89d22dac42e1373625b79b9a5e2733adb95714472b",
+    "08-escaped-symbols-in-math.md": "c7a006da34fa000b9b6e0b77b77a0ca4cb292c75a752153f031ec2a435d4c3c2",
+    "09-math-in-details.md": "4445333d71cef8446c3d977258c80de22d30712eb3f6da8a4fe9af2ab4be71dc",
+    "10--without-surrounding-whitespace.md": "9e9b9900877793298395b415e4e2dc4cadf0565ca12b81e87746121128963f31",
+    "11-inline-math-preceeded-by-nonwhitespace.md": "eb173f6772feedca1a364774a42af55ec2fb5ccf2f7c7b6f6fdd67f19a42c714",
+    "12-inline-math-succeeded-by-nonwhitespace.md": "8f824c545fded1c1f22b7f196811942ed1dd2bcb1306a0a97eca45f92b37df5f",
+    "13-inline-math-with-n.md": "4b741c0f37dbf67738ed13a7ef0cb2fc856350b3d787e126d6f176b81baf1cd9",
+    "14-comments-before-bracket-delimiters.md": "dfcd34a6bd57fc7317e3b57d722de73efb90459269abbcca282efde339f83cb0",
+    "15-small-sumproduct-signs.md": "71308384c955b2b9fbb7fb16d6625d1bda49c969629ec8624367e39af23d6001",
+    "16-operatorname.md": "c9ff62afb6dfa29e0dd3d9ed3198e0a45612361385aaeb4d1848389032df4cd1",
+    "17-inline-math-in-stylized-text.md": "f792ab948909a8d8aabed8c1afb436e81bdfbe79aa80f713337793bde46b94bb",
+    "18-inline-math-at-the-end-of-stylized-text.md": "c192060ded513a159f7704b206416de07312e1c253cbf5e182aa86ce34b55393",
+    "19-dollar-in-text.md": "b93a31fee6126c926413adb324edefbe422662371175810ffdb46ee512e72841",
+    "20-math-vs-html-mixups.md": "af9d9b6f0c07579c2da50d912bb3bcedbb7fc23daf79148e10d56c4e0dafaabd",
+    "21-sqrt-symbol-around-fractions.md": "1c7ae1c82e1302ee378123f5ceea0a62f17108fd5692aef3293b3754ea789be7",
+    "22-matrix-without-line-breaks.md": "0e6cd9de7bdc4c8f82693b4e54b8bf9a5b52fe379efc90885197e2705a985685",
+    "23-50-colors-in-a-block.md": "25cf4dd7cbc6b7c2afe62fc9270047b8352d7e5f18174195b617f06acd24884e",
+    "24-100-bracketed-exponents-or-subscripts.md": "21b4f79f3a287e3393354c1ff86b2a9350d9becc834ae8dfc7f118832e01106b"
+  }
+}

@@ -7,7 +7,8 @@
   "patches": [
     "../../patches/footnote-xml.patch",
     "../../patches/tasklist-checked.patch",
-    "../../patches/footnote-labels.patch"
+    "../../patches/footnote-labels.patch",
+    "../../patches/footnote-unescape.patch"
   ],
   "patchedNodeCSha256": "9b000553c0ec29e3bf65e37dfadf50f4d12938630ccec4cf1998b647a7e06d7b"
 }

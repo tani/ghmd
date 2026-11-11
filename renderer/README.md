@@ -26,7 +26,7 @@ The CLI also accepts standard input. The library returns a Promise containing an
 
 The reference tests compare all four saved fragments byte-for-byte by supplying their saved per-render footnote and math IDs via `runId`. GitHub signs image proxy URLs with its own server-side key. For the image in batch 1, the test supplies the already-saved signed URL via `imageProxy`; without a resolver, the renderer leaves the original image URL in place and batch 1 does not match exactly.
 
-The CLI flag sends each unique remote image URL to GitHub's Markdown API to obtain its signed Camo URL. It does not send the rest of the Markdown. GitHub API rate limits apply; optionally set `GITHUB_TOKEN` for authenticated requests. Failed lookups cause rendering to fail. Without the flag, rendering remains offline and leaves remote image URLs unproxied.
+The CLI flag sends each unique remote image URL to GitHub's Markdown API to obtain its signed Camo URL. It does not send the rest of the Markdown. GitHub API rate limits apply; optionally set `GITHUB_PAT` or `GITHUB_TOKEN` for authenticated requests. To use a workspace-root `.env` from this directory, run `bun --env-file=../.env src/cli.ts --github-image-proxy input.md`. Failed lookups cause rendering to fail. Without the flag, rendering remains offline and leaves remote image URLs unproxied.
 
 The library exposes the same opt-in resolver:
 

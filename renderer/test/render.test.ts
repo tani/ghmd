@@ -76,3 +76,12 @@ test('accepts a deterministic render ID and rejects malformed IDs',async()=>{
  expect(html).toContain(`user-content-fn-a-${runId}`);
  await expect(render('text',{runId:'bad'})).rejects.toThrow('runId must be 32');
 });
+
+
+test('keeps a raw anchor without href while stripping a rejected destination',async()=>{
+ const html=await render('<a>plain anchor</a> and [unsafe](javascript:alert(1))');
+ expect(html).toContain('<a>plain anchor</a>');
+ expect(html).toContain(' and unsafe');
+ expect(html).not.toContain('javascript:');
+ expect(html).not.toContain('data-gfm-had-href');
+});
