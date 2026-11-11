@@ -3,8 +3,8 @@
 An in-process Bun renderer for GitHub-style Markdown HTML fragments. Its current goal is to reproduce the saved GitHub API results in `../github-html/` for the inputs in `../github-markdown/`.
 
 ```ts
-import {render} from './src/index.ts';
-const html = await render('# Hello');
+import { render } from "./src/index.ts";
+const html = await render("# Hello");
 ```
 
 ## Setup and use
@@ -30,16 +30,16 @@ The CLI flag sends each unique remote image URL to GitHub's Markdown API to obta
 The library exposes the same opt-in resolver:
 
 ```ts
-import {render, createGitHubImageProxy} from './src/index.ts';
+import { render, createGitHubImageProxy } from "./src/index.ts";
 const imageProxy = createGitHubImageProxy(); // optionally pass {token}
-const html = await render(markdown, {imageProxy});
+const html = await render(markdown, { imageProxy });
 ```
 
 Applications with a different trusted image proxy can supply a synchronous or asynchronous resolver:
 
 ```ts
 const html = await render(markdown, {
-  imageProxy: async (canonicalUrl) => getSignedProxyUrl(canonicalUrl)
+  imageProxy: async (canonicalUrl) => getSignedProxyUrl(canonicalUrl),
 });
 ```
 
