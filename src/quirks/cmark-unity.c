@@ -171,4 +171,5 @@
 #include "cmark-math-dom.c"
 #include "cmark-postprocess.c"
 
+#include "cmark-stages.c"
 #include "cmark-api.c"

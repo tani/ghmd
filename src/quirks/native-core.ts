@@ -56,3 +56,27 @@ export const prepareMathTables = (
   boundary: string,
   tableMarker: string,
 ): string => call("mathTables", html, token, boundary, tableMarker);
+
+export interface HtmlStage {
+  html: string;
+  needsReparse: boolean;
+}
+const stage = (result: string): HtmlStage => {
+  const flag = result[0];
+  if (flag !== "0" && flag !== "1") throw Error("Invalid native HTML stage result");
+  return { html: result.slice(1), needsReparse: flag === "1" };
+};
+export const prepareHtmlStage = (html: string, boundary: string): HtmlStage =>
+  stage(call("prepareStage", html, boundary));
+export const renderMathStage = (
+  html: string,
+  token: string,
+  boundary: string,
+  tableMarker: string,
+): HtmlStage => stage(call("mathStage", html, token, boundary, tableMarker));
+export const finishHtml = (
+  html: string,
+  token: string,
+  boundary: string,
+  tableMarker: string,
+): string => call("finish", html, token, boundary, tableMarker);

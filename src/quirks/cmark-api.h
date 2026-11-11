@@ -14,6 +14,9 @@ typedef gfm_status (*gfm_html_filter)(gfm_view input, gfm_string *output, void *
 
 /* Successful output is malloc-owned and has an explicit UTF-8 byte length.
  * Errors contain a static diagnostic, never runtime-specific exception state.
+ * The prepareStage and mathStage operations return an ASCII '0'/'1' prefix
+ * followed by HTML. '1' means the caller must reparse through its DOM before
+ * the next stage; '0' preserves the existing serialized structure as-is.
  * Views need not be NUL-terminated. A {NULL, 0} optional modifier uses the
  * operation's default; required arguments must have non-NULL data. */
 gfm_status gfm_call(const char *operation, const gfm_view *arguments, size_t count,

@@ -1,14 +1,5 @@
 import { createDOM } from "./dom";
-import {
-  finalizeHtml,
-  flattenTemplates,
-  renderMarkdown,
-  prepareDetails,
-  prepareMathTables,
-  processLinks,
-  removeBoundaries,
-  renderMathHtml,
-} from "./native";
+import { renderMarkdown, prepareHtmlStage, renderMathStage, finishHtml } from "./native";
 import { parseFragment, serialize } from "parse5";
 import createDOMPurify from "dompurify";
 import type { RenderOptions } from "./index";
@@ -106,26 +97,21 @@ export async function renderInProcess(source: string, options: RenderOptions): P
       ],
       ADD_TAGS: ["input"],
     });
-    // Native preparation preserves text-node boundaries left by templates and comments.
-    const flattened = flattenTemplates(document.body.innerHTML, mark);
-    const withDetails = prepareDetails(flattened);
-    let prepared = flattened;
-    if (withDetails !== flattened) {
-      // The previous DOM mutation reparsed here; preserve that behavior.
-      document.body.innerHTML = removeBoundaries(withDetails, mark);
+    const initial = prepareHtmlStage(document.body.innerHTML, mark);
+    let prepared = initial.html;
+    if (initial.needsReparse) {
+      document.body.innerHTML = initial.html;
       prepared = document.body.innerHTML;
     }
     const token = options.runId ?? crypto.randomUUID().replaceAll("-", "");
     const tableMarker = `data-gfm-table-${mark.replaceAll("-", "")}`;
-    const markedHtml = prepareMathTables(prepared, token, mark, tableMarker);
-    const htmlBeforeMath = removeBoundaries(markedHtml, mark);
-    const mathHtml = renderMathHtml(markedHtml, token, mark);
-    let linkedHtml: string;
-    if (mathHtml !== htmlBeforeMath) {
-      document.body.innerHTML = mathHtml;
-      linkedHtml = processLinks(document.body.innerHTML, mark);
-    } else linkedHtml = processLinks(htmlBeforeMath, mark);
-    const output = finalizeHtml(linkedHtml, token, tableMarker).replace(/\n$/, "");
+    const math = renderMathStage(prepared, token, mark, tableMarker);
+    let beforeFinal = math.html;
+    if (math.needsReparse) {
+      document.body.innerHTML = math.html;
+      beforeFinal = document.body.innerHTML;
+    }
+    const output = finishHtml(beforeFinal, token, mark, tableMarker).replace(/\n$/, "");
     if (Buffer.byteLength(output) > 32 * 1024 * 1024)
       throw new RangeError("Rendered HTML exceeds 32 MB");
     return output;

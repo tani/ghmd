@@ -60,8 +60,8 @@ gfm_status gfm_call(const char *operation, const gfm_view *arguments, size_t cou
   size_t minimum = 1, maximum = 1;
   if (!strcmp(operation, "finalize")) maximum = 3;
   else if (!strcmp(operation, "math")) minimum = maximum = 3;
-  else if (!strcmp(operation, "links") || !strcmp(operation, "templates") || !strcmp(operation, "boundaries")) minimum = maximum = 2;
-  else if (!strcmp(operation, "mathTables")) minimum = maximum = 4;
+  else if (!strcmp(operation, "links") || !strcmp(operation, "templates") || !strcmp(operation, "boundaries") || !strcmp(operation, "prepareStage")) minimum = maximum = 2;
+  else if (!strcmp(operation, "mathTables") || !strcmp(operation, "mathStage") || !strcmp(operation, "finish")) minimum = maximum = 4;
   else if (strcmp(operation, "render") && strcmp(operation, "ast") && strcmp(operation, "version") &&
            strcmp(operation, "lowercase") && strcmp(operation, "decode") && strcmp(operation, "details")) {
     result->error = "Unknown native operation"; return GFM_BAD_ARGUMENT;
@@ -106,6 +106,9 @@ gfm_status gfm_call(const char *operation, const gfm_view *arguments, size_t cou
     else if (!strcmp(operation, "templates")) output = gfm_flatten_templates(source.data, source.length, a);
     else if (!strcmp(operation, "boundaries")) output = gfm_remove_boundaries(source.data, source.length, a);
     else if (!strcmp(operation, "mathTables")) output = gfm_prepare_math_tables(source.data, source.length, a, b, c);
+    else if (!strcmp(operation, "prepareStage")) output = gfm_prepare_html_stage(source.data, source.length, a);
+    else if (!strcmp(operation, "mathStage")) output = gfm_render_math_stage(source.data, source.length, a, b, c);
+    else if (!strcmp(operation, "finish")) output = gfm_finish_html(source.data, source.length, a, b, c);
     for (size_t i = 0; i < 3; i++) free(modifiers[i]);
     result->text.data = (unsigned char *)output;
     if (output) result->text.length = strlen(output);
