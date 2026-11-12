@@ -1,12 +1,12 @@
-import { parseFragment } from "../html";
+import { parseFragment } from "../html/index.ts";
 import {
   missingTextFragments,
   summarizeHtml,
   type SemanticKind,
   type SemanticNode,
   type SemanticSummary,
-} from "./index";
-import { parseWithSourceMap } from "./source-map";
+} from "./index.ts";
+import { parseWithSourceMap } from "./source-map.ts";
 
 type Point = { line: number; column: number; offset: number };
 export type SourceRange = { start: Point; end: Point; precision: "exact" | "block" };

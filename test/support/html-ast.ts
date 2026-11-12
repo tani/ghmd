@@ -1,4 +1,4 @@
-import { parseFragment } from "../../src/html";
+import { parseFragment } from "../../src/html/index.ts";
 
 type Node = {
   nodeName: string;

@@ -1,4 +1,4 @@
-import { parseFragment, serialize } from "../../src/html";
+import { parseFragment, serialize } from "../../src/html/index.ts";
 
 type Node = {
   nodeName: string;

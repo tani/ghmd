@@ -1,4 +1,4 @@
-import { renderDocument } from "./native-core";
+import { renderDocument } from "./native-core.ts";
 
 export interface RenderOptions {
   /** Use a specific GitHub-style 32-character lowercase hexadecimal render ID. */

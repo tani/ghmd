@@ -12,6 +12,14 @@
       "devDependencies": {
         "happy-dom": "21.0.4",
       },
+      "peerDependencies": {
+        "koffi": "^3.3.7",
+        "node-tinycc": "^0.1.0",
+      },
+      "optionalPeers": [
+        "koffi",
+        "node-tinycc",
+      ],
     },
   },
   "packages": {

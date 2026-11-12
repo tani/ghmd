@@ -2,17 +2,18 @@
 
 This directory provides Lexbor HTML5 parsing, HTML source locations, and a C
 allowlist sanitizer. The [GitHub-style renderer](../quirks/README.md) includes the
-C core directly. Comparison and tests use a separate Bun adapter to obtain a
+C core directly. Comparison and tests use a separate runtime adapter to obtain a
 JavaScript tree.
 
 ## JavaScript API
 
 This is an internal module, imported through `src/html/index.ts`; it is not a
-package export. Importing it compiles `native.c` once per module instance with
-`bun:ffi` `cc()`.
+package export. Importing it compiles `native.c` once per module instance through
+the [runtime `cc()` adapter](../ffi/README.md): Bun's built-in compiler or the
+Node.js backend with optional peers.
 
 ```ts
-import { parseFragment, serialize } from "./src/html";
+import { parseFragment, serialize } from "./src/html/index.ts";
 
 const tree = parseFragment('<p title="a>b">Hello</p>', {
   sourceCodeLocationInfo: true,

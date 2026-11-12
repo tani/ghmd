@@ -1,10 +1,10 @@
-import { parseFragment } from "../html";
-import { attachNodeLocations, locateDifferences } from "./locations";
-import { parseWithSourceMap } from "./source-map";
-import type { SourceRange } from "./locations";
+import { parseFragment } from "../html/index.ts";
+import { attachNodeLocations, locateDifferences } from "./locations.ts";
+import { parseWithSourceMap } from "./source-map.ts";
+import type { SourceRange } from "./locations.ts";
 
-export { locateDifferences } from "./locations";
-export type { LocatedFinding, SourceRange } from "./locations";
+export { locateDifferences } from "./locations.ts";
+export type { LocatedFinding, SourceRange } from "./locations.ts";
 
 type Node = {
   nodeName: string;

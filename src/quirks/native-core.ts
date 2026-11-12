@@ -1,7 +1,8 @@
-import { cc } from "bun:ffi";
+import { cc } from "../ffi/index.ts";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = join(import.meta.dir, "../..");
+const root = fileURLToPath(new URL("../../", import.meta.url));
 const { symbols } = cc({
   source: join(root, "src/quirks/cmark/bun.c"),
   include: [

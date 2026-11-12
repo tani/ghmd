@@ -1,5 +1,8 @@
 import MarkdownIt from "markdown-it";
-import math from "@vscode/markdown-it-katex";
+import { createRequire } from "node:module";
+
+// The plugin publishes a CommonJS object with an explicit default export.
+const math = createRequire(import.meta.url)("@vscode/markdown-it-katex").default;
 
 export interface RenderOptions {
   /** VS Code's markdown.preview.linkify setting. Default: true. */

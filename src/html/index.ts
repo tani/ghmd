@@ -1,10 +1,11 @@
-import { cc } from "bun:ffi";
+import { cc } from "../ffi/index.ts";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 // HTML goes in and a JSON tree comes back; locations are optional. Lexbor's
 // native tree and buffers are destroyed before the call returns.
-const root = join(import.meta.dir, "../..");
+const root = fileURLToPath(new URL("../../", import.meta.url));
 const { symbols } = cc({
-  source: join(import.meta.dir, "native.c"),
+  source: fileURLToPath(new URL("native.c", import.meta.url)),
   include: [join(root, "vendor/lexbor/compat")],
   symbols: {
     gfm_html_parse: {

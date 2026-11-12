@@ -1,4 +1,5 @@
-import { render } from "./index";
+import { readFileSync } from "node:fs";
+import { render } from "./index.ts";
 const args = process.argv.slice(2);
 try {
   let runId: string | undefined, path: string | undefined;
@@ -11,7 +12,7 @@ try {
       throw new Error("Usage: render [--run-id ID] [input.md|-]");
     } else path = arg;
   }
-  const source = path && path !== "-" ? await Bun.file(path).text() : await Bun.stdin.text();
+  const source = readFileSync(path && path !== "-" ? path : 0, "utf8");
   process.stdout.write(await render(source, { runId }));
 } catch (error) {
   console.error(String(error));

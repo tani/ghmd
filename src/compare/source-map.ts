@@ -1,6 +1,8 @@
-import sourceMap from "markdown-it-source-map";
-import { parseFragment, serialize } from "../html";
-import { createMarkdownEngine } from "../vscode";
+import { createRequire } from "node:module";
+import { parseFragment, serialize } from "../html/index.ts";
+import { createMarkdownEngine } from "../vscode/index.ts";
+
+const sourceMap = createRequire(import.meta.url)("markdown-it-source-map").default;
 
 export interface MappedBlock {
   map: [number, number];

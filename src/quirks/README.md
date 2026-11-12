@@ -37,9 +37,10 @@ bun run render < input.md
 
 ## Processing and ownership
 
-TypeScript compiles [cmark/bun.c](cmark/bun.c) with `bun:ffi` `cc()` once per module
-instance. A render makes one native call, `gfm_bun_render`, for the complete
-operation:
+TypeScript compiles [cmark/bun.c](cmark/bun.c) through the
+[runtime `cc()` adapter](../ffi/README.md) once per module instance. Bun uses its
+built-in compiler; Node.js uses the optional TinyCC/Koffi backend. A render makes
+one native call, `gfm_bun_render`, for the complete operation:
 
 1. Parse Markdown with cmark-gfm, apply AST compatibility transforms, filter raw
    source-authored inputs, and render HTML.
@@ -89,8 +90,9 @@ the [VS Code-style renderer's](../vscode/README.md) KaTeX output.
 
 Keep upstream sources unchanged and compatibility work in owned modules. The
 preprocessor includes the sources at compile time; no pre-generated merged C
-copy or external compiler process is required at runtime. Bun 1.4.4 or later and
-the standard C headers needed by its compiler are required. Format handwritten C
+copy or external compiler process is required at runtime. Use Bun 1.4.4 or later,
+or Node.js 24 or later with the optional peers installed and built. Both need the
+standard C headers used by their compiler. Format handwritten C
 with the repository's `.clang-format`; exclude vendored sources and generated
 Unicode tables.
 
@@ -108,3 +110,4 @@ features, and saved references. `test:e2e` runs the saved API cases and fuzz
 regressions offline. Migration-specific Markdown/HTML pairs live separately in
 [test/fixtures/native-pipeline](../../test/fixtures/native-pipeline/README.md).
 Private diagnostic helpers are confined to `test/support/native.c`.
+`npm run test:node` separately checks the Node adapter and saved API references.

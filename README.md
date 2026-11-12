@@ -35,7 +35,7 @@ The default recall benchmark (`test/benchmarks/vscode-github-risk.json`) contain
 
 ## Setup and use
 
-Bun 1.4.4 is required. On first import of the GitHub-compatible renderer, `bun:ffi` compiles cmark-gfm and the vendored Lexbor HTML5 parser in-process via `cc()`. The cmark-gfm sources are unmodified. A small C entry point uses preprocessor includes and isolates colliding internal names; it is not a pre-generated copy of the source files. No separate compiler, CMake, make, or setup step is required. Standard C headers must be available to Bun’s C compiler. The VS Code-style renderer does not compile or call cmark-gfm.
+Bun 1.4.4 or later uses its built-in `bun:ffi` compiler. On first import of the GitHub-compatible renderer, `cc()` compiles cmark-gfm and the vendored Lexbor HTML5 parser in-process. The cmark-gfm sources are unmodified. A small C entry point uses preprocessor includes and isolates colliding internal names; it is not a pre-generated copy of the source files. On Bun, no separate compiler, CMake, make, or setup step is required. Standard C headers must be available to the C compiler. The VS Code-style renderer does not compile or call cmark-gfm.
 
 ```sh
 bun install --frozen-lockfile
@@ -43,7 +43,17 @@ bun test
 bun run render input.md > output.html
 ```
 
-The CLI uses the GitHub-compatible renderer and also accepts standard input. Both renderers return a Promise containing an HTML fragment and limit input to 1 MB and output to 32 MB. The compatible renderer's native compilation at import and its complete rendering pipeline run synchronously in the calling process; the Promise preserves the public API. The `cc()` integration has been tested here with Bun 1.4.4 on Linux ARM64; other platforms have not been verified in this project.
+Node.js 24 or later can run the TypeScript source from a checkout using the optional `node-tinycc` and `koffi` peer dependencies. Both have `optional: true` in `peerDependenciesMeta`, so Bun users do not need them. Install and build the peers, then run:
+
+```sh
+npm install node-tinycc koffi
+node src/quirks/cli.ts input.md > output.html
+npm run test:node
+```
+
+The `#ffi` conditional import in `package.json` selects Bun's built-in compiler or the Node adapter without a runtime version check. The Node adapter uses the same C sources, compiling a temporary shared library with TinyCC and binding functions through Koffi or generated Node-API callbacks. It requires the main thread and has been verified on Node 24.16.0 / Linux ARM64. `node-tinycc` needs native build tools during installation; compilation at runtime stays in-process. See [src/ffi/README.md](src/ffi/README.md) for the supported `cc()` subset, installation details, cleanup, and platform limitations.
+
+The CLI uses the GitHub-compatible renderer and also accepts standard input. Both renderers return a Promise containing an HTML fragment and limit input to 1 MB and output to 32 MB. The compatible renderer's native compilation at import and its complete rendering pipeline run synchronously in the calling process; the Promise preserves the public API. The Bun `cc()` integration has been tested here with Bun 1.4.4 on Linux ARM64; other platforms have not been verified in this project.
 
 ## Compatibility status
 
