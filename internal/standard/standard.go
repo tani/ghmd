@@ -1,29 +1,35 @@
-// Package standard exposes the vendored md4c CommonMark parser through cgo.
+// Package standard exposes the vendored md4c parser, transpiled to Go by
+// modernc.org/ccgo/v4, without using cgo.
 package standard
-
-/*
-#cgo CFLAGS: -I${SRCDIR} -I${SRCDIR}/../../third_party/md4c
-#include <stdlib.h>
-#include "bridge.h"
-*/
-import "C"
 
 import (
 	"errors"
+	"unsafe"
+
+	"modernc.org/libc"
 )
 
-// Render converts Markdown to HTML with md4c. github enables the GitHub dialect.
+const githubDialectFlags = MD_FLAG_PERMISSIVEATXHEADERS | MD_FLAG_PERMISSIVEURLAUTOLINKS |
+	MD_FLAG_PERMISSIVEWWWAUTOLINKS | MD_FLAG_PERMISSIVEEMAILAUTOLINKS |
+	MD_FLAG_TABLES | MD_FLAG_STRIKETHROUGH | MD_FLAG_TASKLISTS | MD_FLAG_LATEXMATHSPANS
+
+// Render converts Markdown to HTML with md4c. github enables the GitHub
+// extensions and LaTeX math spans.
 func Render(source string, github bool) (string, error) {
-	data := C.CBytes([]byte(source))
-	defer C.free(data)
-	flag := C.int(0)
+	tls := libc.NewTLS()
+	defer tls.Close()
+	input := libc.Xmalloc(tls, libc.Tsize_t(len(source)+1))
+	defer libc.Xfree(tls, input)
+	bytes := unsafe.Slice((*byte)(unsafe.Pointer(input)), len(source))
+	copy(bytes, source)
+	dialect := int32(0)
 	if github {
-		flag = 1
+		dialect = 1
 	}
-	out := C.bridge_md4c_render((*C.char)(data), C.size_t(len(source)), flag)
-	if out == nil {
+	html := bridge_md4c_render(tls, input, libc.Tsize_t(len(source)), dialect)
+	if html == 0 {
 		return "", errors.New("cannot render Markdown with md4c")
 	}
-	defer C.bridge_md4c_free(out)
-	return C.GoString(out), nil
+	defer bridge_md4c_free(tls, html)
+	return libc.GoString(html), nil
 }

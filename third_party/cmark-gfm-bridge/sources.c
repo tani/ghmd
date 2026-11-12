@@ -152,7 +152,7 @@
 #define S_render_node unity_src_xml_S_render_node
 #include "../../third_party/cmark-gfm/src/xml.c"
 
-#include "bridge.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -161,21 +161,16 @@ typedef struct bridge_document {
   cmark_node *doc;
 } bridge_document;
 
-void bridge_register_extensions(void) {
-  cmark_gfm_core_extensions_ensure_registered();
-}
+void bridge_register_extensions(void) { cmark_gfm_core_extensions_ensure_registered(); }
 
-const char *bridge_version(void) { return cmark_version_string(); }
+static void bridge_parser_options_default(void) {}
 
 bridge_document *bridge_parse(const char *source, size_t length) {
   bridge_register_extensions();
-  const int options =
-      CMARK_OPT_UNSAFE | CMARK_OPT_FOOTNOTES | CMARK_OPT_GITHUB_PRE_LANG | CMARK_OPT_HARDBREAKS;
-  cmark_parser *parser = cmark_parser_new(options);
+  cmark_parser *parser = cmark_parser_new(CMARK_OPT_UNSAFE | CMARK_OPT_FOOTNOTES | CMARK_OPT_GITHUB_PRE_LANG | CMARK_OPT_HARDBREAKS);
   if (!parser)
     return NULL;
-  static const char *const names[] = {"table", "autolink", "tagfilter", "strikethrough",
-                                      "tasklist"};
+  const char *const names[] = {"table", "autolink", "tagfilter", "strikethrough", "tasklist"};
   for (size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
     cmark_syntax_extension *extension = cmark_find_syntax_extension(names[i]);
     if (!extension || !cmark_parser_attach_syntax_extension(parser, extension)) {
@@ -189,7 +184,7 @@ bridge_document *bridge_parse(const char *source, size_t length) {
     cmark_parser_free(parser);
     return NULL;
   }
-  bridge_document *document = calloc(1, sizeof(*document));
+  bridge_document *document = (bridge_document *)calloc(1, sizeof(*document));
   if (!document) {
     cmark_node_free(doc);
     cmark_parser_free(parser);
@@ -210,25 +205,21 @@ void bridge_free(bridge_document *document) {
   free(document);
 }
 
+void *bridge_root(bridge_document *document) { return document->doc; }
+
 char *bridge_render_html(bridge_document *document) {
   return cmark_render_html(document->doc, CMARK_OPT_UNSAFE | CMARK_OPT_FOOTNOTES |
-                                            CMARK_OPT_GITHUB_PRE_LANG | CMARK_OPT_HARDBREAKS,
-                           cmark_parser_get_syntax_extensions(document->parser));
+                                           CMARK_OPT_GITHUB_PRE_LANG | CMARK_OPT_HARDBREAKS,
+                          cmark_parser_get_syntax_extensions(document->parser));
 }
 
 void bridge_free_string(char *value) { free(value); }
-
-void *bridge_root(bridge_document *document) { return document->doc; }
-
-const char *bridge_node_type(void *node) {
-  return cmark_node_get_type_string((cmark_node *)node);
-}
+const char *bridge_version(void) { return cmark_version_string(); }
+const char *bridge_node_type(void *node) { return cmark_node_get_type_string((cmark_node *)node); }
 void *bridge_first_child(void *node) { return cmark_node_first_child((cmark_node *)node); }
 void *bridge_next(void *node) { return cmark_node_next((cmark_node *)node); }
 void *bridge_parent(void *node) { return cmark_node_parent((cmark_node *)node); }
-const char *bridge_node_literal(void *node) {
-  return cmark_node_get_literal((cmark_node *)node);
-}
+const char *bridge_node_literal(void *node) { return cmark_node_get_literal((cmark_node *)node); }
 int bridge_set_literal(void *node, const char *literal, size_t length) {
   (void)length;
   return cmark_node_set_literal((cmark_node *)node, literal);

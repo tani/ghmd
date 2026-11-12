@@ -1,125 +1,176 @@
-// Package cmarkghmd exposes the vendored cmark-gfm parser through cgo.
+// Package cmarkghmd exposes the cmark-gfm parser and AST transpiled by
+// modernc.org/ccgo/v4, without using cgo.
 package cmarkghmd
-
-/*
-#cgo CFLAGS: -I${SRCDIR} -I${SRCDIR}/../../third_party/cmark-gfm/src -I${SRCDIR}/../../third_party/cmark-gfm/extensions -I${SRCDIR}/../../third_party/cmark-gfm/generated
-#include <stdlib.h>
-#include "bridge.h"
-*/
-import "C"
 
 import (
 	"errors"
-	"runtime"
 	"unsafe"
+
+	"modernc.org/libc"
 )
 
 // Node is a borrowed cmark AST node. It is valid while its Document is open.
-type Node struct {
-	p unsafe.Pointer
-}
+type Node struct{ p uintptr }
 
 // Document owns one parsed cmark document and its parser.
-type Document struct {
-	p *C.bridge_document
-}
-
-// Version returns the vendored cmark-gfm release string.
-func Version() string { return C.GoString(C.bridge_version()) }
+type Document struct{ p uintptr }
 
 // Parse parses Markdown with the GitHub extensions enabled.
 func Parse(source string) (*Document, error) {
-	C.bridge_register_extensions()
-	data := C.CBytes([]byte(source))
-	defer C.free(data)
-	p := C.bridge_parse((*C.char)(data), C.size_t(len(source)))
-	if p == nil {
+	tls := libc.NewTLS()
+	defer tls.Close()
+	input := libc.Xmalloc(tls, libc.Tsize_t(len(source)+1))
+	defer libc.Xfree(tls, input)
+	copy(unsafe.Slice((*byte)(unsafe.Pointer(input)), len(source)), source)
+	doc := bridge_parse(tls, input, libc.Tsize_t(len(source)))
+	if doc == 0 {
 		return nil, errors.New("cannot parse Markdown")
 	}
-	d := &Document{p: p}
-	runtime.SetFinalizer(d, (*Document).Close)
-	return d, nil
+	return &Document{p: doc}, nil
 }
 
 // Close releases the parser and AST.
-func (d *Document) Close() {
-	if d.p != nil {
-		C.bridge_free(d.p)
-		d.p = nil
-	}
+func (doc *Document) Close() {
+	tls := libc.NewTLS()
+	defer tls.Close()
+	bridge_free(tls, doc.p)
+	doc.p = 0
 }
 
 // Root returns the document node.
-func (d *Document) Root() Node { return Node{p: C.bridge_root(d.p)} }
+func (doc *Document) Root() Node {
+	tls := libc.NewTLS()
+	defer tls.Close()
+	return Node{p: bridge_root(tls, doc.p)}
+}
 
 // HTML renders the AST to HTML using cmark-gfm's renderer.
-func (d *Document) HTML() string {
-	p := C.bridge_render_html(d.p)
-	if p == nil {
+func (doc *Document) HTML() string {
+	tls := libc.NewTLS()
+	defer tls.Close()
+	html := bridge_render_html(tls, doc.p)
+	if html == 0 {
 		return ""
 	}
-	defer C.bridge_free_string(p)
-	return C.GoString(p)
+	defer bridge_free_string(tls, html)
+	return libc.GoString(html)
+}
+
+// Version returns the vendored cmark-gfm release string.
+func Version() string {
+	tls := libc.NewTLS()
+	defer tls.Close()
+	return libc.GoString(bridge_version(tls))
 }
 
 // Type returns the cmark node type name, such as "paragraph" or "text".
-func (n Node) Type() string { return C.GoString(C.bridge_node_type(n.p)) }
+func (n Node) Type() string {
+	tls := libc.NewTLS()
+	defer tls.Close()
+	return libc.GoString(bridge_node_type(tls, n.p))
+}
 
 // FirstChild returns the first child, or a zero node.
-func (n Node) FirstChild() Node { return Node{p: C.bridge_first_child(n.p)} }
+func (n Node) FirstChild() Node {
+	tls := libc.NewTLS()
+	defer tls.Close()
+	return Node{p: bridge_first_child(tls, n.p)}
+}
 
 // Next returns the next sibling, or a zero node.
-func (n Node) Next() Node { return Node{p: C.bridge_next(n.p)} }
+func (n Node) Next() Node {
+	tls := libc.NewTLS()
+	defer tls.Close()
+	return Node{p: bridge_next(tls, n.p)}
+}
 
 // Parent returns the parent, or a zero node.
-func (n Node) Parent() Node { return Node{p: C.bridge_parent(n.p)} }
+func (n Node) Parent() Node {
+	tls := libc.NewTLS()
+	defer tls.Close()
+	return Node{p: bridge_parent(tls, n.p)}
+}
 
 // Valid reports whether the node refers to an AST node.
-func (n Node) Valid() bool { return n.p != nil }
+func (n Node) Valid() bool { return n.p != 0 }
 
 // Literal returns the node literal, or "".
 func (n Node) Literal() string {
-	p := C.bridge_node_literal(n.p)
-	if p == nil {
+	tls := libc.NewTLS()
+	defer tls.Close()
+	literal := bridge_node_literal(tls, n.p)
+	if literal == 0 {
 		return ""
 	}
-	return C.GoString(p)
+	return libc.GoString(literal)
 }
 
 // SetLiteral replaces a node literal.
 func (n Node) SetLiteral(value string) bool {
-	c := C.CString(value)
-	defer C.free(unsafe.Pointer(c))
-	return C.bridge_set_literal(n.p, c, C.size_t(len(value))) != 0
+	tls := libc.NewTLS()
+	defer tls.Close()
+	data, err := libc.CString(value)
+	if err != nil {
+		return false
+	}
+	defer libc.Xfree(tls, data)
+	return bridge_set_literal(tls, n.p, data, libc.Tsize_t(len(value))) != 0
 }
 
 // StartLine returns the one-based source line, or 0.
-func (n Node) StartLine() int { return int(C.bridge_start_line(n.p)) }
+func (n Node) StartLine() int {
+	tls := libc.NewTLS()
+	defer tls.Close()
+	return int(bridge_start_line(tls, n.p))
+}
 
 // StartColumn returns the one-based source byte column, or 0.
-func (n Node) StartColumn() int { return int(C.bridge_start_column(n.p)) }
+func (n Node) StartColumn() int {
+	tls := libc.NewTLS()
+	defer tls.Close()
+	return int(bridge_start_column(tls, n.p))
+}
 
 // EndLine returns the one-based ending source line, or 0.
-func (n Node) EndLine() int { return int(C.bridge_end_line(n.p)) }
+func (n Node) EndLine() int {
+	tls := libc.NewTLS()
+	defer tls.Close()
+	return int(bridge_end_line(tls, n.p))
+}
 
 // EndColumn returns the one-based ending source byte column, or 0.
-func (n Node) EndColumn() int { return int(C.bridge_end_column(n.p)) }
+func (n Node) EndColumn() int {
+	tls := libc.NewTLS()
+	defer tls.Close()
+	return int(bridge_end_column(tls, n.p))
+}
 
 // SetExtension attaches a named syntax extension to the node.
 func (n Node) SetExtension(name string) bool {
-	c := C.CString(name)
-	defer C.free(unsafe.Pointer(c))
-	return C.bridge_set_extension(n.p, c) != 0
+	tls := libc.NewTLS()
+	defer tls.Close()
+	namePtr, err := libc.CString(name)
+	if err != nil {
+		return false
+	}
+	defer libc.Xfree(tls, namePtr)
+	return bridge_set_extension(tls, n.p, namePtr) != 0
 }
 
 // SetTaskChecked marks a task-list item.
 func (n Node) SetTaskChecked(checked bool) bool {
-	v := C.int(0)
+	tls := libc.NewTLS()
+	defer tls.Close()
+	value := int32(0)
 	if checked {
-		v = 1
+		value = 1
 	}
-	return C.bridge_set_task_checked(n.p, v) != 0
+	return bridge_set_task_checked(tls, n.p, value) != 0
 }
 
 // TaskChecked reports a task-list item's checked state.
-func (n Node) TaskChecked() bool { return C.bridge_get_task_checked(n.p) != 0 }
+func (n Node) TaskChecked() bool {
+	tls := libc.NewTLS()
+	defer tls.Close()
+	return bridge_get_task_checked(tls, n.p) != 0
+}

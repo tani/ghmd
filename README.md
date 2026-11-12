@@ -2,13 +2,22 @@
 
 This project renders GitHub-flavored Markdown to GitHub-compatible HTML and compares that output with a second GitHub-dialect parser. It is a Go rewrite of the former Bun/TypeScript implementation.
 
-- **cmark-gfm** (vendored) parses Markdown through cgo and supplies the GitHub AST.
+- **cmark-gfm** (vendored) is transpiled by `modernc.org/ccgo/v4` and supplies the GitHub AST without cgo.
 - **golang.org/x/net/html** owns HTML5 parsing, tree repair, sanitization and serialization.
-- **md4c** (vendored) parses the same Markdown through cgo as an independent GitHub dialect for differential checks, with LaTeX math spans enabled.
+- **md4c** (vendored) is similarly transpiled by ccgo and executed by `modernc.org/libc`, with LaTeX math spans enabled.
 
 ## Build and run
 
-Go 1.26 or later, a C compiler and cgo are required.
+Go 1.26 or later is required. There is **no C compiler or cgo requirement** at build or test time: the cmark-gfm and md4c sources are transpiled by `modernc.org/ccgo/v4` and executed by `modernc.org/libc`. Use the same guard in CI:
+
+```sh
+go vet -unsafeptr=false -unreachable=false ./...
+CGO_ENABLED=0 go test -count=1 ./...
+```
+
+`unsafeptr` and `unreachable` are intentionally disabled for the generated sources: they coerce C heap addresses, not movable Go allocations, and ccgo's platform-cleanups contain unreachable branches.
+
+The checked-in generated Go files target `linux/arm64`; run `scripts/gen-native.sh` on the desired platform to regenerate them.
 
 ```sh
 go build ./cmd/ghmd
@@ -64,8 +73,8 @@ The 53 automatically checkable guide rules are those with a reliable source sign
 
 | Package | Responsibility |
 | --- | --- |
-| `internal/cmark-gfm` | cgo binding to the unmodified vendored cmark-gfm parser and AST. |
-| `internal/standard` | cgo binding to the vendored md4c parser (CommonMark, GitHub extensions and LaTeX math spans). |
+| `internal/cmark-gfm` | Go AST wrapper around ccgo-transpiled cmark-gfm and `modernc.org/libc`. |
+| `internal/standard` | Go wrapper over ccgo-transpiled md4c and `modernc.org/libc` (CommonMark plus GitHub extensions and LaTeX math spans). |
 | `internal/github` | Full GitHub compatibility pipeline: AST adaptation, sanitization, DOM repair, math, tables, alerts, footnotes, task lists, images, links and final serialization. |
 | `internal/analysis` | Shared HTML fragment parsing, structural tree comparison, and semantic feature extraction. |
 | `internal/diff` | Thin wrapper over `analysis.CompareFragments` for cmark-gfm vs md4c structural differences. |
@@ -85,4 +94,4 @@ The pipeline keeps the former renderer's byte-range tree for already-sanitized H
 
 ## Vendored sources and licensing
 
-`third_party/cmark-gfm` is based on cmark-gfm 0.29.0.gfm.13 and is unmodified; see `PROVENANCE.json` and `COPYING`. `third_party/md4c` is md4c 0.5.2; see `PROVENANCE.json` and `LICENSE.md`. Original project code is MIT licensed; third-party code keeps its own license.
+`third_party/cmark-gfm` is based on cmark-gfm 0.29.0.gfm.13 and is unmodified; see `PROVENANCE.json` and `COPYING`. `third_party/md4c` is an unmodified copy of md4c 0.5.2; see `PROVENANCE.json` and `LICENSE.md`. `third_party/md4c-bridge` contains only our output-callback bridge compiled against it. `third_party/md4c-bridge/bridge.c` and `third_party/cmark-gfm-bridge/sources.c` are callback/enumeration glue compiled by ccgo to preserve the public Go render/parse API without a Go-to-C callback. `scripts/gen-native.sh` regenerates `internal/standard/md4c_generated.go` and `internal/cmark-gfm/cmark_generated.go` from those sources. Original project code is MIT licensed; third-party code keeps its own license. ccgo is BSD-3-Clause, and `modernc.org/libc` retains its own license.
