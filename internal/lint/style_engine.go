@@ -20,16 +20,29 @@ func (v styleViolation) finding() Finding {
 		Rule: "style/" + v.ID, Message: v.ID + ": " + v.Detail}
 }
 
+// styleCheck is one independent authoring rule group. Each group has only a
+// source contract and cannot affect renderer output.
+type styleCheck func(string) []styleViolation
+
+var styleChecks = []struct {
+	name  string
+	check styleCheck
+}{
+	{"blocks", coreStyleViolations},
+	{"tables", tableStrikeStyleViolations},
+	{"footnotes", footnoteViolations},
+	{"alerts", alertViolations},
+	{"math-policy", mathPolicyStyleViolations},
+	{"widgets", widgetViolations},
+	{"profile", profileViolation},
+}
+
 // StyleRules evaluates authoring rules with a stable, extensible rule registry.
 func StyleRules(source string) []Finding {
 	var violations []styleViolation
-	violations = append(violations, coreStyleViolations(source)...)
-	violations = append(violations, tableStrikeStyleViolations(source)...)
-	violations = append(violations, footnoteViolations(source)...)
-	violations = append(violations, alertViolations(source)...)
-	violations = append(violations, mathPolicyStyleViolations(source)...)
-	violations = append(violations, widgetViolations(source)...)
-	violations = append(violations, profileViolation(source)...)
+	for _, group := range styleChecks {
+		violations = append(violations, group.check(source)...)
+	}
 	findings := make([]Finding, 0, len(violations))
 	for _, violation := range violations {
 		findings = append(findings, violation.finding())

@@ -1,7 +1,6 @@
 package lint
 
 import (
-	"sort"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -26,98 +25,6 @@ type mathPolicySpan struct {
 	bodyEnd   int
 	display   bool
 	code      bool
-}
-
-// mathPolicyStyleViolations checks authoring choices, independently of whether
-// a particular renderer happens to accept them. Unknown profiles receive the
-// github-rich checks so that an omitted declaration does not silently opt out.
-func mathPolicyStyleViolations(source string) []styleViolation {
-	lines := sourceLines(source)
-	fenced, _ := fencedCodeRegions(lines)
-	profile := mathPolicyDocumentProfile(lines, fenced)
-	htmlStacks := mathPolicyHTMLStacks(lines, fenced)
-	var out []styleViolation
-
-	for lineIndex, original := range lines {
-		if fenced[lineIndex] {
-			continue
-		}
-		commentMasked := mathPolicyMaskComment(original)
-		codeMasked := maskLineCode(commentMasked)
-		masked := mathPolicyMaskHTMLTags(codeMasked)
-		lineNumber := lineIndex + 1
-		add := func(id string, offset int, detail string) {
-			if offset < 0 {
-				offset = 0
-			}
-			if offset > len(original) {
-				offset = len(original)
-			}
-			out = append(out, styleViolation{ID: id, Line: lineNumber,
-				Column: styleColumn(original, original[:offset]), Detail: detail})
-		}
-
-		if profile == mathPolicyProfileUnspecified || profile == mathPolicyProfileRich {
-			for _, at := range mathPolicyAlternateDelimiters(masked) {
-				add("MATH-003", at, "verify parser-level support for alternate LaTeX delimiters; prefer $`...`$ inline and fenced math display in github-rich")
-			}
-		}
-
-		spans := mathPolicyDollarSpans(masked)
-		spans = append(spans, mathPolicyDollarBacktickSpans(commentMasked)...)
-		sort.SliceStable(spans, func(i, j int) bool { return spans[i].start < spans[j].start })
-		// Dollar-backtick source is masked as an ordinary code span by the shared
-		// helper, so its inline-policy checks use the unmasked body collected above.
-		for _, span := range spans {
-			bodySource := codeMasked
-			if span.code {
-				bodySource = commentMasked
-			}
-			body := bodySource[span.bodyStart:span.bodyEnd]
-			if !span.code && (profile == mathPolicyProfileUnspecified || profile == mathPolicyProfileRich) {
-				if span.display {
-					add("MATH-002", span.start, "same-line $$...$$ display math is not isolated; put delimiters on separate lines or use a fenced math block")
-				} else {
-					add("MATH-002", span.start, "avoid bare $...$ in newly authored github-rich content; prefer dollar-backtick $`...`$ inline math")
-				}
-			}
-			if span.display {
-				continue
-			}
-			if mathPolicyTeXComment(body) >= 0 {
-				add("MATH-005", span.start, "inline math contains a TeX % comment; move comments and multiline expressions to a fenced math block")
-			}
-			if at := strings.Index(body, `\displaystyle`); at >= 0 {
-				add("MATH-010", span.bodyStart+at, "verify whether \\displaystyle is semantically needed; do not force it merely to enlarge inline output")
-			}
-			if len(body) > 80 {
-				add("MATH-011", span.start, "inline math exceeds 80 bytes; split only at mathematically valid boundaries or preserve a readable fenced/code fallback")
-			}
-			if mathPolicyDetailsOpen(htmlStacks[lineIndex]) {
-				add("DETAILS-002", span.start, "move equation widgets outside collapsible sections or test the actual initial expansion")
-			}
-			if mathPolicyNestedContext(masked, span) ||
-				mathPolicyEmphasisContext(masked, span) ||
-				mathPolicyHTMLContext(original, span.start, htmlStacks[lineIndex]) ||
-				mathPolicyTableContext(masked, span) {
-				add("MATH-007", span.start, "move math outside link labels, emphasis, table cells, and HTML containers, or verify this exact nested target structure")
-			}
-		}
-		for i := 1; i < len(spans); i++ {
-			previous, current := spans[i-1], spans[i]
-			if !previous.display && !current.display && previous.end == current.start {
-				add("MATH-006", previous.end-1, "adjacent closing/opening math dollars merge expressions; separate them with prose or whitespace")
-			}
-		}
-
-		for _, at := range mathPolicyNestedTextDollars(codeMasked) {
-			add("MATH-008", at, "avoid nested dollar math inside \\text{...}; rewrite with supported TeX constructs without changing mathematical meaning")
-		}
-		for _, at := range mathPolicyDoubledDollarEscapes(codeMasked) {
-			add("MATH-009", at, "use ordinary TeX escapes such as \\$ rather than doubled backslashes; preserve a single escape where required")
-		}
-	}
-	return out
 }
 
 func mathPolicyDocumentProfile(lines []string, fenced []bool) mathPolicyProfile {
