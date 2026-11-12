@@ -1,0 +1,1 @@
+<template><details>$x$</details></template>

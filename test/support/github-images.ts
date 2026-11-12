@@ -1,4 +1,4 @@
-import { parseFragment, serialize } from "parse5";
+import { parseFragment, serialize } from "../../src/html";
 
 type Node = {
   nodeName: string;

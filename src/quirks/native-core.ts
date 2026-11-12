@@ -4,18 +4,13 @@ import { join } from "node:path";
 const root = join(import.meta.dir, "../..");
 const { symbols } = cc({
   source: join(root, "src/quirks/cmark/bun.c"),
-  include: ["src", "extensions", "generated"].map((dir) => join(root, "vendor/cmark-gfm", dir)),
+  include: [
+    join(root, "vendor/lexbor/compat"),
+    ...["src", "extensions", "generated"].map((dir) => join(root, "vendor/cmark-gfm", dir)),
+  ],
   symbols: {
     gfm_bun_call: {
-      args: [
-        "napi_env",
-        "napi_value",
-        "napi_value",
-        "napi_value",
-        "napi_value",
-        "napi_value",
-        "napi_value",
-      ],
+      args: ["napi_env", "napi_value", "napi_value", "napi_value", "napi_value", "napi_value"],
       returns: "napi_value",
     },
   },
@@ -28,37 +23,17 @@ const call = (
   source: string,
   a?: string,
   b?: string,
-  c?: string,
   filter?: RawHtmlFilter,
-): string => symbols.gfm_bun_call(undefined, operation, source, a, b, c, filter) as string;
+): string => symbols.gfm_bun_call(undefined, operation, source, a, b, filter) as string;
 
 export const nativeVersion = call("version", "");
 export const renderMarkdown = (source: string, filter?: RawHtmlFilter): string =>
-  call("render", source, undefined, undefined, undefined, filter);
+  call("render", source, undefined, undefined, filter);
 /** Diagnostic XML is generated only when requested. */
 export const renderAstXml = (source: string, filter?: RawHtmlFilter): string =>
-  call("ast", source, undefined, undefined, undefined, filter);
+  call("ast", source, undefined, undefined, filter);
 export const unicodeLower = (source: string): string => call("lowercase", source);
-export interface HtmlStage {
-  html: string;
-  needsReparse: boolean;
-}
-const stage = (result: string): HtmlStage => {
-  const flag = result[0];
-  if (flag !== "0" && flag !== "1") throw Error("Invalid native HTML stage result");
-  return { html: result.slice(1), needsReparse: flag === "1" };
-};
-export const prepareHtmlStage = (html: string, boundary: string): HtmlStage =>
-  stage(call("prepareStage", html, boundary));
-export const renderMathStage = (
-  html: string,
-  token: string,
-  boundary: string,
-  tableMarker: string,
-): HtmlStage => stage(call("mathStage", html, token, boundary, tableMarker));
-export const finishHtml = (
-  html: string,
-  token: string,
-  boundary: string,
-  tableMarker: string,
-): string => call("finish", html, token, boundary, tableMarker);
+export const renderDocument = (source: string, token: string, boundary: string): string =>
+  call("document", source, token, boundary);
+
+export const removeRawInputs = (html: string): string => call("rawInputs", html);

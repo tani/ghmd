@@ -42,18 +42,19 @@ static gfm_status gfm_render_string(gfm_view source, int xml, gfm_html_filter fi
   return status;
 }
 
+static gfm_status gfm_render_document(gfm_view source, gfm_view token, gfm_view boundary, gfm_result *result);
+
 gfm_status gfm_call(const char *operation, const gfm_view *arguments, size_t count,
                     gfm_html_filter filter, void *context, gfm_result *result) {
   if (!result) return GFM_BAD_ARGUMENT;
   *result = (gfm_result){0};
-  if (!operation || !arguments || count < 1 || count > 4) {
-    result->error = "Expected one to four string arguments"; return GFM_BAD_ARGUMENT;
+  if (!operation || !arguments || count < 1 || count > 3) {
+    result->error = "Expected one to three string arguments"; return GFM_BAD_ARGUMENT;
   }
   size_t expected = 1;
-  if (!strcmp(operation, "prepareStage")) expected = 2;
-  else if (!strcmp(operation, "mathStage") || !strcmp(operation, "finish")) expected = 4;
+  if (!strcmp(operation, "document")) expected = 3;
   else if (strcmp(operation, "render") && strcmp(operation, "ast") && strcmp(operation, "version") &&
-           strcmp(operation, "lowercase")) {
+           strcmp(operation, "lowercase") && strcmp(operation, "rawInputs")) {
     result->error = "Unknown native operation"; return GFM_BAD_ARGUMENT;
   }
   if (count != expected) {
@@ -63,39 +64,17 @@ gfm_status gfm_call(const char *operation, const gfm_view *arguments, size_t cou
     if (!arguments[i].data) { result->error = "Required string argument is missing"; return GFM_BAD_ARGUMENT; }
   }
   gfm_view source = arguments[0];
+  if (!strcmp(operation, "document")) return gfm_render_document(source, arguments[1], arguments[2], result);
   if (!strcmp(operation, "render") || !strcmp(operation, "ast"))
-    return gfm_render_string(source, !strcmp(operation, "ast"), filter, context, result);
+    return gfm_render_string(source, !strcmp(operation, "ast"), filter ? filter : gfm_filter_raw_inputs, context, result);
+  if (!strcmp(operation, "rawInputs")) return gfm_filter_raw_inputs(source, &result->text, NULL);
   if (!strcmp(operation, "lowercase") || !strcmp(operation, "version")) {
     cmark_strbuf out = CMARK_BUF_INIT(cmark_get_default_mem_allocator());
     if (!strcmp(operation, "lowercase")) gfm_unicode_lower_into(&out, source.data, source.length);
     else cmark_strbuf_puts(&out, cmark_version_string());
     result->text.length = out.size;
     result->text.data = cmark_strbuf_detach(&out);
-  } else {
-    /* Views need not be NUL-terminated. Keep C-string modifier adapters here,
-     * independently of the runtime's input allocation strategy. */
-    char *modifiers[3] = {0};
-    for (size_t i = 1; i < count; i++) {
-      if (arguments[i].length != SIZE_MAX) modifiers[i - 1] = malloc(arguments[i].length + 1);
-      if (!modifiers[i - 1]) {
-        for (size_t n = 0; n < 3; n++) free(modifiers[n]);
-        result->error = "Cannot allocate modifier"; return GFM_NO_MEMORY;
-      }
-      memcpy(modifiers[i - 1], arguments[i].data, arguments[i].length);
-      modifiers[i - 1][arguments[i].length] = 0;
-    }
-    const char *a = modifiers[0] ? modifiers[0] : "";
-    const char *b = modifiers[1] ? modifiers[1] : "";
-    const char *c = modifiers[2] ? modifiers[2] : "";
-    char *output = NULL;
-    if (!strcmp(operation, "prepareStage")) output = gfm_prepare_html_stage(source.data, source.length, a);
-    else if (!strcmp(operation, "mathStage")) output = gfm_render_math_stage(source.data, source.length, a, b, c);
-    else if (!strcmp(operation, "finish")) output = gfm_finish_html(source.data, source.length, a, b, c);
-    for (size_t i = 0; i < 3; i++) free(modifiers[i]);
-    result->text.data = (unsigned char *)output;
-    if (output) result->text.length = strlen(output);
   }
   if (!result->text.data) { result->error = "Native string allocation failed"; return GFM_NO_MEMORY; }
-  if (!strcmp(operation, "finish")) return gfm_complete_html(result);
   return GFM_OK;
 }

@@ -1,0 +1,1 @@
+<svg><b>safe</b><g onload="alert(1)">text</g></svg>

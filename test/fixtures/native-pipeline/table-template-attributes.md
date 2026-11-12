@@ -1,0 +1,1 @@
+<table id="outer"><template><table id="inner"><tr><td>x</td></tr></table></template> after</table>

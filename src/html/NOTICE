@@ -1,0 +1,9 @@
+The HTML/MathML tag and attribute allowlists in sanitize.c are adapted from
+DOMPurify 3.4.1, Copyright 2025-2026 Dr.-Ing. Mario Heiderich, Cure53.
+https://github.com/cure53/DOMPurify/tree/3.4.1
+
+The allowlist data is used under the Apache License, Version 2.0 (one of
+DOMPurify's offered licenses), included as POLICY-LICENSE. This project removes
+DOMPurify's JavaScript implementation and npm dependency. The C sanitizer,
+Lexbor traversal and URL checks are this project's implementation; the lists
+are adapted to its renderer policy (no SVG, inline styles or namespace attrs).

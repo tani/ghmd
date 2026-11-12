@@ -1,5 +1,5 @@
 import sourceMap from "markdown-it-source-map";
-import { parseFragment, serialize } from "parse5";
+import { parseFragment, serialize } from "../html";
 import { createMarkdownEngine } from "../vscode";
 
 export interface MappedBlock {

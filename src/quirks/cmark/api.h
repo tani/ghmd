@@ -15,12 +15,14 @@ typedef gfm_status (*gfm_html_filter)(gfm_view input, gfm_string *output, void *
 
 /* Successful output is malloc-owned and has an explicit UTF-8 byte length.
  * Errors contain a static diagnostic, never runtime-specific exception state.
- * The prepareStage and mathStage operations return an ASCII '0'/'1' prefix
- * followed by HTML. '1' means the caller must reparse through its DOM before
- * the next stage; '0' preserves the existing serialized structure as-is.
- * The finish operation removes one final LF, then enforces the UTF-8 output
- * size limit. GFM_LIMIT_EXCEEDED returns no owned output and a static error.
+ * "document" accepts Markdown, a 32-hex run ID, and a UUID-shaped boundary.
+ * It owns raw-input filtering, HTML5 parsing, sanitization, compatibility edits,
+ * every reparse, math, links, and final size checks. Only final HTML is returned.
+ * "render" (unsanitized Markdown HTML) and "ast" accept one source and an
+ * optional diagnostic raw-HTML filter; the default filter is implemented in C.
+ * "version", "lowercase", and "rawInputs" are string-only diagnostics.
  * Views need not be NUL-terminated. All arguments must have non-NULL data.
+ * Intermediate prepare/math/finish operations are private C helpers.
  */
 gfm_status gfm_call(const char *operation, const gfm_view *arguments, size_t count,
                     gfm_html_filter filter, void *context, gfm_result *result);

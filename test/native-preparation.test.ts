@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { prepareHtmlStage, renderMathStage } from "../src/quirks/native";
+import { prepareHtmlStage, renderMathStage } from "./support/native-stages";
 
 const boundary = "test-boundary";
 const token = "a".repeat(32);

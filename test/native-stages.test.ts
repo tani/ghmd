@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { resolve } from "node:path";
-import { prepareHtmlStage, renderMathStage, finishHtml } from "../src/quirks/native-core";
+import { prepareHtmlStage, renderMathStage, finishHtml } from "./support/native-stages";
 
 const token = "a".repeat(32);
 const boundary = "test-boundary";
@@ -51,7 +51,7 @@ test("the final stage removes rejected anchors before deciding image wrapping", 
   );
 });
 
-test("ordinary rendering makes four native calls across every DOM reparse path", () => {
+test("ordinary rendering makes one native call across every reparse path", () => {
   const root = resolve(import.meta.dir, "..");
   const samples = [
     "simple",
@@ -64,15 +64,18 @@ test("ordinary rendering makes four native calls across every DOM reparse path",
     import { mock } from "bun:test";
     const ffi = await import("bun:ffi");
     const compile = ffi.cc;
-    let calls = 0;
+    let calls = 0, compiles = 0;
     mock.module("bun:ffi", () => ({ ...ffi, cc(options) {
+      compiles++;
       const library = compile(options);
       const invoke = library.symbols.gfm_bun_call;
       return { ...library, symbols: { ...library.symbols, gfm_bun_call(...args) {
+        if (args.some(value => typeof value === "function")) throw Error("Unexpected JS callback");
         calls++; return invoke(...args);
       } } };
     } }));
     const { render } = await import("./src/quirks/index.ts");
+    if (compiles !== 1) throw Error("Renderer must compile exactly one C library");
     const counts = [];
     for (const source of ${JSON.stringify(samples)}) {
       calls = 0;
@@ -88,7 +91,7 @@ test("ordinary rendering makes four native calls across every DOM reparse path",
   });
   expect(result.stderr.toString()).toBe("");
   expect(result.exitCode).toBe(0);
-  expect(JSON.parse(result.stdout.toString())).toEqual(samples.map(() => 4));
+  expect(JSON.parse(result.stdout.toString())).toEqual(samples.map(() => 1));
 });
 
 test("the final C stage removes exactly one trailing LF", () => {

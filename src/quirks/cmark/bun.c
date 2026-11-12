@@ -52,18 +52,17 @@ static gfm_status gfm_bun_filter_html(gfm_view input, gfm_string *output, void *
 /* Only this function crosses the Bun boundary. env is supplied by cc(); the
  * remaining arguments are strings, except the optional synchronous filter. */
 napi_value gfm_bun_call(napi_env env, napi_value operation, napi_value source,
-                        napi_value arg1, napi_value arg2, napi_value arg3,
-                        napi_value raw_filter) {
-  gfm_string name = {0}, strings[4] = {{0}};
-  gfm_view arguments[4] = {{0}};
+                        napi_value arg1, napi_value arg2, napi_value raw_filter) {
+  gfm_string name = {0}, strings[3] = {{0}};
+  gfm_view arguments[3] = {{0}};
   gfm_result output = {0};
-  napi_value result = NULL, values[4] = {source, arg1, arg2, arg3};
+  napi_value result = NULL, values[3] = {source, arg1, arg2};
   gfm_bun_filter filter = {env, raw_filter};
   gfm_html_filter callback = NULL;
   size_t count = 0;
   if (!gfm_bun_read_string(env, operation, &name, "Operation must be a string")) goto done;
   if (memchr(name.data, 0, name.length)) { gfm_bun_error(env, GFM_BUN_TYPE_ERROR, "Invalid native operation"); goto done; }
-  for (size_t i = 0; i < 4; i++) {
+  for (size_t i = 0; i < 3; i++) {
     napi_valuetype type;
     if (napi_typeof(env, values[i], &type) != napi_ok) { gfm_bun_error(env, GFM_BUN_ERROR, "Cannot inspect argument"); goto done; }
     if (i > 0 && type == napi_undefined) continue;
@@ -87,7 +86,7 @@ napi_value gfm_bun_call(napi_env env, napi_value operation, napi_value source,
   }
 done:
   free(name.data);
-  for (size_t i = 0; i < 4; i++) free(strings[i].data);
+  for (size_t i = 0; i < 3; i++) free(strings[i].data);
   free(output.text.data);
   return result;
 }

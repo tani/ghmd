@@ -1,4 +1,4 @@
-import { parseFragment } from "parse5";
+import { parseFragment } from "../html";
 import { attachNodeLocations, locateDifferences } from "./locations";
 import { parseWithSourceMap } from "./source-map";
 import type { SourceRange } from "./locations";

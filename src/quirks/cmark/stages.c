@@ -1,6 +1,5 @@
-/* Consecutive native steps are grouped around the DOM reparse boundaries.
- * Stages return an ASCII '0' or '1' followed by HTML; '1' requests a DOM reparse.
- * Keeping this small framing in the string API avoids runtime-specific values. */
+/* Internal HTML preparation. Reparse decisions remain within the C pipeline;
+ * no stage framing or intermediate HTML crosses the runtime boundary. */
 #include "api.h"
 
 static gfm_status gfm_complete_html(gfm_result *result) {
@@ -18,35 +17,27 @@ static gfm_status gfm_complete_html(gfm_result *result) {
   return GFM_OK;
 }
 
-static char *gfm_stage_result(char *html, int reparse) {
-  if (!html) return NULL;
-  size_t length = strlen(html);
-  char *result = length <= SIZE_MAX - 2 ? malloc(length + 2) : NULL;
-  if (result) {
-    result[0] = reparse ? '1' : '0';
-    memcpy(result + 1, html, length + 1);
-  }
-  free(html);
-  return result;
-}
-
-static char *gfm_prepare_html_stage(const unsigned char *source, size_t length, const char *boundary) {
+static char *gfm_prepare_html_stage(const unsigned char *source, size_t length, const char *boundary, int *needs_reparse) {
+  *needs_reparse = 0;
   char *flattened = gfm_flatten_templates(source, length, boundary);
   if (!flattened) return NULL;
-  char *details = gfm_prepare_details((const unsigned char *)flattened, strlen(flattened));
+  size_t length_flattened = strlen(flattened);
+  char *details = gfm_prepare_details((const unsigned char *)flattened, length_flattened);
   if (!details) { free(flattened); return NULL; }
   int reparse = strcmp(flattened, details) != 0;
   free(flattened);
   if (reparse) {
-    char *clean = gfm_remove_boundaries((const unsigned char *)details, strlen(details), boundary);
+    size_t length_details = strlen(details);
+    char *clean = gfm_remove_boundaries((const unsigned char *)details, length_details, boundary);
     free(details);
     details = clean;
   }
-  return gfm_stage_result(details, reparse);
+  *needs_reparse = reparse; return details;
 }
 
 static char *gfm_render_math_stage(const unsigned char *source, size_t length, const char *token,
-                                   const char *boundary, const char *table_marker) {
+                                   const char *boundary, const char *table_marker, int *needs_reparse) {
+  *needs_reparse = 0;
   char *marked = gfm_prepare_math_tables(source, length, token, boundary, table_marker);
   if (!marked) return NULL;
   size_t marked_length = strlen(marked);
@@ -57,14 +48,15 @@ static char *gfm_render_math_stage(const unsigned char *source, size_t length, c
   if (!math) { free(plain); return NULL; }
   int reparse = strcmp(plain, math) != 0;
   free(plain);
-  return gfm_stage_result(math, reparse);
+  *needs_reparse = reparse; return math;
 }
 
 static char *gfm_finish_html(const unsigned char *source, size_t length, const char *token,
                               const char *boundary, const char *table_marker) {
   char *linked = gfm_process_links(source, length, boundary);
   if (!linked) return NULL;
-  char *result = gfm_finalize_serialized_html((const unsigned char *)linked, strlen(linked), token, table_marker);
+  size_t linked_length = strlen(linked);
+  char *result = gfm_finalize_serialized_html((const unsigned char *)linked, linked_length, token, table_marker);
   free(linked);
   return result;
 }

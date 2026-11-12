@@ -1,0 +1,1 @@
+<details><table>a<template>b</template>c</table></details>

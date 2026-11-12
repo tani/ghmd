@@ -79,7 +79,8 @@ static int gfm_math_apply(gfm_html_tree *tree, gfm_math_edit *edits) {
       char *display=gfm_emphasis_display(reconstructed.ptr,reconstructed.size);
       if (display) {
         cmark_strbuf out=CMARK_BUF_INIT(cmark_get_default_mem_allocator());
-        gfm_math_element(&out,(unsigned char*)display,strlen(display),1,0,tree->token);
+        size_t display_length = strlen(display);
+        gfm_math_element(&out,(unsigned char*)display,display_length,1,0,tree->token);
         free(display); edits[id].inner=gfm_math_finish(&out); cmark_strbuf_free(&reconstructed); continue;
       }
     }
@@ -110,7 +111,7 @@ static int gfm_math_apply(gfm_html_tree *tree, gfm_math_edit *edits) {
       cmark_strbuf a=CMARK_BUF_INIT(cmark_get_default_mem_allocator()), b=CMARK_BUF_INIT(cmark_get_default_mem_allocator()), c=CMARK_BUF_INIT(cmark_get_default_mem_allocator());
       gfm_math_text(&a,tree,edits,before);gfm_math_text(&b,tree,edits,after);gfm_math_text(&c,tree,edits,code);
       char *value=gfm_protected_math(a.ptr,a.size,b.ptr,b.size,c.ptr,c.size,gfm_node_is(tree,id,"em"));
-      if(value){cmark_strbuf out=CMARK_BUF_INIT(cmark_get_default_mem_allocator());gfm_math_element(&out,(unsigned char*)value,strlen(value),0,0,tree->token);free(value);edits[code].outer=gfm_math_finish(&out);edits[before].trim_last=1;edits[after].trim_first=1;}
+      if(value){cmark_strbuf out=CMARK_BUF_INIT(cmark_get_default_mem_allocator());size_t value_length = strlen(value);gfm_math_element(&out,(unsigned char*)value,value_length,0,0,tree->token);free(value);edits[code].outer=gfm_math_finish(&out);edits[before].trim_last=1;edits[after].trim_first=1;}
       cmark_strbuf_free(&a);cmark_strbuf_free(&b);cmark_strbuf_free(&c);
     }
     if(gfm_node_is(tree,id,"em") || (gfm_node_is(tree,id,"strong") && gfm_math_closest(tree,id,"em\0\0")))continue;
@@ -129,7 +130,7 @@ static int gfm_math_apply(gfm_html_tree *tree, gfm_math_edit *edits) {
     if(tree->nodes[id].inert||gfm_math_replaced_ancestor(tree,edits,id)||!gfm_node_is(tree,id,"pre")||!gfm_attribute_equals(tree,id,"lang","math")||gfm_math_blocked(tree,id))continue;
     cmark_strbuf text=CMARK_BUF_INIT(cmark_get_default_mem_allocator()),out=CMARK_BUF_INIT(cmark_get_default_mem_allocator());
     gfm_math_text(&text,tree,edits,id);char *value=gfm_fenced_math(text.ptr,text.size);if(!value){cmark_strbuf_free(&text);cmark_strbuf_free(&out);return 0;}
-    gfm_math_element(&out,(unsigned char*)value,strlen(value),1,0,tree->token);free(value);edits[id].outer=gfm_math_finish(&out);cmark_strbuf_free(&text);
+    size_t value_length = strlen(value);gfm_math_element(&out,(unsigned char*)value,value_length,1,0,tree->token);free(value);edits[id].outer=gfm_math_finish(&out);cmark_strbuf_free(&text);
   }
   return 1;
 }

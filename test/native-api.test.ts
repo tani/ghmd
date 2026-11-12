@@ -3,8 +3,7 @@ import {
   renderMarkdown,
   renderAstXml,
   unicodeLower,
-  finishHtml,
-  renderMathStage,
+  renderDocument,
 } from "../src/quirks/native-core";
 
 const source = "before <b>raw</b> after\n";
@@ -18,12 +17,13 @@ test("native string API validates arguments without exposing pointers", () => {
     expect(() => renderMarkdown(value as any)).toThrow(TypeError);
     expect(() => unicodeLower(value as any)).toThrow(TypeError);
   }
-  expect(() => renderMathStage("<p>x</p>", undefined as any, "boundary", "")).toThrow(TypeError);
+  expect(() => renderDocument("x", undefined as any, "boundary")).toThrow(TypeError);
 });
 
-test("stages require their string modifiers explicitly", () => {
-  expect(() => finishHtml("<p>x</p>", undefined as any, "boundary", "")).toThrow(TypeError);
-  expect(() => finishHtml("<p>x</p>", "token", "boundary", undefined as any)).toThrow(TypeError);
+test("complete render validates identifiers inside C", () => {
+  const boundary = "01234567-89ab-cdef-0123-456789abcdef";
+  expect(() => renderDocument("x", "bad", boundary)).toThrow("runId must be 32");
+  expect(() => renderDocument("x", "a".repeat(32), "bad")).toThrow("Invalid render boundary");
 });
 
 test("raw HTML callbacks exchange strings while C owns the AST", () => {

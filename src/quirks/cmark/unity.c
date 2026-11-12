@@ -3,6 +3,7 @@
  * source-local macros are undefined between files to avoid collisions.
  * The upstream-source test verifies that every vendored C file is included;
  * behavioral tests check the combined build against saved references. */
+#include "../../html/core.c"
 #define CMARK_GFM_STATIC_DEFINE 1
 #define CMARK_GFM_EXTENSIONS_STATIC_DEFINE 1
 #define match unity_extensions_autolink_match
@@ -172,4 +173,6 @@
 #include "postprocess.c"
 
 #include "stages.c"
+#include "dom.c"
 #include "api.c"
+#include "document.c"

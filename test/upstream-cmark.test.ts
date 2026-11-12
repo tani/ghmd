@@ -3,7 +3,8 @@ import { createHash } from "node:crypto";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import manifest from "./fixtures/cmark-gfm-upstream.json";
-import { renderMarkdown, renderMathStage, finishHtml } from "../src/quirks/native";
+import { renderMarkdown } from "../src/quirks/native-core";
+import { renderMathStage, finishHtml } from "./support/native-stages";
 const mathHtml = (html: string, token: string, boundary: string) =>
   renderMathStage(html, token, boundary, "").html;
 const finish = (html: string, token = "00000000000000000000000000000000") =>

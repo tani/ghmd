@@ -1,0 +1,1 @@
+<a><template><img src="x" onerror="alert(1)"><a href="javascript:x()">bad</a></template></a>

@@ -1,0 +1,11 @@
+{
+  "upstream": "https://github.com/lexbor/lexbor",
+  "upstreamCommit": "e651d6bce83a6601dff37261374f0545e910b1c1",
+  "nativeVersion": "3.1.0",
+  "generation": "perl single.pl html",
+  "upstreamSha256": "417d3a941c6fddce174b5051c85797c2045a707c8b979ce58f3bfb5e0e172d98",
+  "generatedSha256": "50e12c9037dc6f257d98732632c494192674aa52f5e3de4f1a1ea6bf8df016db",
+  "adaptation": "Only the definition of lxb_html_tree_create_element_for_token is renamed to gfm_lexbor_create_element_original. The wrapper in src/html/core.c records source provenance and delegates to the original implementation. The declaration, upstream call sites, tokenization and tree-repair algorithms are unchanged.",
+  "compatibilityHeader": "compat/float.h is empty because this selected module includes float.h but uses no FLT_*, DBL_* or LDBL_* macros. The preparation script checks that assumption.",
+  "license": "Apache-2.0 with BSD-2-Clause subcomponents; upstream LICENSE and NOTICE are included"
+}

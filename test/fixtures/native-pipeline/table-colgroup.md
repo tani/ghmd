@@ -1,0 +1,1 @@
+<table><colgroup><col width="20"><col></colgroup><tbody><tr><td>$x$</td></tr></tbody></table>
