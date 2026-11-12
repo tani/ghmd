@@ -1,8 +1,8 @@
-// Package gfm renders GitHub-flavored Markdown to GitHub-compatible HTML.
-package gfm
+// Package ghmd renders GitHub-flavored Markdown to GitHub-compatible HTML.
+package ghmd
 
 import (
-	"gfm/internal/github"
+	"ghmd/internal/github"
 )
 
 // RenderOptions controls one render.

@@ -17,7 +17,7 @@ func TestFixtureDifferentialNoiseBudget(t *testing.T) {
 	if err != nil {
 		t.Skip(err)
 	}
-	differential, mathDifferential, mathSource, raw := 0, 0, 0, 0
+	differential, mathDifferential, mathSource, raw, style := 0, 0, 0, 0, 0
 	var noisy []string
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
@@ -40,6 +40,8 @@ func TestFixtureDifferentialNoiseBudget(t *testing.T) {
 			case strings.HasPrefix(finding.Rule, "standard/"):
 				differential++
 				noisy = append(noisy, entry.Name()+" "+finding.Rule)
+			case strings.HasPrefix(finding.Rule, "style/"):
+				style++
 			default:
 				raw++
 			}
@@ -56,5 +58,8 @@ func TestFixtureDifferentialNoiseBudget(t *testing.T) {
 	}
 	if raw > 100 {
 		t.Fatalf("raw-HTML lint noise regressed: %d findings", raw)
+	}
+	if style > 1500 {
+		t.Fatalf("authoring-style lint findings regressed: %d", style)
 	}
 }

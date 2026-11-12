@@ -10,8 +10,8 @@ import (
 	"regexp"
 	"testing"
 
-	"gfm"
-	"gfm/internal/verify"
+	"ghmd"
+	"ghmd/internal/verify"
 )
 
 type manifest struct {
@@ -48,11 +48,11 @@ func TestGitHubReferences(t *testing.T) {
 				t.Fatalf("fixture hash mismatch for %s", fixture.ID)
 			}
 			runID := runIDPattern.FindStringSubmatch(string(expected))
-			options := gfm.RenderOptions{}
+			options := ghmd.RenderOptions{}
 			if len(runID) > 1 {
 				options.RunID = runID[1]
 			}
-			actual, err := gfm.Render(string(source), options)
+			actual, err := ghmd.Render(string(source), options)
 			if err != nil {
 				t.Fatal(err)
 			}

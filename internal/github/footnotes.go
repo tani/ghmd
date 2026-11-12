@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"sort"
 
-	"gfm/internal/cmark-gfm"
+	"ghmd/internal/cmark-gfm"
 )
 
 type recoverySpan struct {
@@ -22,7 +22,7 @@ type labelRecovery struct {
 	edits  []recoveryEdit
 }
 
-func (r *labelRecovery) location(node cmarkgfm.Node) (recoverySpan, bool) {
+func (r *labelRecovery) location(node cmarkghmd.Node) (recoverySpan, bool) {
 	a, b := node.StartLine(), node.StartColumn()
 	c, d := node.EndLine(), node.EndColumn()
 	if a < 1 || b < 1 || c < 1 || d < 1 || a > len(r.lines) || c > len(r.lines) {
@@ -78,14 +78,14 @@ func (r *labelRecovery) addEdit(start, end, labelStart, labelEnd int, colon bool
 	r.edits = append(r.edits, recoveryEdit{start: start, end: end, text: text})
 }
 
-func (r *labelRecovery) paragraphEdits(paragraph cmarkgfm.Node) {
+func (r *labelRecovery) paragraphEdits(paragraph cmarkghmd.Node) {
 	scope, ok := r.location(paragraph)
 	if !ok {
 		return
 	}
 	var text []byte
 	var protectedSpans []recoverySpan
-	stack := []cmarkgfm.Node{paragraph}
+	stack := []cmarkghmd.Node{paragraph}
 	for len(stack) != 0 {
 		last := len(stack) - 1
 		node := stack[last]
@@ -221,7 +221,7 @@ func (r *labelRecovery) paragraphEdits(paragraph cmarkgfm.Node) {
 
 // recoverLabels repairs malformed footnote labels in source order while
 // leaving protected code, HTML, links, and images untouched.
-func recoverLabels(root cmarkgfm.Node, source []byte) (data []byte, changed bool) {
+func recoverLabels(root cmarkghmd.Node, source []byte) (data []byte, changed bool) {
 	r := labelRecovery{source: source, lines: []int{0}}
 	for i, ch := range source {
 		if ch == '\n' {

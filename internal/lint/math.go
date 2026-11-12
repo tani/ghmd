@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"gfm/internal/github"
+	"ghmd/internal/github"
 )
 
 const (

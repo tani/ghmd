@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"gfm/internal/verify"
+	"ghmd/internal/verify"
 )
 
 const (

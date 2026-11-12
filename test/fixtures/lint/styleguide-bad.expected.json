@@ -1,0 +1,682 @@
+{
+  "source": "styleguide-bad.md",
+  "rules": [
+    {
+      "id": "ALERT-001",
+      "startLine": 7,
+      "expected": [
+        {
+          "rule": "style/ALERT-001",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "ALERT-002",
+      "startLine": 12,
+      "expected": [
+        {
+          "rule": "style/ALERT-002",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "AUTO-001",
+      "startLine": 19,
+      "expected": [
+        {
+          "rule": "style/LINK-001",
+          "line": 1
+        },
+        {
+          "rule": "style/LINK-001",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "BLOCK-001",
+      "startLine": 23,
+      "expected": [
+        {
+          "rule": "style/BLOCK-001",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "BLOCK-002",
+      "startLine": 29,
+      "expected": [
+        {
+          "rule": "style/BLOCK-002",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "BLOCK-003",
+      "startLine": 34,
+      "expected": []
+    },
+    {
+      "id": "CODE-001",
+      "startLine": 38,
+      "expected": [
+        {
+          "rule": "style/CODE-001",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "CODE-002",
+      "startLine": 46,
+      "expected": [
+        {
+          "rule": "style/CODE-002",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "COMPAT-001",
+      "startLine": 50,
+      "expected": [
+        {
+          "rule": "style/COMPAT-001",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "COMPAT-002",
+      "startLine": 54,
+      "expected": []
+    },
+    {
+      "id": "COMPAT-003",
+      "startLine": 58,
+      "expected": []
+    },
+    {
+      "id": "DETAILS-001",
+      "startLine": 62,
+      "expected": [
+        {
+          "rule": "html/unclosed-tag",
+          "line": 1
+        },
+        {
+          "rule": "style/DETAILS-001",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "DETAILS-002",
+      "startLine": 68,
+      "expected": [
+        {
+          "rule": "html/unclosed-tag",
+          "line": 1
+        },
+        {
+          "rule": "style/DETAILS-002",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "EXT-001",
+      "startLine": 74,
+      "expected": [
+        {
+          "rule": "style/EXT-001",
+          "line": 1
+        },
+        {
+          "rule": "style/EXT-001",
+          "line": 1
+        },
+        {
+          "rule": "style/EXT-001",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "FOOT-001",
+      "startLine": 78,
+      "expected": [
+        {
+          "rule": "style/FOOT-001",
+          "line": 1
+        },
+        {
+          "rule": "style/FOOT-001",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "FOOT-002",
+      "startLine": 84,
+      "expected": [
+        {
+          "rule": "style/FOOT-002",
+          "line": 1
+        },
+        {
+          "rule": "style/FOOT-002",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "id": "FOOT-003",
+      "startLine": 92,
+      "expected": [
+        {
+          "rule": "math/footnote-literal",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "FOOT-004",
+      "startLine": 98,
+      "expected": [
+        {
+          "rule": "style/FOOT-004",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "HTML-001",
+      "startLine": 104,
+      "expected": [
+        {
+          "rule": "raw-html/removed-container",
+          "line": 1
+        },
+        {
+          "rule": "raw-html/removed-container",
+          "line": 3
+        },
+        {
+          "rule": "raw-html/unsafe-attribute",
+          "line": 3
+        },
+        {
+          "rule": "raw-html/unsafe-attribute",
+          "line": 5
+        },
+        {
+          "rule": "raw-html/unsafe-url",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "LINK-001",
+      "startLine": 114,
+      "expected": [
+        {
+          "rule": "style/LINK-001",
+          "line": 1
+        },
+        {
+          "rule": "style/LINK-001",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "LINK-002",
+      "startLine": 118,
+      "expected": [
+        {
+          "rule": "style/LINK-002",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "LINK-003",
+      "startLine": 122,
+      "expected": [
+        {
+          "rule": "style/LINK-003",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "MATH-001",
+      "startLine": 128,
+      "expected": [
+        {
+          "rule": "style/COMPAT-001",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "MATH-002",
+      "startLine": 132,
+      "expected": [
+        {
+          "rule": "math/display-not-isolated",
+          "line": 3
+        },
+        {
+          "rule": "style/MATH-002",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "MATH-003",
+      "startLine": 138,
+      "expected": [
+        {
+          "rule": "style/MATH-003",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "MATH-004",
+      "startLine": 142,
+      "expected": [
+        {
+          "rule": "standard/lost-math",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "MATH-005",
+      "startLine": 146,
+      "expected": [
+        {
+          "rule": "style/MATH-005",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "MATH-006",
+      "startLine": 150,
+      "expected": [
+        {
+          "rule": "standard/lost-math",
+          "line": 1
+        },
+        {
+          "rule": "style/MATH-006",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "MATH-007",
+      "startLine": 154,
+      "expected": [
+        {
+          "rule": "standard/lost-math",
+          "line": 0
+        },
+        {
+          "rule": "standard/lost-math",
+          "line": 0
+        },
+        {
+          "rule": "standard/lost-math",
+          "line": 0
+        }
+      ]
+    },
+    {
+      "id": "MATH-008",
+      "startLine": 162,
+      "expected": [
+        {
+          "rule": "standard/lost-math",
+          "line": 1
+        },
+        {
+          "rule": "style/MATH-008",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "MATH-009",
+      "startLine": 166,
+      "expected": [
+        {
+          "rule": "standard/lost-math",
+          "line": 1
+        },
+        {
+          "rule": "style/MATH-009",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "MATH-010",
+      "startLine": 170,
+      "expected": [
+        {
+          "rule": "style/MATH-010",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "MATH-011",
+      "startLine": 174,
+      "expected": [
+        {
+          "rule": "style/MATH-011",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "MEDIA-001",
+      "startLine": 178,
+      "expected": [
+        {
+          "rule": "style/MEDIA-001",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "MERMAID-001",
+      "startLine": 182,
+      "expected": [
+        {
+          "rule": "style/MERMAID-001",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "MERMAID-002",
+      "startLine": 189,
+      "expected": [
+        {
+          "rule": "style/MERMAID-002",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "MERMAID-003",
+      "startLine": 195,
+      "expected": [
+        {
+          "rule": "style/MERMAID-003",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "MERMAID-004",
+      "startLine": 202,
+      "expected": [
+        {
+          "rule": "style/MERMAID-004",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "MERMAID-005",
+      "startLine": 209,
+      "expected": [
+        {
+          "rule": "style/MERMAID-005",
+          "line": 3
+        },
+        {
+          "rule": "style/MERMAID-005",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "MERMAID-006",
+      "startLine": 217,
+      "expected": [
+        {
+          "rule": "style/MERMAID-006",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "MERMAID-007",
+      "startLine": 225,
+      "expected": [
+        {
+          "rule": "style/MERMAID-007",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "id": "MERMAID-008",
+      "startLine": 237,
+      "expected": [
+        {
+          "rule": "style/MERMAID-008",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "RENDER-001",
+      "startLine": 244,
+      "expected": []
+    },
+    {
+      "id": "RENDER-002",
+      "startLine": 248,
+      "expected": []
+    },
+    {
+      "id": "RENDER-003",
+      "startLine": 252,
+      "expected": []
+    },
+    {
+      "id": "RENDER-004",
+      "startLine": 256,
+      "expected": []
+    },
+    {
+      "id": "RENDER-005",
+      "startLine": 260,
+      "expected": []
+    },
+    {
+      "id": "RENDER-006",
+      "startLine": 264,
+      "expected": []
+    },
+    {
+      "id": "RENDER-007",
+      "startLine": 268,
+      "expected": []
+    },
+    {
+      "id": "SOCIAL-001",
+      "startLine": 272,
+      "expected": [
+        {
+          "rule": "style/SOCIAL-001",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "STRIKE-001",
+      "startLine": 276,
+      "expected": [
+        {
+          "rule": "style/STRIKE-001",
+          "line": 1
+        },
+        {
+          "rule": "style/STRIKE-001",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "STRIKE-002",
+      "startLine": 280,
+      "expected": [
+        {
+          "rule": "style/STRIKE-002",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "TABLE-001",
+      "startLine": 284,
+      "expected": [
+        {
+          "rule": "style/TABLE-001",
+          "line": 3
+        },
+        {
+          "rule": "style/TABLE-001",
+          "line": 4
+        }
+      ]
+    },
+    {
+      "id": "TABLE-002",
+      "startLine": 291,
+      "expected": [
+        {
+          "rule": "style/TABLE-002",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "TABLE-003",
+      "startLine": 297,
+      "expected": [
+        {
+          "rule": "style/TABLE-003",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "TABLE-004",
+      "startLine": 303,
+      "expected": [
+        {
+          "rule": "style/TABLE-004",
+          "line": 1
+        },
+        {
+          "rule": "style/TABLE-004",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "TABLE-005",
+      "startLine": 309,
+      "expected": [
+        {
+          "rule": "style/TABLE-005",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "TASK-001",
+      "startLine": 315,
+      "expected": [
+        {
+          "rule": "style/TASK-001",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "startLine": 319,
+      "expected": []
+    },
+    {
+      "id": "TASK-003",
+      "startLine": 323,
+      "expected": [
+        {
+          "rule": "style/TASK-003",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "TEXT-001",
+      "startLine": 327,
+      "expected": [
+        {
+          "rule": "standard/lost-formatting",
+          "line": 0
+        },
+        {
+          "rule": "style/TEXT-001",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "TEXT-002",
+      "startLine": 331,
+      "expected": [
+        {
+          "rule": "style/TEXT-002",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "WIDGET-001",
+      "startLine": 335,
+      "expected": [
+        {
+          "rule": "style/WIDGET-001",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "WIDGET-002",
+      "startLine": 341,
+      "expected": [
+        {
+          "rule": "style/WIDGET-002",
+          "line": 1
+        }
+      ]
+    }
+  ]
+}

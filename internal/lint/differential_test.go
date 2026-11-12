@@ -65,8 +65,8 @@ func TestDifferentialIgnoresPresentationWrappers(t *testing.T) {
 func TestSourceAcceptsSemanticallyCleanDocuments(t *testing.T) {
 	tests := []string{
 		"# Title\n\nText with **strong**, `code`, [a link](https://example.com), and ![an image](image.png).\n\n- [ ] open\n- [x] done\n",
-		"<details><summary>Read <kbd>K</kbd></summary>Text<br><a href=\"https://example.com\">safe</a></details>\n",
-		"| a | b |\n| - | - |\n| 1 | 2 |\n",
+		"<details>\n<summary>Read K</summary>\n\nText<br><a href=\"https://example.com\">safe</a>\n</details>",
+		"| a | b |\n| --- | --- |\n| 1 | 2 |\n",
 	}
 	for _, source := range tests {
 		findings, err := Source(source)

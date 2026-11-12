@@ -4,14 +4,14 @@ import (
 	"strings"
 	"testing"
 
-	"gfm"
+	"ghmd"
 )
 
 const upstreamExtraRunID = "00000000000000000000000000000000"
 
 func renderUpstreamExtra(t *testing.T, source string) string {
 	t.Helper()
-	html, err := gfm.Render(source, gfm.RenderOptions{RunID: upstreamExtraRunID})
+	html, err := ghmd.Render(source, ghmd.RenderOptions{RunID: upstreamExtraRunID})
 	if err != nil {
 		t.Fatal(err)
 	}

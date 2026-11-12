@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"gfm/internal/cmark-gfm"
+	"ghmd/internal/cmark-gfm"
 )
 
 // listMarker returns the beginning of list-item content after start.
@@ -44,7 +44,7 @@ func listMarker(source []byte, start, end int) (int, bool) {
 }
 
 // adaptText applies GitHub's unresolved-footnote recovery to a text node.
-func adaptText(node cmarkgfm.Node) error {
+func adaptText(node cmarkghmd.Node) error {
 	input := node.Literal()
 	if input == "" || !strings.Contains(input, "[^") {
 		return nil
@@ -129,7 +129,7 @@ func adaptText(node cmarkgfm.Node) error {
 }
 
 // adaptListNode applies source-based task-list adjustments to an item node.
-func adaptListNode(node cmarkgfm.Node, nodeType string, source []byte, lines []int) error {
+func adaptListNode(node cmarkghmd.Node, nodeType string, source []byte, lines []int) error {
 	line, column := node.StartLine(), node.StartColumn()
 	if line < 1 || line > len(lines) || column < 1 {
 		return nil
@@ -180,7 +180,7 @@ func adaptListNode(node cmarkgfm.Node, nodeType string, source []byte, lines []i
 }
 
 // adaptNodes applies GitHub compatibility adjustments to the unmodified cmark AST.
-func adaptNodes(root cmarkgfm.Node, source []byte) error {
+func adaptNodes(root cmarkghmd.Node, source []byte) error {
 	count := 1
 	for _, c := range source {
 		if c == '\n' {
@@ -198,8 +198,8 @@ func adaptNodes(root cmarkgfm.Node, source []byte) error {
 		}
 	}
 
-	var visit func(cmarkgfm.Node) error
-	visit = func(node cmarkgfm.Node) error {
+	var visit func(cmarkghmd.Node) error
+	visit = func(node cmarkghmd.Node) error {
 		nodeType := node.Type()
 		if nodeType == "text" {
 			if err := adaptText(node); err != nil {

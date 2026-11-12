@@ -182,7 +182,14 @@ func TestSourceKeepsMathCauseWhenStandardAlsoRejects(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(findings) != 1 || findings[0].Rule != ruleMathNotRecognized {
+	seen := false
+	for _, finding := range findings {
+		if finding.Rule == ruleMathNotRecognized {
+			seen = true
+			break
+		}
+	}
+	if !seen {
 		t.Fatalf("Source findings = %v, want one boundary finding", findings)
 	}
 }

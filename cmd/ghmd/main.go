@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"gfm"
-	"gfm/internal/diff"
-	"gfm/internal/lint"
+	"ghmd"
+	"ghmd/internal/diff"
+	"ghmd/internal/lint"
 )
 
 func main() {
@@ -36,7 +36,7 @@ func run(args []string) error {
 	case "lint":
 		return lintCommand(args)
 	}
-	return errors.New("Usage: gfm [render|diff|lint] [options] [input.md|-]")
+	return errors.New("Usage: ghmd [render|diff|lint] [options] [input.md|-]")
 }
 
 func renderCommand(args []string) error {
@@ -48,7 +48,7 @@ func renderCommand(args []string) error {
 	if err != nil {
 		return err
 	}
-	html, err := gfm.Render(source, gfm.RenderOptions{RunID: runID})
+	html, err := ghmd.Render(source, ghmd.RenderOptions{RunID: runID})
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func renderCommand(args []string) error {
 
 func diffCommand(args []string) error {
 	if len(args) != 1 || args[0] == "-h" || args[0] == "--help" {
-		return errors.New("Usage: gfm diff [input.md|-]")
+		return errors.New("Usage: ghmd diff [input.md|-]")
 	}
 	source, err := readInput(args[0])
 	if err != nil {
@@ -79,7 +79,7 @@ func diffCommand(args []string) error {
 
 func lintCommand(args []string) error {
 	if len(args) > 1 || len(args) == 1 && (args[0] == "-h" || args[0] == "--help" || strings.HasPrefix(args[0], "-") && args[0] != "-") {
-		return errors.New("Usage: gfm lint [input.md|-]")
+		return errors.New("Usage: ghmd lint [input.md|-]")
 	}
 	path := ""
 	if len(args) == 1 {

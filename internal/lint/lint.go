@@ -10,7 +10,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	cmarkgfm "gfm/internal/cmark-gfm"
+	cmarkghmd "ghmd/internal/cmark-gfm"
 )
 
 const (
@@ -68,13 +68,14 @@ func Source(source string) ([]Finding, error) {
 	}
 	findings = append(findings, differences...)
 	findings = append(findings, mathFindings(source)...)
+	findings = append(findings, StyleRules(source)...)
 	findings = dedupeMathCauses(findings)
 	sortFindings(findings)
 	return findings, nil
 }
 
 func rawHTML(source string) ([]Finding, error) {
-	document, err := cmarkgfm.Parse(source)
+	document, err := cmarkghmd.Parse(source)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +135,7 @@ func lineStartOffsets(source string) []int {
 	return starts
 }
 
-func (s *htmlScanner) walk(node cmarkgfm.Node) {
+func (s *htmlScanner) walk(node cmarkghmd.Node) {
 	for ; node.Valid(); node = node.Next() {
 		if node.Type() == "html_inline" || node.Type() == "html_block" {
 			s.scanHTML(node)
@@ -145,7 +146,7 @@ func (s *htmlScanner) walk(node cmarkgfm.Node) {
 	}
 }
 
-func (s *htmlScanner) scanHTML(node cmarkgfm.Node) {
+func (s *htmlScanner) scanHTML(node cmarkghmd.Node) {
 	s.literal = node.Literal()
 	s.offset = 0
 	s.line = node.StartLine()

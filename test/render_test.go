@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"gfm/internal/github"
+	"ghmd/internal/github"
 )
 
 func TestValidateIdentifiers(t *testing.T) {

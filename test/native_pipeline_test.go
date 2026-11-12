@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"gfm"
+	"ghmd"
 )
 
 func TestNativePipeline(t *testing.T) {
@@ -28,7 +28,7 @@ func TestNativePipeline(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			actual, err := gfm.Render(string(source), gfm.RenderOptions{RunID: strings.Repeat("a", 32)})
+			actual, err := ghmd.Render(string(source), ghmd.RenderOptions{RunID: strings.Repeat("a", 32)})
 			if err != nil {
 				t.Fatal(err)
 			}

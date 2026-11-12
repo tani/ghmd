@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"testing"
 
-	"gfm"
-	"gfm/internal/verify"
+	"ghmd"
+	"ghmd/internal/verify"
 )
 
 var fuzzName = regexp.MustCompile(`^fuzz-[a-f0-9]{24}\.json$`)
@@ -52,7 +52,7 @@ func TestSavedFuzzRegressions(t *testing.T) {
 			if hash(html) != meta.HTMLSHA {
 				t.Fatalf("html hash mismatch")
 			}
-			actual, err := gfm.Render(string(source), gfm.RenderOptions{})
+			actual, err := ghmd.Render(string(source), ghmd.RenderOptions{})
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"gfm/internal/github"
+	"ghmd/internal/github"
 )
 
 type upstreamManifest struct {

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gfm/internal/cmark-gfm"
+	"ghmd/internal/cmark-gfm"
 )
 
 const (
@@ -109,7 +109,7 @@ func RenderDocument(source, runID, boundary string) (string, error) {
 }
 
 func renderMarkdown(source []byte) (string, error) {
-	document, err := cmarkgfm.Parse(string(source))
+	document, err := cmarkghmd.Parse(string(source))
 	if err != nil {
 		return "", ErrMarkdown
 	}
@@ -118,7 +118,7 @@ func renderMarkdown(source []byte) (string, error) {
 	recovered, changed := recoverLabels(root, source)
 	if changed {
 		document.Close()
-		document, err = cmarkgfm.Parse(string(recovered))
+		document, err = cmarkghmd.Parse(string(recovered))
 		if err != nil {
 			return "", ErrMarkdown
 		}
@@ -135,7 +135,7 @@ func renderMarkdown(source []byte) (string, error) {
 	return document.HTML(), nil
 }
 
-func walkNodes(node cmarkgfm.Node, visit func(cmarkgfm.Node) error) error {
+func walkNodes(node cmarkghmd.Node, visit func(cmarkghmd.Node) error) error {
 	for ; node.Valid(); node = node.Next() {
 		if err := visit(node); err != nil {
 			return err
@@ -147,7 +147,7 @@ func walkNodes(node cmarkgfm.Node, visit func(cmarkgfm.Node) error) error {
 	return nil
 }
 
-func filterNode(node cmarkgfm.Node) error {
+func filterNode(node cmarkghmd.Node) error {
 	kind := node.Type()
 	if kind != "html_inline" && kind != "html_block" {
 		return nil

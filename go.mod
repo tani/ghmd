@@ -1,4 +1,4 @@
-module gfm
+module ghmd
 
 go 1.26.5
 

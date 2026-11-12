@@ -1,5 +1,5 @@
-// Package cmarkgfm exposes the vendored cmark-gfm parser through cgo.
-package cmarkgfm
+// Package cmarkghmd exposes the vendored cmark-gfm parser through cgo.
+package cmarkghmd
 
 /*
 #cgo CFLAGS: -I${SRCDIR} -I${SRCDIR}/../../third_party/cmark-gfm/src -I${SRCDIR}/../../third_party/cmark-gfm/extensions -I${SRCDIR}/../../third_party/cmark-gfm/generated

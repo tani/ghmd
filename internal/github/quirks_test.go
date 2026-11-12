@@ -4,12 +4,12 @@ import (
 	"strings"
 	"testing"
 
-	"gfm/internal/cmark-gfm"
+	"ghmd/internal/cmark-gfm"
 )
 
 func renderAdapted(t *testing.T, source string) string {
 	t.Helper()
-	document, err := cmarkgfm.Parse(source)
+	document, err := cmarkghmd.Parse(source)
 	if err != nil {
 		t.Fatal(err)
 	}

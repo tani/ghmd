@@ -10,8 +10,8 @@ import (
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 
-	"gfm/internal/github"
-	"gfm/internal/standard"
+	"ghmd/internal/github"
+	"ghmd/internal/standard"
 )
 
 const (
@@ -42,6 +42,7 @@ type semanticFeatures struct {
 	counts       map[featureID]int
 	descriptions map[featureID]featureDescription
 	source       string
+	footnotes    []bool
 }
 
 func newSemanticFeatures() semanticFeatures {
@@ -52,6 +53,10 @@ func newSemanticFeatures() semanticFeatures {
 }
 
 func (f *semanticFeatures) add(rule, key, search, message string) {
+	if (rule == ruleLostText || rule == ruleLostCode || rule == ruleLostLink || rule == ruleLostImage || rule == ruleLostMath) &&
+		f.onlyInFootnotes(search) {
+		return
+	}
 	id := featureID{rule: rule, key: key}
 	f.counts[id]++
 	if _, exists := f.descriptions[id]; !exists {
@@ -60,13 +65,6 @@ func (f *semanticFeatures) add(rule, key, search, message string) {
 }
 
 func differential(source string) ([]Finding, error) {
-	lowerSource := strings.ToLower(source)
-	if strings.Contains(source, "[^") || strings.Contains(lowerSource, "<svg") {
-		// md4c has no footnote support and SVG is foreign content; these
-		// outputs are not a usable expected baseline. Raw-HTML rules still
-		// apply to the same source.
-		return nil, nil
-	}
 	githubHTML, err := github.RenderDocument(source, differentialRunID, differentialBoundary)
 	if err != nil {
 		return nil, err
@@ -89,6 +87,7 @@ func differential(source string) ([]Finding, error) {
 func extractFeatures(fragment, source string) (semanticFeatures, error) {
 	features := newSemanticFeatures()
 	features.source = source
+	features.footnotes = mathFootnoteLines(source, lineStartOffsets(source))
 	context := &html.Node{Type: html.ElementNode, Data: "body", DataAtom: atom.Body}
 	nodes, err := html.ParseFragment(strings.NewReader(fragment), context)
 	if err != nil {
@@ -110,7 +109,7 @@ func (f *semanticFeatures) walk(node *html.Node) {
 	}
 
 	switch node.Data {
-	case "script", "style", "iframe", "noembed", "noframes", "template", "head", "title":
+	case "script", "style", "iframe", "noembed", "noframes", "template", "head", "title", "svg":
 		return
 	case "math-renderer", "x-equation":
 		expression := normalizeMath(nodeText(node))
@@ -147,6 +146,9 @@ func (f *semanticFeatures) walk(node *html.Node) {
 			}
 		}
 	case "img":
+		if strings.Contains(f.source, "[^") {
+			break
+		}
 		src, hasSource := attribute(node, "src")
 		alt, hasAlt := attribute(node, "alt")
 		if _, unsafe := unsafeURL("img", "src", src); unsafe || strings.HasPrefix(strings.ToLower(src), "data:") {
@@ -183,7 +185,8 @@ func (f *semanticFeatures) addVisibleText(nodes []*html.Node) {
 	current := &strings.Builder{}
 	flush := func() {
 		for _, text := range visibleTextFragments(current.String()) {
-			if strings.ContainsRune(text, '$') || strings.Contains(f.source, "~~") {
+			if strings.ContainsRune(text, '$') || strings.Contains(f.source, "~~") ||
+				(strings.Contains(f.source, "[^") && strings.HasPrefix(text, "[")) {
 				// Dollar remnants are math-rule territory; strikethrough
 				// delimiter differences are reported by formatting rules.
 				continue
@@ -222,7 +225,7 @@ func (f *semanticFeatures) addVisibleText(nodes []*html.Node) {
 			return
 		}
 		switch node.Data {
-		case "script", "style", "iframe", "noembed", "noframes", "template", "head", "title":
+		case "script", "style", "iframe", "noembed", "noframes", "template", "head", "title", "svg":
 			return
 		case "code":
 			// In the standard renderer, math written as $`expr`$ appears as
@@ -635,4 +638,29 @@ func firstCellText(node *html.Node) string {
 		return ""
 	}
 	return visit(node)
+}
+
+// onlyInFootnotes reports whether every occurrence of value lies inside a
+// footnote definition, where md4c's unsupported footnote syntax makes its
+// output unusable as an expected baseline.
+func (f *semanticFeatures) onlyInFootnotes(value string) bool {
+	if value == "" || len(f.footnotes) == 0 {
+		return false
+	}
+	starts := lineStartOffsets(f.source)
+	found := false
+	for offset := 0; offset < len(f.source); {
+		index := strings.Index(f.source[offset:], value)
+		if index < 0 {
+			break
+		}
+		index += offset
+		line := sort.Search(len(starts), func(i int) bool { return starts[i] > index }) - 1
+		if line < 0 || line >= len(f.footnotes) || !f.footnotes[line] {
+			return false
+		}
+		found = true
+		offset = index + len(value)
+	}
+	return found
 }
