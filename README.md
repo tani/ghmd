@@ -15,9 +15,11 @@ go vet -unsafeptr=false -unreachable=false ./...
 CGO_ENABLED=0 go test -count=1 ./...
 ```
 
+The same checks, plus the reproducibility gate, are provided by `make check`: it builds, tests, vets, runs `scripts/gen-native.sh`, and requires `git diff --exit-code` to show no generated changes.
+
 `unsafeptr` and `unreachable` are intentionally disabled for the generated sources: they coerce C heap addresses, not movable Go allocations, and ccgo's platform-cleanups contain unreachable branches.
 
-The checked-in generated Go files target `linux/arm64`; run `scripts/gen-native.sh` on the desired platform to regenerate them.
+Reproduction is guaranteed **for a fixed source checkout, `ccgo/v4@v4.39.0`, Go, host headers, and target `linux/arm64`**. C preprocessing reads the host headers; a different sysroot or platform can alter generated constants or code. For cross-machine/hermetic builds, pin a sysroot and toolchain (e.g. Nix or a container) and run `scripts/gen-native.sh` there. `git diff --exit-code -- internal/cmark-gfm/cmark_generated.go internal/standard/md4c_generated.go` checks only generated sources; other working-tree changes are not part of this gate.
 
 ```sh
 go build ./cmd/ghmd
