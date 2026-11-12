@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { createDOM } from "./support/dom";
 import { render } from "../src/quirks";
-import { sanitizeHtml } from "../src/html";
+import { sanitizeHtml } from "./support/native";
 
 // An independent DOM implementation reparses the serialized result. Inspect
 // templates too: inert content can become active when later unwrapped.

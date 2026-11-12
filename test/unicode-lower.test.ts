@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { unicodeLower } from "../src/quirks/native-core";
+import { unicodeLower } from "./support/native";
 import { render } from "../src/quirks";
 
 test("matches JavaScript lowercase for every Unicode scalar value", () => {

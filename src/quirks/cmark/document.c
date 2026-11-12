@@ -1,5 +1,10 @@
 /* Complete Markdown-to-HTML operation. No JS callbacks or DOM round trips. */
-static gfm_status gfm_render_document(gfm_view source, gfm_view token, gfm_view boundary, gfm_result *result) {
+gfm_status gfm_render(gfm_view source, gfm_view token, gfm_view boundary, gfm_result *result) {
+  if (!result) return GFM_BAD_ARGUMENT;
+  *result = (gfm_result){0};
+  if (!source.data || !token.data || !boundary.data) {
+    result->error = "Required string argument is missing"; return GFM_BAD_ARGUMENT;
+  }
   if (source.length > 1000000) { result->error = "Markdown exceeds 1 MB"; return GFM_LIMIT_EXCEEDED; }
   if (token.length != 32) { result->error = "runId must be 32 lowercase hexadecimal characters"; return GFM_BAD_ARGUMENT; }
   for (size_t i = 0; i < token.length; i++) if (!((token.data[i] >= 'a' && token.data[i] <= 'f') || (token.data[i] >= '0' && token.data[i] <= '9'))) {
@@ -19,7 +24,7 @@ static gfm_status gfm_render_document(gfm_view source, gfm_view token, gfm_view 
   memcpy(table_marker, "data-gfm-table-", 15); size_t used = 15;
   for (size_t i = 0; i < 36; i++) if (boundary.data[i] != '-') table_marker[used++] = boundary.data[i];
   table_marker[used] = 0;
-  gfm_status status = gfm_render_string(source, 0, gfm_filter_raw_inputs, NULL, result);
+  gfm_status status = gfm_render_markdown(source, result);
   if (status != GFM_OK) { free(modifiers); return status; }
   if (result->text.length > GFM_MAX_OUTPUT_BYTES) {
     free(modifiers); free(result->text.data); result->text = (gfm_string){0};

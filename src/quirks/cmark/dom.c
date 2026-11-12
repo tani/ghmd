@@ -353,8 +353,7 @@ static gfm_status gfm_dom_input_spans(lxb_dom_node_t *node, gfm_raw_span **spans
   }
   return GFM_OK;
 }
-static gfm_status gfm_filter_raw_inputs(gfm_view source, gfm_string *result, void *context) {
-  (void)context;
+static gfm_status gfm_filter_raw_inputs(gfm_view source, gfm_string *result) {
   gfm_status status = GFM_NO_MEMORY;
   h_buffer out = {0}; h_document d = {0}; gfm_raw_span *spans = NULL; size_t count = 0, capacity = 0;
   if (gfm_dom_has_input(source.data, source.length)) {

@@ -1,6 +1,6 @@
 import { describe, test, expect } from "bun:test";
 import { render } from "../src/quirks/index";
-import { renderMarkdown, renderAstXml, nativeVersion } from "../src/quirks/native-core";
+import { renderMarkdown, renderAstXml, nativeVersion } from "./support/native";
 
 describe("render", () => {
   test("renders GFM and keeps task states separate from later content", async () => {

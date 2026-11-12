@@ -1,4 +1,4 @@
-/* Own the parser, any recovered source, and its AST as a single FFI object. */
+/* Own the parser, any recovered source, and its AST during one C render. */
 typedef struct {
   cmark_parser *parser;
   cmark_node *doc;
@@ -63,37 +63,4 @@ static gfm_document *gfm_document_new(const unsigned char *source, size_t length
 static char *gfm_document_html(gfm_document *document) {
   return cmark_render_html(document->doc, document->options,
                            cmark_parser_get_syntax_extensions(document->parser));
-}
-
-/* The upstream XML renderer uses <unknown> for footnote node types. */
-static char *gfm_document_xml(gfm_document *document) {
-  char *xml = cmark_render_xml(document->doc, CMARK_OPT_SOURCEPOS);
-  if (!xml) return NULL;
-  cmark_strbuf output = CMARK_BUF_INIT(cmark_get_default_mem_allocator());
-  const char *p = xml;
-  const char *open = "<<unknown>", *close = "</<unknown>>";
-  size_t open_len = strlen(open), close_len = strlen(close);
-  while (*p) {
-    if (!strncmp(p, close, close_len)) {
-      cmark_strbuf_puts(&output, "</footnote_definition>"); p += close_len; continue;
-    }
-    if (!strncmp(p, open, open_len)) {
-      const char *attrs = p + open_len, *end = strchr(attrs, '>');
-      if (end) {
-        const char *slash = end;
-        while (slash > attrs && (slash[-1] == ' ' || slash[-1] == '\t' || slash[-1] == '\r' || slash[-1] == '\n')) slash--;
-        if (slash > attrs && slash[-1] == '/') {
-          const char *attr_end = slash - 1;
-          while (attr_end > attrs && (attr_end[-1] == ' ' || attr_end[-1] == '\t' || attr_end[-1] == '\r' || attr_end[-1] == '\n')) attr_end--;
-          cmark_strbuf_puts(&output, "<footnote_reference");
-          cmark_strbuf_put(&output, (const unsigned char *)attrs, attr_end - attrs);
-          cmark_strbuf_puts(&output, " />"); p = end + 1; continue;
-        }
-      }
-      cmark_strbuf_puts(&output, "<footnote_definition"); p += open_len; continue;
-    }
-    cmark_strbuf_putc(&output, (unsigned char)*p++);
-  }
-  free(xml);
-  return (char *)cmark_strbuf_detach(&output);
 }

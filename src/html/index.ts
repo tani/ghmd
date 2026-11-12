@@ -1,14 +1,14 @@
 import { cc } from "bun:ffi";
 import { join } from "node:path";
-// This binding exchanges strings only. Lexbor's tree and all native buffers
-// belong to one call and are destroyed before it returns.
+// HTML goes in and a JSON tree comes back; locations are optional. Lexbor's
+// native tree and buffers are destroyed before the call returns.
 const root = join(import.meta.dir, "../..");
 const { symbols } = cc({
   source: join(import.meta.dir, "native.c"),
   include: [join(root, "vendor/lexbor/compat")],
   symbols: {
-    gfm_html_call: {
-      args: ["napi_env", "napi_value", "napi_value", "napi_value"],
+    gfm_html_parse: {
+      args: ["napi_env", "napi_value", "napi_value"],
       returns: "napi_value",
     },
   },
@@ -40,12 +40,7 @@ export function parseFragment(
   options: { sourceCodeLocationInfo?: boolean } = {},
 ): HtmlNode {
   const tree = JSON.parse(
-    symbols.gfm_html_call(
-      undefined,
-      "parse",
-      html,
-      options.sourceCodeLocationInfo ? "locations" : "",
-    ) as string,
+    symbols.gfm_html_parse(undefined, html, Boolean(options.sourceCodeLocationInfo)) as string,
   );
   const parents = (node: HtmlNode) => {
     for (const child of node.childNodes ?? []) {
@@ -61,9 +56,6 @@ export function parseFragment(
   parents(tree);
   return tree;
 }
-/** Sanitize an HTML fragment; boundary is a private renderer nonce for math. */
-export const sanitizeHtml = (html: string, boundary = ""): string =>
-  symbols.gfm_html_call(undefined, "sanitize", html, boundary) as string;
 const escapeText = (text: string) =>
   text
     .replaceAll("&", "&amp;")

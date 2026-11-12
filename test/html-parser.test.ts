@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import { parseFragment, serialize, type HtmlNode } from "../src/html";
-import { removeRawInputs } from "../src/quirks/native-core";
+import { removeRawInputs } from "./support/native";
 import provenance from "../vendor/lexbor/PROVENANCE.json";
 
 const nodes = (root: HtmlNode): HtmlNode[] => [

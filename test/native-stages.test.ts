@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { resolve } from "node:path";
-import { prepareHtmlStage, renderMathStage, finishHtml } from "./support/native-stages";
+import { prepareHtmlStage, renderMathStage, finishHtml } from "./support/native";
 
 const token = "a".repeat(32);
 const boundary = "test-boundary";
@@ -68,14 +68,15 @@ test("ordinary rendering makes one native call across every reparse path", () =>
     mock.module("bun:ffi", () => ({ ...ffi, cc(options) {
       compiles++;
       const library = compile(options);
-      const invoke = library.symbols.gfm_bun_call;
-      return { ...library, symbols: { ...library.symbols, gfm_bun_call(...args) {
+      const invoke = library.symbols.gfm_bun_render;
+      return { ...library, symbols: { ...library.symbols, gfm_bun_render(...args) {
         if (args.some(value => typeof value === "function")) throw Error("Unexpected JS callback");
         calls++; return invoke(...args);
       } } };
     } }));
     const { render } = await import("./src/quirks/index.ts");
     if (compiles !== 1) throw Error("Renderer must compile exactly one C library");
+    if (calls !== 0) throw Error("Import must not invoke the native renderer");
     const counts = [];
     for (const source of ${JSON.stringify(samples)}) {
       calls = 0;

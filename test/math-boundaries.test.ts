@@ -47,7 +47,7 @@ test("preserves multiple display blocks and escapes fenced math", async () => {
 });
 
 test("recognizes an empty display-math text block", async () => {
-  const { renderMathStage } = await import("./support/native-stages");
+  const { renderMathStage } = await import("./support/native");
   expect(renderMathStage("<p>$$\n\n$$</p>", runId, "boundary", "").html).toContain(
     'class="js-display-math"',
   );

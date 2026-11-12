@@ -174,5 +174,5 @@
 
 #include "stages.c"
 #include "dom.c"
-#include "api.c"
+#include "markdown.c"
 #include "document.c"

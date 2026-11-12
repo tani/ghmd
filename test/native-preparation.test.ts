@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { prepareHtmlStage, renderMathStage } from "./support/native-stages";
+import { prepareHtmlStage, renderMathStage } from "./support/native";
 
 const boundary = "test-boundary";
 const token = "a".repeat(32);
