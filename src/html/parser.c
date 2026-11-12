@@ -34,8 +34,8 @@ static h_location *h_location_new(lxb_html_tree_t *tree) {
   return loc;
 }
 
-/* The generated upstream definition is renamed, so all original call sites
- * pass here. Parsing and tree-repair algorithms remain untouched. */
+/* lexbor.c routes upstream calls here using scoped preprocessor macros.
+ * The original implementation creates the node; this wrapper adds locations. */
 lxb_html_element_t *lxb_html_tree_create_element_for_token(lxb_html_tree_t *tree,
                                                            lxb_html_token_t *token,
                                                            lxb_ns_id_t ns) {

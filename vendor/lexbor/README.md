@@ -17,12 +17,19 @@ Then run, from this repository:
 bun scripts/prepare-lexbor.ts /path/to/lexbor/html-single.h
 ```
 
-There is one deliberate adaptation: the element-construction definition is
-renamed so `src/html/parser.c` can wrap it and attach source locations (including
-reconstructed formatting nodes). The wrapper delegates to the original function;
-HTML parsing and tree repair stay in Lexbor. Tests reverse the rename and verify
-the original distribution's hash. Update the pinned commit, both hashes, and
-review the wrapper when upgrading.
+The distribution is copied byte-for-byte, and tests check its upstream SHA-256
+directly. The preparation script verifies the input hash and copies the bytes.
+
+`src/html/lexbor.c` surrounds the include with scoped preprocessor macros so
+element creation passes through `src/html/parser.c` to attach source locations,
+including reconstructed formatting nodes. The upstream implementation is given
+a private name during compilation, while its internal calls retain the wrapper
+name. No source file is rewritten and no callback field is added to Lexbor.
+
+The macro adapter relies on the pinned source's first argument being
+`lxb_html_tree_t *tree` in declarations/definitions and `tree` at call sites.
+Unrecognized forms fail to compile. Update the pinned commit and upstream hash,
+review the adapter, and run the location and rendering tests when upgrading.
 
 `compat/float.h` allows compilation with Bun's bundled C compiler without GCC's
 headers. It is intentionally empty: the selected module includes that header but

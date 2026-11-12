@@ -10,19 +10,10 @@ const nodes = (root: HtmlNode): HtmlNode[] => [
   ...(root.childNodes ?? []).flatMap(nodes),
 ];
 
-test("vendored HTML parser is reproducible from the pinned upstream amalgamation", async () => {
-  const generated = await Bun.file(new URL("../vendor/lexbor/lexbor.h", import.meta.url)).text();
-  const hash = (value: string) => createHash("sha256").update(value).digest("hex");
-  expect(hash(generated)).toBe(provenance.generatedSha256);
-  expect(
-    generated.match(/gfm_lexbor_create_element_original\(lxb_html_tree_t \*tree,/g),
-  ).toHaveLength(1);
-  const original = generated.replace(
-    "gfm_lexbor_create_element_original(lxb_html_tree_t *tree,",
-    "lxb_html_tree_create_element_for_token(lxb_html_tree_t *tree,",
-  );
-  expect(hash(original)).toBe(provenance.upstreamSha256);
-  expect(original).not.toMatch(/\b(?:FLT|DBL|LDBL)_[A-Z0-9_]+\b/);
+test("vendored HTML parser is byte-for-byte the pinned upstream amalgamation", async () => {
+  const original = await Bun.file(new URL("../vendor/lexbor/lexbor.h", import.meta.url)).bytes();
+  expect(createHash("sha256").update(original).digest("hex")).toBe(provenance.upstreamSha256);
+  expect(new TextDecoder().decode(original)).not.toMatch(/\b(?:FLT|DBL|LDBL)_[A-Z0-9_]+\b/);
 });
 
 test("preserves HTML5 repair, foster parenting, templates and SVG casing", () => {

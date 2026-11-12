@@ -52020,7 +52020,7 @@ lxb_html_tree_insert_foreign_element(lxb_html_tree_t *tree,
 }
 
 lxb_html_element_t *
-gfm_lexbor_create_element_original(lxb_html_tree_t *tree,
+lxb_html_tree_create_element_for_token(lxb_html_tree_t *tree,
                                        lxb_html_token_t *token, lxb_ns_id_t ns)
 {
     lxb_dom_node_t *node = lxb_html_tree_create_node(tree, token->tag_id, ns);
