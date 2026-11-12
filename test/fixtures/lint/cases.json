@@ -1,0 +1,680 @@
+[
+  {
+    "id": "safe-html",
+    "source": "<details><summary>More</summary>body</details>\n",
+    "want": []
+  },
+  {
+    "id": "safe-anchor",
+    "source": "<a href=\"https://example.com\">x</a>\n",
+    "want": []
+  },
+  {
+    "id": "safe-image",
+    "source": "![alt](a.png)\n",
+    "want": []
+  },
+  {
+    "id": "inline-code",
+    "source": "`<script>alert(1)</script>`\n",
+    "want": []
+  },
+  {
+    "id": "fenced-code",
+    "source": "```html\n<script>alert(1)</script>\n```\n",
+    "want": []
+  },
+  {
+    "id": "html-comment",
+    "source": "<!-- <script>alert(1)</script> -->\n",
+    "want": []
+  },
+  {
+    "id": "attribute-text",
+    "source": "<div title=\"<input type=checkbox>\">safe</div>\n",
+    "want": []
+  },
+  {
+    "id": "plain-less-than",
+    "source": "1 < 2 and a < b\n",
+    "want": []
+  },
+  {
+    "id": "script",
+    "source": "<script>alert(1)</script>\n",
+    "want": [
+      {
+        "rule": "raw-html/removed-container",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "iframe",
+    "source": "<iframe src=\"https://example.com\"></iframe>\n",
+    "want": [
+      {
+        "rule": "raw-html/removed-container",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "svg",
+    "source": "<svg><text>nested</text></svg>\n",
+    "want": [
+      {
+        "rule": "raw-html/removed-container",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "object-fallback",
+    "source": "<object>fallback text</object>\n",
+    "want": [
+      {
+        "rule": "raw-html/removed-container",
+        "line": 1
+      },
+      {
+        "rule": "standard/lost-text",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "event-handler",
+    "source": "<div onclick=\"alert(1)\">x</div>\n",
+    "want": [
+      {
+        "rule": "raw-html/unsafe-attribute",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "srcdoc",
+    "source": "<iframe srcdoc=\"<p>x</p>\"></iframe>\n",
+    "want": [
+      {
+        "rule": "raw-html/removed-container",
+        "line": 1
+      },
+      {
+        "rule": "raw-html/unsafe-attribute",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "javascript-url",
+    "source": "<a href=\"javascript:alert(1)\">x</a>\n",
+    "want": [
+      {
+        "rule": "raw-html/unsafe-url",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "obfuscated-url",
+    "source": "<a href=\"jav&#x61;script:alert(1)\">x</a>\n",
+    "want": [
+      {
+        "rule": "raw-html/unsafe-url",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "vbscript-url",
+    "source": "<a href=\"vbscript:msgbox(1)\">x</a>\n",
+    "want": [
+      {
+        "rule": "raw-html/unsafe-url",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "data-url",
+    "source": "<img src=\"data:text/html,x\">\n",
+    "want": [
+      {
+        "rule": "raw-html/unsafe-url",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "raw-input",
+    "source": "<input type=\"checkbox\" checked>\n",
+    "want": [
+      {
+        "rule": "raw-html/input",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "template",
+    "source": "<template>text</template>\n",
+    "want": [
+      {
+        "rule": "raw-html/template",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "nested-anchor",
+    "source": "<a href=\"https://a\"><a href=\"https://b\">x</a></a>\n",
+    "want": [
+      {
+        "rule": "html/nested-anchor",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "block-in-p",
+    "source": "<p><div>x</div></p>\n",
+    "want": [
+      {
+        "rule": "html/block-in-p",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "unclosed-div",
+    "source": "<div>\n\ntext\n",
+    "want": [
+      {
+        "rule": "html/unclosed-tag",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "stray-close",
+    "source": "</div>\n",
+    "want": [
+      {
+        "rule": "html/stray-close",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "unclosed-anchor",
+    "source": "<a href=\"https://example.com\">x\n",
+    "want": [
+      {
+        "rule": "html/unclosed-tag",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "xmlns-attribute",
+    "source": "<p xmlns=\"x\">ok</p>\n",
+    "want": [
+      {
+        "rule": "raw-html/unsafe-attribute",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "math-code",
+    "source": "$`x`$\n",
+    "want": []
+  },
+  {
+    "id": "math-simple",
+    "source": "$x$\n",
+    "want": []
+  },
+  {
+    "id": "currency",
+    "source": "cost $5 and $6 total\n",
+    "want": []
+  },
+  {
+    "id": "footnote",
+    "source": "Text[^a]\n\n[^a]: note\n",
+    "want": []
+  },
+  {
+    "id": "strikethrough",
+    "source": "~~gone~~\n",
+    "want": []
+  },
+  {
+    "id": "task-blockquote",
+    "source": "> - [ ]\n",
+    "want": [
+      {
+        "rule": "standard/task-state",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "object-code",
+    "source": "<object><code>f()</code></object>\n",
+    "want": [
+      {
+        "rule": "raw-html/removed-container",
+        "line": 1
+      },
+      {
+        "rule": "standard/lost-code",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "object-link",
+    "source": "<object><a href=\"https://example.com\">x</a></object>\n",
+    "want": [
+      {
+        "rule": "raw-html/removed-container",
+        "line": 1
+      },
+      {
+        "rule": "standard/lost-link",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "template-script",
+    "source": "<template><script>x()</script></template>\n",
+    "want": [
+      {
+        "rule": "raw-html/removed-container",
+        "line": 1
+      },
+      {
+        "rule": "raw-html/template",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "multiline-script",
+    "source": "<script>\nvar x = 1;\n</script>\n",
+    "want": [
+      {
+        "rule": "raw-html/removed-container",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "table-in-p",
+    "source": "<p><table><tr><td>x</td></tr></table></p>\n",
+    "want": [
+      {
+        "rule": "html/block-in-p",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "safe-table",
+    "source": "<div><table><tr><td>x</td></tr></table></div>\n",
+    "want": []
+  },
+  {
+    "id": "script-in-fence",
+    "source": "```\n<iframe srcdoc=x></iframe>\n```\n",
+    "want": []
+  },
+  {
+    "id": "multiple-unsafe-attributes",
+    "source": "<div onclick=\"a\" onload=\"b\">x</div>\n",
+    "want": [
+      {
+        "rule": "raw-html/unsafe-attribute",
+        "line": 1
+      },
+      {
+        "rule": "raw-html/unsafe-attribute",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "multiple-unsafe-urls",
+    "source": "<a href=\"javascript:a\"><img src=\"javascript:b\"></a>\n",
+    "want": [
+      {
+        "rule": "raw-html/unsafe-url",
+        "line": 1,
+        "column": 1
+      },
+      {
+        "rule": "raw-html/unsafe-url",
+        "line": 1,
+        "column": 24
+      }
+    ]
+  },
+  {
+    "id": "nested-template",
+    "source": "<template><template>x</template></template>\n",
+    "want": [
+      {
+        "rule": "raw-html/template",
+        "line": 1,
+        "column": 1
+      },
+      {
+        "rule": "raw-html/template",
+        "line": 1,
+        "column": 11
+      }
+    ]
+  },
+  {
+    "id": "safe-details-div",
+    "source": "<details><summary>S</summary><div>x</div></details>\n",
+    "want": []
+  },
+  {
+    "id": "block-in-p-list",
+    "source": "<p><ul><li>x</li></ul></p>\n",
+    "want": [
+      {
+        "rule": "html/block-in-p",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "block-in-p-table",
+    "source": "<p><table><tr><td>x</td></tr></table></p>\n",
+    "want": [
+      {
+        "rule": "html/block-in-p",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "unclosed-details",
+    "source": "<details>\n\nbody\n",
+    "want": [
+      {
+        "rule": "html/unclosed-tag",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "unclosed-table",
+    "source": "<table><tr><td>x\n",
+    "want": [
+      {
+        "rule": "html/unclosed-tag",
+        "line": 1,
+        "column": 1
+      },
+      {
+        "rule": "html/unclosed-tag",
+        "line": 1,
+        "column": 8
+      },
+      {
+        "rule": "html/unclosed-tag",
+        "line": 1,
+        "column": 12
+      }
+    ]
+  },
+  {
+    "id": "template-iframe",
+    "source": "<template><iframe></iframe></template>\n",
+    "want": [
+      {
+        "rule": "raw-html/removed-container",
+        "line": 1
+      },
+      {
+        "rule": "raw-html/template",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "stray-span",
+    "source": "</span>\n",
+    "want": [
+      {
+        "rule": "html/stray-close",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "safe-mathml",
+    "source": "<math><mfrac><mi>x</mi><mn>2</mn></mfrac></math>\n",
+    "want": []
+  },
+  {
+    "id": "image-event",
+    "source": "<img src=\"https://example.com/a.png\" onerror=\"x\">\n",
+    "want": [
+      {
+        "rule": "raw-html/unsafe-attribute",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "object-image",
+    "source": "<object><img src=\"https://example.com/a.png\" alt=\"pic\"></object>\n",
+    "want": [
+      {
+        "rule": "raw-html/removed-container",
+        "line": 1
+      },
+      {
+        "rule": "standard/lost-image",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "raw-input-in-list",
+    "source": "- item <input type=checkbox>\n",
+    "want": [
+      {
+        "rule": "raw-html/input",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "math-in-emphasis",
+    "source": "*before $x$ after*\n",
+    "want": [
+      {
+        "rule": "standard/lost-math",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "math-in-link-label",
+    "source": "[$x$](https://example.com)\n",
+    "want": [
+      {
+        "rule": "standard/lost-math",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "math-in-raw-bold",
+    "source": "<b>$x$</b>\n",
+    "want": [
+      {
+        "rule": "standard/lost-math",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "math-in-table-escaped-pipe",
+    "source": "| a |\n| --- |\n| $a \\| b$ |\n",
+    "want": [
+      {
+        "rule": "standard/lost-math",
+        "line": 3
+      }
+    ]
+  },
+  {
+    "id": "math-not-recognized-prefix",
+    "source": "a$x$\n",
+    "want": [
+      {
+        "rule": "math/not-recognized",
+        "line": 1,
+        "column": 2
+      }
+    ]
+  },
+  {
+    "id": "math-not-recognized-leading-space",
+    "source": "$ x$\n",
+    "want": [
+      {
+        "rule": "standard/lost-math",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "math-not-recognized-trailing-space",
+    "source": "$x $\n",
+    "want": [
+      {
+        "rule": "standard/lost-math",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "math-not-recognized-ampersand",
+    "source": "$x&y$\n",
+    "want": [
+      {
+        "rule": "standard/lost-math",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "math-not-recognized-suffix",
+    "source": "$x$y\n",
+    "want": [
+      {
+        "rule": "math/not-recognized",
+        "line": 1,
+        "column": 1
+      }
+    ]
+  },
+  {
+    "id": "math-unclosed-dollar",
+    "source": "before $x\n",
+    "want": [
+      {
+        "rule": "math/unclosed-dollar",
+        "line": 1,
+        "column": 8
+      }
+    ]
+  },
+  {
+    "id": "math-currency-controls",
+    "source": "$5\n$5.99\ncost $5 and $6 total\n",
+    "want": []
+  },
+  {
+    "id": "math-footnote-definition",
+    "source": "[^a]: note $x$\n    $y$\n",
+    "want": [
+      {
+        "rule": "math/footnote-literal",
+        "line": 1,
+        "column": 12
+      },
+      {
+        "rule": "math/footnote-literal",
+        "line": 2,
+        "column": 5
+      }
+    ]
+  },
+  {
+    "id": "math-display-inline",
+    "source": "$$x$$\n",
+    "want": [
+      {
+        "rule": "math/display-not-isolated",
+        "line": 1,
+        "column": 1
+      },
+      {
+        "rule": "standard/lost-math",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "math-display-not-isolated-closing",
+    "source": "$$\nx\n$$ trailing\n",
+    "want": [
+      {
+        "rule": "math/display-not-isolated",
+        "line": 1,
+        "column": 1
+      },
+      {
+        "rule": "standard/lost-math",
+        "line": 1
+      },
+      {
+        "rule": "standard/lost-text",
+        "line": 3
+      }
+    ]
+  },
+  {
+    "id": "math-display-block",
+    "source": "$$\nx\n$$\n",
+    "want": []
+  },
+  {
+    "id": "math-exclusions",
+    "source": "```\n$ x$\n```\n`$x $` <!-- $x&y$ --> <span title=\"$x$y\">safe</span> \\$x\\$ $`x`$\n",
+    "want": []
+  },
+  {
+    "id": "math-multibyte-column",
+    "source": "\u00e9\ud83d\ude42 $ x$\n",
+    "want": [
+      {
+        "rule": "standard/lost-math",
+        "line": 1
+      }
+    ]
+  }
+]

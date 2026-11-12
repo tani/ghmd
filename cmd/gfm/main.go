@@ -9,6 +9,7 @@ import (
 
 	"gfm"
 	"gfm/internal/diff"
+	"gfm/internal/lint"
 )
 
 func main() {
@@ -22,7 +23,7 @@ func run(args []string) error {
 	command := "render"
 	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
 		switch args[0] {
-		case "render", "diff":
+		case "render", "diff", "lint":
 			command = args[0]
 			args = args[1:]
 		}
@@ -32,8 +33,10 @@ func run(args []string) error {
 		return renderCommand(args)
 	case "diff":
 		return diffCommand(args)
+	case "lint":
+		return lintCommand(args)
 	}
-	return errors.New("Usage: gfm [render|diff] [options] [input.md|-]")
+	return errors.New("Usage: gfm [render|diff|lint] [options] [input.md|-]")
 }
 
 func renderCommand(args []string) error {
@@ -67,6 +70,35 @@ func diffCommand(args []string) error {
 	}
 	for _, finding := range findings {
 		fmt.Println(finding)
+	}
+	if len(findings) > 0 {
+		os.Exit(1)
+	}
+	return nil
+}
+
+func lintCommand(args []string) error {
+	if len(args) > 1 || len(args) == 1 && (args[0] == "-h" || args[0] == "--help" || strings.HasPrefix(args[0], "-") && args[0] != "-") {
+		return errors.New("Usage: gfm lint [input.md|-]")
+	}
+	path := ""
+	if len(args) == 1 {
+		path = args[0]
+	}
+	source, err := readInput(path)
+	if err != nil {
+		return err
+	}
+	findings, err := lint.Source(source)
+	if err != nil {
+		return err
+	}
+	displayPath := path
+	if displayPath == "" || displayPath == "-" {
+		displayPath = "<stdin>"
+	}
+	for _, finding := range findings {
+		fmt.Printf("%s:%s\n", displayPath, finding)
 	}
 	if len(findings) > 0 {
 		os.Exit(1)

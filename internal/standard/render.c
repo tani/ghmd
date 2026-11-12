@@ -33,7 +33,7 @@ static void md_collect(const MD_CHAR *text, MD_SIZE size, void *userdata) {
 
 char *bridge_md4c_render(const char *source, size_t length, int github_dialect) {
   md_buffer buffer = {0};
-  unsigned flags = github_dialect ? MD_DIALECT_GITHUB : 0;
+  unsigned flags = github_dialect ? (MD_DIALECT_GITHUB | MD_FLAG_LATEXMATHSPANS) : 0;
   int result = md_html(source, length, md_collect, &buffer, flags, 0);
   if (result != 0 || buffer.failed) {
     free(buffer.data);
