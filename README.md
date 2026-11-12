@@ -11,10 +11,10 @@ This project renders GitHub-flavored Markdown to GitHub-compatible HTML and comp
 Go 1.26 or later, a C compiler and cgo are required.
 
 ```sh
-go build ./cmd/yagfm
-./yagfm render input.md > output.html
-./yagfm render --run-id 0123456789abcdef0123456789abcdef input.md
-./yagfm diff input.md        # cmark-gfm vs md4c structural differences
+go build ./cmd/gfm
+./gfm render input.md > output.html
+./gfm render --run-id 0123456789abcdef0123456789abcdef input.md
+./gfm diff input.md        # cmark-gfm vs md4c structural differences
 ```
 
 `render` accepts standard input when the path is `-` or omitted. Input is limited to 1 MB and output to 32 MB.
@@ -22,9 +22,9 @@ go build ./cmd/yagfm
 The public Go API is:
 
 ```go
-import "yagfm"
+import "gfm"
 
-html, err := yagfm.Render(source, yagfm.RenderOptions{RunID: ""})
+html, err := gfm.Render(source, gfm.RenderOptions{RunID: ""})
 ```
 
 An empty run ID generates a random 32-character lowercase hexadecimal identifier. Reusing an ID in the same page can cause anchor collisions.
@@ -39,7 +39,7 @@ The GitHub reference suite renders 617 captured inputs and compares canonical HT
 
 `test/fixtures/native-pipeline/` contains exact-byte regression cases for the postprocessing pipeline. The vendored cmark-gfm sources and generated headers are verified against `test/fixtures/cmark-gfm-upstream.json`.
 
-`yagfm diff` is intentionally lossy: it projects both rendered fragments onto a normalized tree and reports structural differences. It does not claim that either parser is correct.
+`gfm diff` is intentionally lossy: it projects both rendered fragments onto a normalized tree and reports structural differences. It does not claim that either parser is correct.
 
 ## Architecture
 
@@ -50,7 +50,7 @@ The GitHub reference suite renders 617 captured inputs and compares canonical HT
 | `internal/github` | Full GitHub compatibility pipeline: AST adaptation, sanitization, DOM repair, math, tables, alerts, footnotes, task lists, images, links and final serialization. |
 | `internal/diff` | cmark-gfm vs md4c normalized tree comparison. |
 | `internal/verify` | Fixture canonicalization and GitHub image-proxy normalization. |
-| `cmd/yagfm` | `render` and `diff` command-line interface. |
+| `cmd/gfm` | `render` and `diff` command-line interface. |
 
 The pipeline keeps the former renderer's byte-range tree for already-sanitized HTML. HTML5 boundaries use `x/net/html`: raw-input filtering, sanitizer traversal, DOM compatibility repair and DOM serialization. The renderer makes no JavaScript or Node calls.
 

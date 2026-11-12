@@ -1,8 +1,8 @@
-// Package yagfm renders GitHub-flavored Markdown to GitHub-compatible HTML.
-package yagfm
+// Package gfm renders GitHub-flavored Markdown to GitHub-compatible HTML.
+package gfm
 
 import (
-	"yagfm/internal/github"
+	"gfm/internal/github"
 )
 
 // RenderOptions controls one render.

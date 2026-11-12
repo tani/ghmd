@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"yagfm/internal/cmark-gfm"
+	"gfm/internal/cmark-gfm"
 )
 
 func renderAdapted(t *testing.T, source string) string {

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"yagfm/internal/verify"
+	"gfm/internal/verify"
 )
 
 const (

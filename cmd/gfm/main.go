@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"yagfm"
-	"yagfm/internal/diff"
+	"gfm"
+	"gfm/internal/diff"
 )
 
 func main() {
@@ -33,7 +33,7 @@ func run(args []string) error {
 	case "diff":
 		return diffCommand(args)
 	}
-	return errors.New("Usage: yagfm [render|diff] [options] [input.md|-]")
+	return errors.New("Usage: gfm [render|diff] [options] [input.md|-]")
 }
 
 func renderCommand(args []string) error {
@@ -45,7 +45,7 @@ func renderCommand(args []string) error {
 	if err != nil {
 		return err
 	}
-	html, err := yagfm.Render(source, yagfm.RenderOptions{RunID: runID})
+	html, err := gfm.Render(source, gfm.RenderOptions{RunID: runID})
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func renderCommand(args []string) error {
 
 func diffCommand(args []string) error {
 	if len(args) != 1 || args[0] == "-h" || args[0] == "--help" {
-		return errors.New("Usage: yagfm diff [input.md|-]")
+		return errors.New("Usage: gfm diff [input.md|-]")
 	}
 	source, err := readInput(args[0])
 	if err != nil {

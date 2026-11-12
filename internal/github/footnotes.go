@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"sort"
 
-	"yagfm/internal/cmark-gfm"
+	"gfm/internal/cmark-gfm"
 )
 
 type recoverySpan struct {

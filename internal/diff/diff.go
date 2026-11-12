@@ -9,8 +9,8 @@ import (
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 
-	"yagfm/internal/github"
-	"yagfm/internal/standard"
+	"gfm/internal/github"
+	"gfm/internal/standard"
 )
 
 // Finding is one normalized HTML difference.

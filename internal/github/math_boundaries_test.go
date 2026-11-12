@@ -17,7 +17,7 @@ func mathBoundaryElement(body string, display bool, runID string) string {
 
 func renderMathBoundaryDocument(t *testing.T, source, runID string) string {
 	t.Helper()
-	// RenderDocument is the internal entry point used by yagfm.Render. Using it
+	// RenderDocument is the internal entry point used by gfm.Render. Using it
 	// here avoids an import cycle while retaining the fixed run ID assertions.
 	html, err := RenderDocument(source, runID, "01234567-89ab-cdef-0123-456789abcdef")
 	if err != nil {

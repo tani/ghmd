@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"yagfm/internal/cmark-gfm"
+	"gfm/internal/cmark-gfm"
 )
 
 // listMarker returns the beginning of list-item content after start.

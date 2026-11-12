@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"yagfm/internal/github"
+	"gfm/internal/github"
 )
 
 type upstreamManifest struct {

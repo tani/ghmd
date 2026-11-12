@@ -5,14 +5,14 @@ import (
 	"strings"
 	"testing"
 
-	"yagfm"
-	cmarkgfm "yagfm/internal/cmark-gfm"
-	"yagfm/internal/verify"
+	"gfm"
+	cmarkgfm "gfm/internal/cmark-gfm"
+	"gfm/internal/verify"
 )
 
 func renderForBehaviorTest(t *testing.T, source, runID string) string {
 	t.Helper()
-	html, err := yagfm.Render(source, yagfm.RenderOptions{RunID: runID})
+	html, err := gfm.Render(source, gfm.RenderOptions{RunID: runID})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,7 +135,7 @@ func TestRenderDeterministicIDAndMalformedID(t *testing.T) {
 	requireHTMLContains(t, html,
 		`data-run-id="`+runID+`"`,
 		`user-content-fn-a-`+runID)
-	if _, err := yagfm.Render("text", yagfm.RenderOptions{RunID: "bad"}); err == nil || !strings.Contains(err.Error(), "runId must be 32") {
+	if _, err := gfm.Render("text", gfm.RenderOptions{RunID: "bad"}); err == nil || !strings.Contains(err.Error(), "runId must be 32") {
 		t.Fatalf("malformed run ID error = %v", err)
 	}
 }

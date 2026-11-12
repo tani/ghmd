@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"yagfm/internal/cmark-gfm"
+	"gfm/internal/cmark-gfm"
 )
 
 const (

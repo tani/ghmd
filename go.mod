@@ -1,4 +1,4 @@
-module yagfm
+module gfm
 
 go 1.26.5
 

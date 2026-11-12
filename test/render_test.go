@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"yagfm/internal/github"
+	"gfm/internal/github"
 )
 
 func TestValidateIdentifiers(t *testing.T) {

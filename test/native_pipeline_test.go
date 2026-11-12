@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"yagfm"
+	"gfm"
 )
 
 func TestNativePipeline(t *testing.T) {
@@ -28,7 +28,7 @@ func TestNativePipeline(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			actual, err := yagfm.Render(string(source), yagfm.RenderOptions{RunID: strings.Repeat("a", 32)})
+			actual, err := gfm.Render(string(source), gfm.RenderOptions{RunID: strings.Repeat("a", 32)})
 			if err != nil {
 				t.Fatal(err)
 			}

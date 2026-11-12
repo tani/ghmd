@@ -7,7 +7,7 @@ import (
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 
-	"yagfm"
+	"gfm"
 )
 
 func TestSanitizerNeutralizesAttacks(t *testing.T) {
@@ -26,7 +26,7 @@ func TestSanitizerNeutralizesAttacks(t *testing.T) {
 		`<!--removed--><div><img src=x onerror=alert(1)><a href="javascript:alert(2)" onclick=alert(3)>bad</a><template><img src=x onload=alert(4)></template></div>`,
 	}
 	for _, attack := range attacks {
-		output, err := yagfm.Render(attack, yagfm.RenderOptions{})
+		output, err := gfm.Render(attack, gfm.RenderOptions{})
 		if err != nil {
 			t.Fatalf("%v: %s", err, attack)
 		}
