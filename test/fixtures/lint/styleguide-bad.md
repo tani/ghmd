@@ -1,6 +1,6 @@
-# Deliberately bad GFM style guide document
+# Deliberately bad GFM rule fixture
 
-This document violates every authoring rule in GFM_STYLEGUIDE.md.
+This document violates every automatic authoring rule in RULES.md.
 
 ## ALERT-001
 

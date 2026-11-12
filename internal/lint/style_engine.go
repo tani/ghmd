@@ -7,7 +7,7 @@ import (
 )
 
 // styleViolation is a concrete authoring violation recognized from source, as
-// distinct from a rendering or parser differential. ID matches the style guide.
+// distinct from a rendering or parser differential. ID matches RULES.md.
 type styleViolation struct {
 	ID     string
 	Line   int

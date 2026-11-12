@@ -134,7 +134,6 @@ func TestMathExcludedRegions(t *testing.T) {
 		{name: "tilde fence", source: "~~~\n$ x$\n$x\n~~~~\n"},
 		{name: "unclosed fence", source: "```\n$ x$"},
 		{name: "inline code", source: "`$ x$` and ``$x $``"},
-		{name: "math code", source: "$`x`$ a$` y `$"},
 		{name: "HTML comment", source: "<!-- $ x$ -->\n<!--\n$x\n-->"},
 		{name: "HTML attributes", source: "<span title=\"$ x$\" data-value='$x'>safe</span>"},
 		{name: "escaped dollars", source: `\$ x\$ and \$open`},
@@ -150,6 +149,110 @@ func TestMathExcludedRegions(t *testing.T) {
 		expectedMathFinding{ruleMathNotRecognized, 2, 1})
 	requireMathFindings(t, "<span title=\"<!-- $x$ -->\">safe</span> $ x$",
 		expectedMathFinding{ruleMathNotRecognized, 1, 40})
+	requireMathFindings(t, "$`x`$ a$` y `$",
+		expectedMathFinding{ruleMathNotRecognized, 1, 8})
+}
+
+func TestMathDollarBacktickBoundary(t *testing.T) {
+	requireMathFindings(t, "a$`x`$",
+		expectedMathFinding{ruleMathNotRecognized, 1, 2})
+	for _, source := range []string{
+		"$`x`$",
+		" $`x`$",
+		"1$`x`$",
+		"($`x`$",
+	} {
+		requireMathFindings(t, source)
+	}
+}
+
+func TestMathHTMLLookalike(t *testing.T) {
+	requireMathFindings(t, "$$\na<b\n$$\n",
+		expectedMathFinding{ruleMathHTMLLookalike, 2, 2})
+	requireMathFindings(t, "```math\na <b > c\n```\n",
+		expectedMathFinding{ruleMathHTMLLookalike, 2, 3})
+	for _, source := range []string{
+		"$$\na < b\n$$\n",
+		"```math\na < b\n```\n",
+		`$a<b$`,
+		"$`a<b`$",
+	} {
+		requireMathFindings(t, source)
+	}
+}
+
+func TestMathUnknownCommands(t *testing.T) {
+	requireMathFindings(t, `$\definitelyUnknown{x}$`,
+		expectedMathFinding{ruleMathUnknownMacro, 1, 2})
+	for _, source := range []string{
+		`$\mathop{\mathrm{Min}}_x$`,
+		"`\\unknown`",
+	} {
+		requireMathFindings(t, source)
+	}
+}
+
+func TestMathRejectsMacroDefinitions(t *testing.T) {
+	for _, source := range []string{
+		`$\def\foo{x}\foo$`,
+		`$\newcommand{\foo}[1]{#1}\foo$`,
+		`$\renewcommand{\foo}{x}\foo$`,
+		`$\DeclareMathOperator{\foo}{foo}\foo$`,
+		"$$\n\\def\\foo{x}\n$$\n",
+		"```math\n\\def\\foo{x}\n```\n",
+	} {
+		findings := mathFindings(source)
+		seenDefinition := false
+		for _, finding := range findings {
+			if finding.Rule == ruleMathDisallowedMacro {
+				seenDefinition = true
+			}
+		}
+		if !seenDefinition {
+			t.Errorf("mathFindings(%q) = %v, want a disallowed definition macro", source, findings)
+		}
+	}
+}
+
+func TestMathStrippedEscapes(t *testing.T) {
+	requireMathFindings(t, `$\{a\,b\}$`,
+		expectedMathFinding{ruleMathStrippedEscape, 1, 2})
+	requireMathFindings(t, `$\$x$`,
+		expectedMathFinding{ruleMathStrippedEscape, 1, 2})
+	requireMathFindings(t, "$$\n\\{a\\}\n$$\n",
+		expectedMathFinding{ruleMathStrippedEscape, 2, 1})
+
+	for _, source := range []string{
+		"$`\\_`$",
+		"$`\\#group_i`$",
+		"```math\n\\{a\\}\n```\n",
+		`$\alpha + \beta$`,
+	} {
+		requireMathFindings(t, source)
+	}
+}
+
+func TestMathDisallowedMacros(t *testing.T) {
+	requireMathFindings(t, `$\operatorname{Min}_x$`,
+		expectedMathFinding{ruleMathDisallowedMacro, 1, 2})
+	requireMathFindings(t, "$`\\operatorname{Min}_x`$",
+		expectedMathFinding{ruleMathDisallowedMacro, 1, 3})
+	requireMathFindings(t, "$$\n\\operatorname*{Min}_{x}\n$$\n",
+		expectedMathFinding{ruleMathDisallowedMacro, 2, 1})
+	requireMathFindings(t, "```math\n\\operatorname{Min}_x\n```\n",
+		expectedMathFinding{ruleMathDisallowedMacro, 2, 1})
+	requireMathFindings(t, "~~~math\n\\operatorname{Min}_x\n~~~\n",
+		expectedMathFinding{ruleMathDisallowedMacro, 2, 1})
+
+	for _, source := range []string{
+		"Use \\operatorname in prose.",
+		"`\\operatorname`",
+		"```text\n\\operatorname\n```\n",
+		`$\mathrm{Min}_x$`,
+		`$\operatornamewithlimits{Min}_x$`,
+	} {
+		requireMathFindings(t, source)
+	}
 }
 
 func TestMathEscapedBackslashes(t *testing.T) {

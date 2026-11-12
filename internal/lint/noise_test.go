@@ -53,7 +53,9 @@ func TestFixtureDifferentialNoiseBudget(t *testing.T) {
 	if mathDifferential > 120 {
 		t.Fatalf("math differential findings regressed: %d", mathDifferential)
 	}
-	if mathSource > 120 {
+	// The matrix-cross fixtures intentionally exercise letter-prefixed
+	// dollar-backtick math, which math/not-recognized reports.
+	if mathSource > 300 {
 		t.Fatalf("math source findings regressed: %d", mathSource)
 	}
 	if raw > 100 {

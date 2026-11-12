@@ -13,12 +13,17 @@ const (
 	ruleMathUnclosedDollar  = "math/unclosed-dollar"
 	ruleMathFootnoteLiteral = "math/footnote-literal"
 	ruleMathDisplayIsolated = "math/display-not-isolated"
+	ruleMathStrippedEscape  = "math/stripped-escape"
+	ruleMathDisallowedMacro = "math/disallowed-macro"
+	ruleMathHTMLLookalike   = "math/html-lookalike"
+	ruleMathUnknownMacro    = "math/unknown-macro"
 )
 
 // mathFindings reports dollar math that GitHub renders literally or rejects.
 func mathFindings(source string) []Finding {
+	regionFindings := mathRegionFindings(source)
 	if !strings.ContainsRune(source, '$') {
-		return nil
+		return regionFindings
 	}
 
 	starts := lineStartOffsets(source)
@@ -29,7 +34,7 @@ func mathFindings(source string) []Finding {
 		footnotes: mathFootnoteLines(source, starts),
 	}
 	s.scan()
-	return s.findings
+	return append(s.findings, regionFindings...)
 }
 
 type mathScanner struct {
@@ -67,6 +72,9 @@ func (s *mathScanner) scan() {
 			s.add(i, ruleMathNotRecognized, "inline math does not satisfy GitHub's dollar boundaries")
 		} else if s.footnotes[s.line(i)] {
 			s.add(i, ruleMathFootnoteLiteral, "GitHub renders inline math in footnote definitions as literal text")
+		} else if at := mathStrippedEscape(s.source, i+1, close); at >= 0 {
+			s.add(at, ruleMathStrippedEscape,
+				"GitHub removes this backslash escape from bare $...$ math; use $`...`$ to preserve the TeX source")
 		}
 		i = close + 1
 	}
@@ -75,6 +83,10 @@ func (s *mathScanner) scan() {
 func (s *mathScanner) display(open int) int {
 	closeIsolated := s.nextDisplay(open+2, true)
 	if mathDelimitersOnOwnLines(s.source, s.starts, open) && closeIsolated >= 0 {
+		if at := mathStrippedEscape(s.source, open+2, closeIsolated); at >= 0 {
+			s.add(at, ruleMathStrippedEscape,
+				"GitHub removes this backslash escape from $$ display math; use a fenced math block to preserve the TeX source")
+		}
 		return closeIsolated + 2
 	}
 	s.add(open, ruleMathDisplayIsolated, "display math requires isolated opening and closing $$ lines")
@@ -343,6 +355,22 @@ func mathHTMLTagEnd(source string, open int) int {
 			quote = c
 		} else if c == '>' {
 			return i + 1
+		}
+	}
+	return -1
+}
+
+// mathStrippedEscape locates a CommonMark backslash escape inside bare math.
+// GitHub consumes escapes for ASCII punctuation before handing the expression
+// to its math renderer, so TeX commands such as \{ and \_ lose their meaning.
+func mathStrippedEscape(source string, from, to int) int {
+	for i := from; i+1 < to; i++ {
+		if source[i] != '\\' {
+			continue
+		}
+		if c := source[i+1]; c >= '!' && c <= '/' || c >= ':' && c <= '@' ||
+			c >= '[' && c <= '`' || c >= '{' && c <= '~' {
+			return i
 		}
 	}
 	return -1

@@ -19,7 +19,7 @@ var manualStyleRules = map[string]string{
 }
 
 // ManualRule returns review guidance for a rule, and whether it is deliberately
-// excluded from automatic linting. Rule IDs match GFM_STYLEGUIDE.md exactly.
+// excluded from automatic linting. Rule IDs match RULES.md exactly.
 func ManualRule(id string) (string, bool) {
 	guidance, ok := manualStyleRules[id]
 	return guidance, ok

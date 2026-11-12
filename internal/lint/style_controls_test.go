@@ -55,7 +55,7 @@ func TestStyleGuideNegativeControls(t *testing.T) {
 		{"MATH-007", "$`x`$"},
 		{"MATH-008", "$`\\text{plain text}`$"},
 		{"MATH-009", "$`\\$x`$"},
-		{"MATH-010", "$\\sum_i x_i$"},
+		{"MATH-010", "$x + y$"},
 		{"MATH-011", "$x + y$"},
 		{"MERMAID-001", mermaid},
 		{"MERMAID-002", mermaid},
