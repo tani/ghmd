@@ -1,5 +1,0 @@
-# Reference inputs and exact GitHub output must remain byte-for-byte unchanged.
-GFM_STYLEGUIDE.md
-test/fixtures/
-# Keep the vendored upstream release unmodified.
-vendor/

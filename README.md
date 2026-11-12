@@ -1,98 +1,67 @@
-# GitHub and VS Code Markdown comparison
+# GitHub Markdown renderer in Go
 
-This project finds Markdown that may render correctly in VS Code's built-in preview but differently on GitHub. It uses `markdown-it` and `@vscode/markdown-it-katex` to approximate VS Code's default preview, then compares its meaningful output with GitHub HTML.
+This project renders GitHub-flavored Markdown to GitHub-compatible HTML and compares that output with a second GitHub-dialect parser. It is a Go rewrite of the former Bun/TypeScript implementation.
 
-```sh
-bun install --frozen-lockfile
-bun run compare input.md                    # Offline: approximate GitHub with the local renderer
-bun run compare --github-live input.md      # One real GitHub API request; sends the file contents
-bun run compare --fixtures                  # Use saved GitHub API responses, offline
-bun run compare --fixtures --kind math      # Filter by category
-bun run compare --fixtures --all            # List all candidates
-bun run compare --only original-0024        # Inspect a saved case
-```
+- **cmark-gfm** (vendored) parses Markdown through cgo and supplies the GitHub AST.
+- **golang.org/x/net/html** owns HTML5 parsing, tree repair, sanitization and serialization.
+- **md4c** (vendored) parses the same Markdown through cgo as an independent GitHub dialect for differential checks.
 
-The live option uses `GITHUB_PAT` or `GITHUB_TOKEN` if available; GitHub's rate limits apply. The offline local renderer is an approximation, and can miss GitHub behavior; fixture comparisons use the exact saved GitHub response, even where the local renderer disagrees. The live option sends the document to GitHub, while ordinary comparisons and tests make no requests. `--json` emits machine-readable results.
+## Build and run
 
-The comparison projects HTML onto text, math, code, links, images, task states, formatting, and list/table structure. It extracts TeX from KaTeX's MathML and GitHub's math placeholders, and ignores highlighter markup and nonessential serialization. It looks for content or formatting present in the VS Code output that may be missing or different in GitHub. KaTeX errors are reported separately rather than called GitHub defects. Findings are candidates, not a guarantee of correct visual rendering, security, or author intent; the projection is lossy, and it cannot detect shared renderer errors.
-
-Individual results include source-location candidates. Exact ranges identify matching Markdown expressions, destinations, or words; they do not prove that the span caused the difference. Structural changes and fenced blocks may point to an enclosing block instead. Repeated content is reported as ambiguous, and differences that cannot be aligned are marked unavailable rather than assigned a guessed location. Large candidate lists may be capped. Line and column numbers are one-based; columns count Unicode code points, end positions are exclusive, and JSON offsets use UTF-16 code units. Grouped fixture summaries omit individual ranges; use `--all`, `--only ID`, or `--json` to inspect them.
-
-The semantic summary keeps an ordered `nodes` array with separate text, math, code, image, and math-error nodes. Text comparisons follow text nodes in order without substituting markers for other content. `compareMarkdown` adds a `source` field to VS Code nodes when the source map can associate them with a Markdown block; repeated matches are marked ambiguous, and unmapped nodes are unavailable. These are block-level candidates, while individual findings can have more precise ranges. `text` now contains individual text fragments instead of a single document-wide string.
-
-Location analysis uses `markdown-it-source-map` to associate rendered top-level elements with source lines. The plugin does not provide inline columns, end lines, or mappings for every renderer such as fenced blocks, so token ranges and conservative source matching are still used for those cases. Source-provided attributes are not trusted as plugin-generated mappings, and source-map instrumentation is confined to analysis rather than normal preview output.
-
-For programmatic comparisons of already-rendered fragments:
-
-```ts
-import { compareMarkdown } from "gfm-bun-render/compare";
-const { findings } = compareMarkdown(markdown, githubHtml, vscodeHtml);
-```
-
-The VS Code-style renderer follows default preview settings (`html: true`, `linkify: true`, `breaks: false`, fuzzy links off) and the built-in math plugin's fenced math and macro settings. VS Code itself has additional preview plugins, webview security settings, styles, and configurable behavior, which this approximation does not fully reproduce. In particular, do not assume that all GitHub features, such as footnotes, task lists, alerts, and Mermaid widgets, are reproduced by these libraries. The returned VS Code-style HTML is **not sanitized** and must not be inserted into a trusted page without an appropriate sanitizer. [VS Code Markdown engine](https://github.com/microsoft/vscode/blob/main/extensions/markdown-language-features/src/markdownEngine.ts), [VS Code math extension](https://github.com/microsoft/vscode/blob/main/extensions/markdown-math/src/extension.ts).
-
-The default recall benchmark (`test/benchmarks/vscode-github-risk.json`) contains seven positive examples and four controls, selected manually from existing development fixtures. The cases have assumed intent, some share root causes, and the sample is neither independent nor representative. A document is counted as detected when any candidate category appears; that candidate may not identify the annotated issue. `--style` and `--rendering` select older, broader label sets that include cases VS Code itself does not necessarily render as intended. Scores do not estimate general recall.
-
-## Setup and use
-
-Bun 1.4.4 or later uses its built-in `bun:ffi` compiler. On first import of the GitHub-compatible renderer, `cc()` compiles cmark-gfm and the vendored Lexbor HTML5 parser in-process. The cmark-gfm sources are unmodified. A small C entry point uses preprocessor includes and isolates colliding internal names; it is not a pre-generated copy of the source files. On Bun, no separate compiler, CMake, make, or setup step is required. Standard C headers must be available to the C compiler. The VS Code-style renderer does not compile or call cmark-gfm.
+Go 1.26 or later, a C compiler and cgo are required.
 
 ```sh
-bun install --frozen-lockfile
-bun test
-bun run render input.md > output.html
+go build ./cmd/yagfm
+./yagfm render input.md > output.html
+./yagfm render --run-id 0123456789abcdef0123456789abcdef input.md
+./yagfm diff input.md        # cmark-gfm vs md4c structural differences
 ```
 
-Node.js 24 or later can run the TypeScript source from a checkout using the optional `node-tinycc` and `koffi` peer dependencies. Both have `optional: true` in `peerDependenciesMeta`, so Bun users do not need them. Install and build the peers, then run:
+`render` accepts standard input when the path is `-` or omitted. Input is limited to 1 MB and output to 32 MB.
+
+The public Go API is:
+
+```go
+import "yagfm"
+
+html, err := yagfm.Render(source, yagfm.RenderOptions{RunID: ""})
+```
+
+An empty run ID generates a random 32-character lowercase hexadecimal identifier. Reusing an ID in the same page can cause anchor collisions.
+
+## Tests
 
 ```sh
-npm install node-tinycc koffi
-node src/quirks/cli.ts input.md > output.html
-npm run test:node
+go test ./...
 ```
 
-The `#ffi` conditional import in `package.json` selects Bun's built-in compiler or the Node adapter without a runtime version check. The Node adapter uses the same C sources, compiling a temporary shared library with TinyCC and binding functions through Koffi or generated Node-API callbacks. It requires the main thread and has been verified on Node 24.16.0 / Linux ARM64. `node-tinycc` needs native build tools during installation; compilation at runtime stays in-process. See [src/ffi/README.md](src/ffi/README.md) for the supported `cc()` subset, installation details, cleanup, and platform limitations.
+The GitHub reference suite renders 617 captured inputs and compares canonical HTML trees against responses captured from GitHub's Markdown API in GFM mode. Fixtures live in `test/fixtures/e2e/`; source and response hashes are checked before rendering. The comparison ignores syntax-highlighting wrappers, normalizes generated footnote and math IDs, and collapses ordinary HTML whitespace; it still checks tags, nesting, attributes and content.
 
-The CLI uses the GitHub-compatible renderer and also accepts standard input. Both renderers return a Promise containing an HTML fragment and limit input to 1 MB and output to 32 MB. The compatible renderer's native compilation at import and its complete rendering pipeline run synchronously in the calling process; the Promise preserves the public API. The Bun `cc()` integration has been tested here with Bun 1.4.4 on Linux ARM64; other platforms have not been verified in this project.
+`test/fixtures/native-pipeline/` contains exact-byte regression cases for the postprocessing pipeline. The vendored cmark-gfm sources and generated headers are verified against `test/fixtures/cmark-gfm-upstream.json`.
 
-## Compatibility status
+`yagfm diff` is intentionally lossy: it projects both rendered fragments onto a normalized tree and reports structural differences. It does not claim that either parser is correct.
 
-The offline E2E tests cover 617 distinct inputs, representing 665 named cases, with responses individually captured from GitHub's Markdown API in GFM mode. The cases cover positive and negative syntax, math in different contexts, task-list and document boundaries, HTML sanitization, code highlighting, images, widgets, and larger documents. Each input and its exact response are stored as an `.md`/`.html` pair; the manifest records aliases, source, rule IDs, hashes, and capture time. Run `bun run test:e2e` to run only these tests; no API request is made by the tests.
+## Architecture
 
-The comparison parses HTML into a tree, sorts attributes, normalizes generated footnote and math IDs, and collapses ordinary HTML whitespace. It ignores formatting whitespace at block boundaries but keeps meaningful inline spacing and preserves whitespace inside code, preformatted text, and math. It checks tags, nesting, attributes, and content; it does not establish visual equivalence or validate the browser's rendering of math or diagrams. For captured GitHub responses, proxied image URLs and proxy-only wrappers are normalized back to the original image URLs before comparison.
+| Package | Responsibility |
+| --- | --- |
+| `internal/cmark-gfm` | cgo binding to the unmodified vendored cmark-gfm parser and AST. |
+| `internal/standard` | cgo binding to the vendored md4c parser (CommonMark plus GitHub extensions). |
+| `internal/github` | Full GitHub compatibility pipeline: AST adaptation, sanitization, DOM repair, math, tables, alerts, footnotes, task lists, images, links and final serialization. |
+| `internal/diff` | cmark-gfm vs md4c normalized tree comparison. |
+| `internal/verify` | Fixture canonicalization and GitHub image-proxy normalization. |
+| `cmd/yagfm` | `render` and `diff` command-line interface. |
 
-Neither renderer performs syntax highlighting. E2E comparison ignores GitHub’s highlighting wrappers, token spans, code-block language attributes, and one trailing code-block newline, while still checking code contents; language preservation is covered separately by unit tests.
+The pipeline keeps the former renderer's byte-range tree for already-sanitized HTML. HTML5 boundaries use `x/net/html`: raw-input filtering, sanitizer traversal, DOM compatibility repair and DOM serialization. The renderer makes no JavaScript or Node calls.
 
-To capture missing cases from `scripts/new-e2e-cases.ts`, set `GITHUB_PAT` or `GITHUB_TOKEN` and run `bun scripts/capture-e2e.ts`. The script reuses existing references, waits at least 650 ms between requests by default, saves each successful response before continuing, and stops on an HTTP error so it can be resumed. `GFM_CAPTURE_DELAY_MS` may increase the interval (minimum 250 ms). GitHub's authenticated rate limit is typically 5,000 requests per hour, and secondary limits can apply.
+## Rendering policy
 
-### Fuzzing and saved regressions
+- Raw HTML passes through an allowlist sanitizer. Executable containers, event handlers, inline styles, unsafe URLs, namespace attributes and dangerous `id`/`name` values are removed. Template contents are checked recursively; safe HTML and basic MathML are retained. Unknown tags are unwrapped.
+- The allowlist data is adapted from DOMPurify 3.4.1 under Apache-2.0; see `NOTICE` and `POLICY-LICENSE` files retained with the pipeline sources.
+- Neither renderer performs syntax highlighting.
+- Input limits: 1 MB of Markdown, 32 MB of HTML output, tree depth 512.
+- Remote image URLs are left unproxied.
 
-`bun run fuzz --seed 42 --count 100` generates reproducible combinations of math, malformed HTML, deep lists and Unicode, running each render in an isolated process with a timeout. By default it performs no network requests and saves crashes under `test/fixtures/fuzz/`. To compare generated cases with GitHub's Markdown API, set `GITHUB_PAT` or `GITHUB_TOKEN` and add `--github`; this makes one request per unsaved input with at least 750 ms between requests, stops on API errors, and saves each mismatch or crash as a Markdown/HTML pair with seed, index and hashes. `--count` is capped at 1000 per run; GitHub's hourly and secondary limits still apply. Do not use `--github` with private input unless sending it to GitHub is intended.
+## Vendored sources and licensing
 
-Saved cases are included in `bun test` and `bun run test:e2e`. A saved mismatch remains a tracked known difference: its reference and current normalized output hashes are verified, so a fix or other behavior change requires review. Once fixed, change its metadata `failure` from `mismatch` to `fixed` and remove `actualAstSha256`; the test then requires equality. A saved crash must stop crashing and, when a reference is present, match it before its test passes. The command exits nonzero when it saves a failure or encounters an API error. Fixtures are never overwritten by later fuzz runs.
-
-For example, `matrix-bare-prefix-0` captures recognized `$x$`, while `matrix-bare-prefix-1` captures `a$x$` remaining literal. Both expected responses come from GitHub, rather than being inferred from the renderer.
-
-The original inputs include cases split from the Markdown batches previously provided in this workspace, including examples attributed there to the markdown-math-acid-test project. The independently captured outputs reflect each case on its own; document-wide interactions can produce different results.
-
-For reproducible output, pass a 32-character lowercase hexadecimal `runId` to `render`, or use `--run-id ID` on the CLI. Normally the renderer generates a fresh ID for each fragment, as GitHub does; reusing an ID in the same page can cause anchor collisions.
-
-The renderer leaves remote image URLs unproxied. Matching these fixtures does not prove compatibility with every possible Markdown input; math, sanitization, and GitHub's other server-side transformations have broader behavior than the cases covered here. Raw HTML passes through the vendored Lexbor HTML5 parser and the C allowlist sanitizer in `src/html/sanitize.c` before renderer transformations. It removes executable containers, event handlers, inline styles, unsafe URLs, namespace attributes, and dangerous `id`/`name` values; it recursively checks template content and retains safe HTML and basic MathML. Unknown HTML tags are unwrapped. There are no parse5 or DOMPurify dependencies. The allowlist data is adapted from DOMPurify 3.4.1 under Apache-2.0; see `src/html/NOTICE` and `POLICY-LICENSE`. Its JavaScript implementation is not retained. The sanitizer is not security-audited.
-
-The GitHub-compatible renderer makes **one native call per document**. `src/quirks/cmark/document.c` owns the complete operation: cmark parsing and AST adjustments, raw input filtering, HTML5 parsing, sanitization, reconstructed-anchor and SVG handling, template/details preparation, every reparse, tables and math, link processing, final serialization, and size checks. No intermediate HTML or reparse flag crosses into JavaScript. TypeScript only loads the native library, generates random render identifiers, and exposes the Promise API and CLI. There is no runtime DOM library; happy-dom is a development dependency used only as an independent test oracle.
-
-The C API in `src/quirks/cmark/api.h` exposes one function, `gfm_render()`: borrowed Markdown, run-ID, and boundary UTF-8 views go in, and a malloc-owned final HTML string or a runtime-independent error comes out. It validates the input and identifiers in C. `bun.c` exposes only `gfm_bun_render`, which handles string ownership and JavaScript exceptions. There is no operation dispatcher or JavaScript callback support. The same core works without Bun or Node-API, verified by a plain-C probe.
-
-`native-core.ts` configures `cc()` and exports only the internal `renderDocument()` binding used by the public `render()` API. Unsanitized HTML, AST/XML, version, Unicode-lowercase, raw-input filtering, and standalone sanitizer entry points are not exposed by production bindings. Tests exercise the necessary private helpers through `test/support/native.c`; the XML diagnostic formatter also lives there. Preparation, math, and finalization stay private C functions. The final operation removes exactly one trailing LF and enforces the 32 MB UTF-8 output limit before creating a JavaScript string. A subprocess test verifies one compilation, no import-time native calls, and one native invocation per render across the reparse paths, without callbacks or an external compiler.
-
-Lexbor tokenizes and constructs HTML trees. At internal reparse boundaries, neutral tag names defer paragraph/table/template repairs until C DOM compatibility rules run. Those rules retain the former renderer's direct-parent paragraph closing, table insertion, template boundaries, and end-tag effects after relocated elements. They operate on sanitized content and never replace the raw HTML sanitizer. Literal attribute angle brackets keep their former serialization. These behaviors are checked by exact Markdown/HTML pairs under `test/fixtures/native-pipeline/`; these are migration regressions, separately labeled from the unchanged GitHub API captures. Unicode lowercase uses pinned Unicode 17.0 tables generated by `bun scripts/generate-unicode-lower.ts`, including context-sensitive Greek sigma.
-
-Handwritten C modules are assembled explicitly in `src/quirks/cmark/unity.c`. `tree.c` holds serialized-HTML spans and tree queries; `attributes.c` and `classes.c` handle edits shared by feature modules. Lists, tasks, images, alerts, links, and footnotes have separate modules, and `serialize.c` writes their final HTML. Native DOM compatibility, DOM serialization, and raw-source filtering are separated into `dom-compat.c`, `dom-serialize.c`, and `raw-html.c`. `document.c` owns intermediate strings, render identifiers, and the single cleanup path for the complete operation. The HTML core similarly assembles bounded output buffers, Lexbor parsing/source locations, JSON adaptation, and sanitization from separate files.
-
-Handwritten C follows `.clang-format`. If formatting C, use a development installation of clang-format on `src/quirks/cmark/*.c`, `src/quirks/cmark/api.h`, `src/html/*.c`, and `test/support/*.c`. Vendored sources and generated Unicode tables are excluded; no formatter is required at runtime.
-
-The native source is based on cmark-gfm 0.29.0.gfm.13. The vendored upstream C files are unmodified and are checked against the release hashes in `test/fixtures/cmark-gfm-upstream.json`. Compatibility adjustments live in `src/quirks/cmark/*.c`; cmark sources remain unmodified. Multiline footnote compatibility can require reparsing transformed source, so AST XML source positions in those cases refer to the transformed input. See `vendor/cmark-gfm/PROVENANCE.json` and `COPYING` for provenance and licensing. Original prototype code is MIT licensed; third-party code retains its own license.
-
-The runtime-independent HTML implementation in `src/html/core.c` is compiled into the cmark renderer. HTML normalization, comparison, source mapping, and sanitizer tests use the separate string-returning adapter in `src/html/native.c`; it is not called by the cmark rendering path. No native pointers escape to JavaScript. Its only native entry point, `gfm_html_parse`, returns a JSON tree with an optional source-location flag. The standalone sanitizer test binding is confined to `test/support/native.c`. The parser uses named tracking modes for no locations, native byte offsets, or JavaScript UTF-16 offsets. Token provenance preserves JavaScript UTF-16 offsets, original start tags, explicit end tags, and reconstructed-node identity. Source tracking feeds chunks ending at `>` to Lexbor, so quoted delimiters and duplicate attributes are handled by the real tokenizer rather than by a second HTML scanner. The sanitizer walks every node even after removing comments or tags. A per-render nonce preserves the old math text boundaries without retaining untrusted comment contents or skipping later security checks.
-
-Lexbor 3.1.0 is pinned to commit `e651d6bce83a6601dff37261374f0545e910b1c1`. Its official HTML amalgamation is stored byte-for-byte and checked directly against the upstream SHA-256. `src/html/lexbor.c` uses scoped `#define`/`#include` macros to route element creation through the source-location wrapper at compile time; the vendored file is never rewritten. The adapter depends on the pinned declaration and call syntax, so upgrades require reviewing it and running the location and rendering tests. See `vendor/lexbor/PROVENANCE.json`, `README.md`, `LICENSE`, and `NOTICE` for regeneration and the C-header compatibility shim. Native HTML input is limited to 32 MB, tree depth to 512, and intermediate output to 64 MB; failures throw rather than returning partially sanitized HTML.
+`third_party/cmark-gfm` is based on cmark-gfm 0.29.0.gfm.13 and is unmodified; see `PROVENANCE.json` and `COPYING`. `third_party/md4c` is md4c 0.5.2; see `PROVENANCE.json` and `LICENSE.md`. Original project code is MIT licensed; third-party code keeps its own license.
