@@ -19,7 +19,47 @@ func main() {
 	}
 }
 
+const topLevelHelp = `Usage:
+  ghmd [render|diff|lint] [options] [input.md|-]
+
+Commands:
+  render  Render GitHub-flavored Markdown to HTML (default)
+  diff    Compare cmark-gfm and md4c structural output
+  lint    Report likely GitHub rendering problems
+
+Options:
+  -h, --help  Show help
+
+Run 'ghmd <command> -h' for command-specific help.
+`
+
+const renderHelp = `Usage:
+  ghmd render [--run-id ID] [input.md|-]
+
+Reads standard input when the path is omitted or '-'.
+`
+
+const diffHelp = `Usage:
+  ghmd diff <input.md|->
+
+Reads standard input when the path is '-'.
+`
+
+const lintHelp = `Usage:
+  ghmd lint [input.md|-]
+
+Reads standard input when the path is omitted or '-'.
+`
+
+func isHelp(arg string) bool {
+	return arg == "-h" || arg == "--help"
+}
+
 func run(args []string) error {
+	if len(args) > 0 && isHelp(args[0]) {
+		fmt.Print(topLevelHelp)
+		return nil
+	}
 	command := "render"
 	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
 		switch args[0] {
@@ -40,6 +80,10 @@ func run(args []string) error {
 }
 
 func renderCommand(args []string) error {
+	if len(args) > 0 && isHelp(args[0]) {
+		fmt.Print(renderHelp)
+		return nil
+	}
 	runID, path, err := parseRenderArgs(args)
 	if err != nil {
 		return err
@@ -57,8 +101,12 @@ func renderCommand(args []string) error {
 }
 
 func diffCommand(args []string) error {
-	if len(args) != 1 || args[0] == "-h" || args[0] == "--help" {
-		return errors.New("Usage: ghmd diff [input.md|-]")
+	if len(args) > 0 && isHelp(args[0]) {
+		fmt.Print(diffHelp)
+		return nil
+	}
+	if len(args) != 1 {
+		return errors.New("Usage: ghmd diff <input.md|->")
 	}
 	source, err := readInput(args[0])
 	if err != nil {
@@ -78,7 +126,11 @@ func diffCommand(args []string) error {
 }
 
 func lintCommand(args []string) error {
-	if len(args) > 1 || len(args) == 1 && (args[0] == "-h" || args[0] == "--help" || strings.HasPrefix(args[0], "-") && args[0] != "-") {
+	if len(args) > 0 && isHelp(args[0]) {
+		fmt.Print(lintHelp)
+		return nil
+	}
+	if len(args) > 1 || len(args) == 1 && strings.HasPrefix(args[0], "-") && args[0] != "-" {
 		return errors.New("Usage: ghmd lint [input.md|-]")
 	}
 	path := ""
