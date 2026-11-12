@@ -53,7 +53,7 @@ func TestDifferentialIgnoresPresentationWrappers(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := extractFeatures(`<p>same visible text</p>`, "")
+	got, err := extractFeatures(`<p>same visible <em>text</em></p>`, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,5 +145,39 @@ func TestVisibleTextFragmentsDoNotHideCurrency(t *testing.T) {
 	fragments := visibleTextFragments("cost $5 and $6 total")
 	if len(fragments) != 1 || fragments[0] != "cost $5 and $6 total" {
 		t.Fatalf("currency text was rewritten: %q", fragments)
+	}
+}
+
+func TestCompareFeaturesReportsTableShapeDifference(t *testing.T) {
+	want, err := extractFeatures(`<table><tr><td>a</td><td>b</td></tr></table>`, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := extractFeatures(`<table><tr><td>a</td></tr></table>`, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var structure []Finding
+	for _, finding := range compareFeatures("a b", want, got) {
+		if finding.Rule == ruleLostStructure {
+			structure = append(structure, finding)
+		}
+	}
+	if len(structure) != 1 || !strings.Contains(structure[0].Message, "1 rows x 2 columns") {
+		t.Fatalf("table shape difference not reported: %v", structure)
+	}
+
+	sameWant, err := extractFeatures(`<table><tr><td>a</td><td>b</td></tr></table>`, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sameGot, err := extractFeatures(`<table><tr><th>a</th><th>b</th></tr></table>`, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, finding := range compareFeatures("a b", sameWant, sameGot) {
+		if finding.Rule == ruleLostStructure {
+			t.Fatalf("identical table shape reported: %v", finding)
+		}
 	}
 }

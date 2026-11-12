@@ -18,12 +18,14 @@ const (
 	differentialRunID    = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	differentialBoundary = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 
-	ruleLostText  = "standard/lost-text"
-	ruleLostCode  = "standard/lost-code"
-	ruleLostLink  = "standard/lost-link"
-	ruleLostImage = "standard/lost-image"
-	ruleLostMath  = "standard/lost-math"
-	ruleTaskState = "standard/task-state"
+	ruleLostText       = "standard/lost-text"
+	ruleLostFormatting = "standard/lost-formatting"
+	ruleLostStructure  = "standard/lost-structure"
+	ruleLostCode       = "standard/lost-code"
+	ruleLostLink       = "standard/lost-link"
+	ruleLostImage      = "standard/lost-image"
+	ruleLostMath       = "standard/lost-math"
+	ruleTaskState      = "standard/task-state"
 )
 
 type featureID struct {
@@ -59,10 +61,9 @@ func (f *semanticFeatures) add(rule, key, search, message string) {
 
 func differential(source string) ([]Finding, error) {
 	lowerSource := strings.ToLower(source)
-	if strings.Contains(source, "[^") || strings.Contains(lowerSource, "<svg") || strings.Contains(source, "~~") {
-		// These constructs are parsed materially differently by md4c:
-		// footnotes are unsupported, SVG is foreign content, and
-		// strikethrough delimiter recovery differs. The raw-HTML rules still
+	if strings.Contains(source, "[^") || strings.Contains(lowerSource, "<svg") {
+		// md4c has no footnote support and SVG is foreign content; these
+		// outputs are not a usable expected baseline. Raw-HTML rules still
 		// apply to the same source.
 		return nil, nil
 	}
@@ -123,6 +124,14 @@ func (f *semanticFeatures) walk(node *html.Node) {
 	case "code":
 		f.addCode(node, "inline")
 		return
+	case "strong", "b":
+		f.addFormatting(node, "strong")
+	case "em", "i":
+		f.addFormatting(node, "em")
+	case "del", "s", "strike":
+		f.addFormatting(node, "del")
+	case "table":
+		f.addTable(node)
 	}
 
 	switch node.Data {
@@ -174,6 +183,11 @@ func (f *semanticFeatures) addVisibleText(nodes []*html.Node) {
 	current := &strings.Builder{}
 	flush := func() {
 		for _, text := range visibleTextFragments(current.String()) {
+			if strings.ContainsRune(text, '$') || strings.Contains(f.source, "~~") {
+				// Dollar remnants are math-rule territory; strikethrough
+				// delimiter differences are reported by formatting rules.
+				continue
+			}
 			f.add(ruleLostText, text, text, fmt.Sprintf("standard text %q is missing or changed", text))
 		}
 		current.Reset()
@@ -563,4 +577,62 @@ func normalizeMath(value string) string {
 	}
 	value = strings.ReplaceAll(value, "`", "")
 	return strings.TrimSpace(value)
+}
+
+func (f *semanticFeatures) addFormatting(node *html.Node, kind string) {
+	text := normalizedText(nodeText(node))
+	if text == "" {
+		return
+	}
+	f.add(ruleLostFormatting, kind, text,
+		fmt.Sprintf("standard %s formatting is missing or changed", kind))
+}
+
+func (f *semanticFeatures) addTable(node *html.Node) {
+	rows, columns := 0, 0
+	var visit func(*html.Node, int)
+	visit = func(current *html.Node, depth int) {
+		if current.Type == html.ElementNode {
+			if current.Data == "tr" {
+				rows++
+				count := 0
+				for child := current.FirstChild; child != nil; child = child.NextSibling {
+					if child.Type == html.ElementNode && (child.Data == "td" || child.Data == "th") {
+						count++
+					}
+				}
+				if count > columns {
+					columns = count
+				}
+			}
+			for child := current.FirstChild; child != nil; child = child.NextSibling {
+				visit(child, depth+1)
+			}
+		}
+	}
+	visit(node, 0)
+	if rows == 0 && columns == 0 {
+		return
+	}
+	search := firstCellText(node)
+	f.add(ruleLostStructure, fmt.Sprintf("table:%d:%d", rows, columns), search,
+		fmt.Sprintf("standard table shape %d rows x %d columns is missing or changed", rows, columns))
+}
+
+func firstCellText(node *html.Node) string {
+	var visit func(*html.Node) string
+	visit = func(current *html.Node) string {
+		if current.Type == html.ElementNode && (current.Data == "td" || current.Data == "th") {
+			if text := normalizedText(nodeText(current)); meaningfulText(text) {
+				return text
+			}
+		}
+		for child := current.FirstChild; child != nil; child = child.NextSibling {
+			if text := visit(child); text != "" {
+				return text
+			}
+		}
+		return ""
+	}
+	return visit(node)
 }

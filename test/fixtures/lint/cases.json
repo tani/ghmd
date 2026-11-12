@@ -676,5 +676,40 @@
         "line": 1
       }
     ]
+  },
+  {
+    "id": "strike-nested-formatting",
+    "source": "a~~***nested***~~a\n",
+    "want": [
+      {
+        "rule": "standard/lost-formatting",
+        "line": 1
+      }
+    ]
+  },
+  {
+    "id": "strong-nesting-formatting",
+    "source": "**outer **inner** outer**\n",
+    "want": [
+      {
+        "rule": "standard/lost-formatting",
+        "line": 0
+      }
+    ]
+  },
+  {
+    "id": "strike-simple-control",
+    "source": "~~x~~\n",
+    "want": []
+  },
+  {
+    "id": "emphasis-simple-control",
+    "source": "**bold** and *em*\n",
+    "want": []
+  },
+  {
+    "id": "table-shape-control",
+    "source": "| A |\n| --- |\n| `a\\|b` |\n",
+    "want": []
   }
 ]
