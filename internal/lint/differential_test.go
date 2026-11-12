@@ -3,6 +3,8 @@ package lint
 import (
 	"strings"
 	"testing"
+
+	"ghmd/internal/analysis"
 )
 
 func TestDifferentialFeatureRules(t *testing.T) {
@@ -142,7 +144,16 @@ func TestSourceSortsRawAndDifferentialFindings(t *testing.T) {
 }
 
 func TestVisibleTextFragmentsDoNotHideCurrency(t *testing.T) {
-	fragments := visibleTextFragments("cost $5 and $6 total")
+	features, err := analysis.SemanticFeatures(`<p>cost $5 and $6 total</p>`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fragments []string
+	for _, feature := range features {
+		if feature.Kind == analysis.FeatureKind(ruleLostText) {
+			fragments = append(fragments, feature.Search)
+		}
+	}
 	if len(fragments) != 1 || fragments[0] != "cost $5 and $6 total" {
 		t.Fatalf("currency text was rewritten: %q", fragments)
 	}

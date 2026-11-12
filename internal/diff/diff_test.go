@@ -3,6 +3,8 @@ package diff
 import (
 	"strings"
 	"testing"
+
+	"ghmd/internal/analysis"
 )
 
 func TestGitHubParsersIdenticalInput(t *testing.T) {
@@ -38,10 +40,10 @@ func TestGitHubParsersReportsDialectDifferences(t *testing.T) {
 }
 
 func TestCompareFindsTextDifference(t *testing.T) {
-	if findings := compare("<p>a</p>", "<p>a</p>"); len(findings) != 0 {
+	if findings := analysis.CompareFragments("<p>a</p>", "<p>a</p>"); len(findings) != 0 {
 		t.Fatalf("identical fragments differ: %v", findings)
 	}
-	findings := compare("<p>a</p>", "<p>b</p>")
+	findings := analysis.CompareFragments("<p>a</p>", "<p>b</p>")
 	if len(findings) == 0 || findings[0].Want != "a" || findings[0].Got != "b" {
 		t.Fatalf("text difference not reported: %v", findings)
 	}

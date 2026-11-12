@@ -67,8 +67,9 @@ The 53 automatically checkable guide rules are those with a reliable source sign
 | `internal/cmark-gfm` | cgo binding to the unmodified vendored cmark-gfm parser and AST. |
 | `internal/standard` | cgo binding to the vendored md4c parser (CommonMark, GitHub extensions and LaTeX math spans). |
 | `internal/github` | Full GitHub compatibility pipeline: AST adaptation, sanitization, DOM repair, math, tables, alerts, footnotes, task lists, images, links and final serialization. |
-| `internal/diff` | cmark-gfm vs md4c normalized tree comparison. |
-| `internal/lint` | Raw-HTML risk scanner and standard-renderer regression checks with source locations. |
+| `internal/analysis` | Shared HTML fragment parsing, structural tree comparison, and semantic feature extraction. |
+| `internal/diff` | Thin wrapper over `analysis.CompareFragments` for cmark-gfm vs md4c structural differences. |
+| `internal/lint` | Raw-HTML source/policy rules plus the standard-renderer differential. Uses `analysis.SemanticFeatures`; does not call `internal/diff`. |
 | `internal/verify` | Fixture canonicalization and GitHub image-proxy normalization. |
 | `cmd/ghmd` | `render`, `diff` and `lint` command-line interface. |
 
