@@ -1,5 +1,6 @@
 #define CMARK_GFM_STATIC_DEFINE 1
 #define CMARK_GFM_EXTENSIONS_STATIC_DEFINE 1
+#include "../../third_party/cmark-gfm-bridge/wasi_shim.c"
 #define match unity_extensions_autolink_match
 #include "../../third_party/cmark-gfm/extensions/autolink.c"
 #undef strncasecmp
