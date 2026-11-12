@@ -1,6 +1,7 @@
 package github
 
 import (
+	"errors"
 	"strings"
 
 	"yagfm/internal/cmark-gfm"
@@ -43,10 +44,10 @@ func listMarker(source []byte, start, end int) (int, bool) {
 }
 
 // adaptText applies GitHub's unresolved-footnote recovery to a text node.
-func adaptText(node cmarkgfm.Node) bool {
+func adaptText(node cmarkgfm.Node) error {
 	input := node.Literal()
 	if input == "" || !strings.Contains(input, "[^") {
-		return true
+		return nil
 	}
 
 	var first strings.Builder
@@ -118,14 +119,20 @@ func adaptText(node cmarkgfm.Node) bool {
 	}
 
 	output := result.String()
-	return input == output || node.SetLiteral(output)
+	if input == output {
+		return nil
+	}
+	if !node.SetLiteral(output) {
+		return errors.New("cannot replace Markdown literal")
+	}
+	return nil
 }
 
 // adaptListNode applies source-based task-list adjustments to an item node.
-func adaptListNode(node cmarkgfm.Node, nodeType string, source []byte, lines []int) bool {
+func adaptListNode(node cmarkgfm.Node, nodeType string, source []byte, lines []int) error {
 	line, column := node.StartLine(), node.StartColumn()
 	if line < 1 || line > len(lines) || column < 1 {
-		return true
+		return nil
 	}
 	begin := lines[line-1]
 	end := len(source)
@@ -133,11 +140,11 @@ func adaptListNode(node cmarkgfm.Node, nodeType string, source []byte, lines []i
 		end = lines[line] - 1
 	}
 	if column-1 > end-begin {
-		return true
+		return nil
 	}
 	marker, ok := listMarker(source, begin+column-1, end)
 	if !ok {
-		return true
+		return nil
 	}
 	if nodeType == "tasklist" {
 		if end-marker >= 3 && source[marker] == '[' &&
@@ -145,32 +152,35 @@ func adaptListNode(node cmarkgfm.Node, nodeType string, source []byte, lines []i
 			source[marker+2] == ']' {
 			node.SetTaskChecked(source[marker+1] != ' ')
 		}
-		return true
+		return nil
 	}
 
 	paragraph := node.FirstChild()
 	if !paragraph.Valid() || paragraph.Type() != "paragraph" {
-		return true
+		return nil
 	}
 	first := paragraph.FirstChild()
 	if !first.Valid() || first.Type() != "text" {
-		return true
+		return nil
 	}
 	text := first.Literal()
 	if len(text) < 4 || text[0] != '[' ||
 		(text[1] != ' ' && text[1] != 'x' && text[1] != 'X') || text[2] != ']' ||
 		(text[3] != ' ' && text[3] != '\t') {
-		return true
+		return nil
 	}
 	if !node.SetExtension("tasklist") {
-		return false
+		return errors.New("cannot attach tasklist extension")
 	}
 	node.SetTaskChecked(text[1] != ' ')
-	return first.SetLiteral(text[4:])
+	if !first.SetLiteral(text[4:]) {
+		return errors.New("cannot replace task literal")
+	}
+	return nil
 }
 
 // adaptNodes applies GitHub compatibility adjustments to the unmodified cmark AST.
-func adaptNodes(root cmarkgfm.Node, source []byte) bool {
+func adaptNodes(root cmarkgfm.Node, source []byte) error {
 	count := 1
 	for _, c := range source {
 		if c == '\n' {
@@ -188,23 +198,24 @@ func adaptNodes(root cmarkgfm.Node, source []byte) bool {
 		}
 	}
 
-	var visit func(cmarkgfm.Node) bool
-	visit = func(node cmarkgfm.Node) bool {
+	var visit func(cmarkgfm.Node) error
+	visit = func(node cmarkgfm.Node) error {
 		nodeType := node.Type()
 		if nodeType == "text" {
-			if !adaptText(node) {
-				return false
+			if err := adaptText(node); err != nil {
+				return err
 			}
-		} else if (nodeType == "item" || nodeType == "tasklist") &&
-			!adaptListNode(node, nodeType, source, lines) {
-			return false
+		} else if nodeType == "item" || nodeType == "tasklist" {
+			if err := adaptListNode(node, nodeType, source, lines); err != nil {
+				return err
+			}
 		}
 		for child := node.FirstChild(); child.Valid(); child = child.Next() {
-			if !visit(child) {
-				return false
+			if err := visit(child); err != nil {
+				return err
 			}
 		}
-		return true
+		return nil
 	}
 	return visit(root)
 }

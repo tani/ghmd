@@ -66,11 +66,7 @@ func TestUpstreamVendorHashes(t *testing.T) {
 }
 
 func finish(html string) string {
-	out, ok := github.FinalizeSerializedHTML(html, "00000000000000000000000000000000", "")
-	if !ok {
-		return "<failed>"
-	}
-	return out
+	return github.FinalizeSerializedHTML(html, "00000000000000000000000000000000", "")
 }
 
 func TestFinalizeRules(t *testing.T) {
@@ -96,10 +92,7 @@ func TestFinalizeRules(t *testing.T) {
 func TestFinalizeFootnotes(t *testing.T) {
 	token := "0123456789abcdef0123456789abcdef"
 	input := `<p><sup class="footnote-ref"><a href="#fn-a&amp;b" id="fnref-a" data-footnote-ref="">1</a></sup></p><section class="old" data-footnotes=""><ol><li id="fn-a"><p>note <a href="#fnref-a" data-footnote-backref="" data-footnote-backref-idx="1" class="old">↩</a></p></li></ol></section>`
-	output, ok := github.FinalizeSerializedHTML(input, token, "")
-	if !ok {
-		t.Fatal("finalize failed")
-	}
+	output := github.FinalizeSerializedHTML(input, token, "")
 	for _, wanted := range []string{
 		`href="#user-content-fn-a&amp;b-` + token + `"`,
 		`id="user-content-fnref-a-` + token + `" data-footnote-ref="" aria-describedby="footnote-label"`,

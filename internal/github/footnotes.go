@@ -221,7 +221,7 @@ func (r *labelRecovery) paragraphEdits(paragraph cmarkgfm.Node) {
 
 // recoverLabels repairs malformed footnote labels in source order while
 // leaving protected code, HTML, links, and images untouched.
-func recoverLabels(root cmarkgfm.Node, source []byte) (data []byte, changed, ok bool) {
+func recoverLabels(root cmarkgfm.Node, source []byte) (data []byte, changed bool) {
 	r := labelRecovery{source: source, lines: []int{0}}
 	for i, ch := range source {
 		if ch == '\n' {
@@ -273,5 +273,5 @@ func recoverLabels(root cmarkgfm.Node, source []byte) (data []byte, changed, ok 
 		copy(output[start:start+len(edit.text)], edit.text)
 		output = output[:total]
 	}
-	return output, !bytes.Equal(output, source), true
+	return output, !bytes.Equal(output, source)
 }

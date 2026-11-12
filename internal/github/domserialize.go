@@ -28,12 +28,12 @@ func domAttributeName(attr html.Attribute) string {
 	return attr.Key
 }
 
-func domSerializeNode(out *Buffer, node *html.Node, depth int, raw, aliases bool) bool {
+func domSerializeNode(out *Buffer, node *html.Node, depth int, raw, aliases bool) error {
 	if len(out.Data) > maxDOMBufferBytes {
-		return false
+		return ErrSize
 	}
 	if depth > 512 {
-		return false
+		return ErrDepth
 	}
 	if node.Type == html.TextNode || node.Type == html.CommentNode {
 		if node.Type == html.CommentNode {
@@ -45,10 +45,13 @@ func domSerializeNode(out *Buffer, node *html.Node, depth int, raw, aliases bool
 		} else {
 			domSerializeEscape(out, node.Data, false)
 		}
-		return len(out.Data) <= maxDOMBufferBytes
+		if len(out.Data) > maxDOMBufferBytes {
+			return ErrSize
+		}
+		return nil
 	}
 	if node.Type != html.ElementNode {
-		return true
+		return nil
 	}
 	name := node.Data
 	if aliases {
@@ -65,29 +68,35 @@ func domSerializeNode(out *Buffer, node *html.Node, depth int, raw, aliases bool
 	}
 	out.Putc('>')
 	if node.Namespace == "" && wordList("area base br col embed hr img input keygen link meta param source track wbr", name) {
-		return len(out.Data) <= maxDOMBufferBytes
+		if len(out.Data) > maxDOMBufferBytes {
+			return ErrSize
+		}
+		return nil
 	}
 	literal := node.Namespace == "" && wordList("style script xmp iframe noembed noframes plaintext noscript", name)
 	for child := domChildren(node); child != nil; child = child.NextSibling {
-		if !domSerializeNode(out, child, depth+1, literal, aliases) {
-			return false
+		if err := domSerializeNode(out, child, depth+1, literal, aliases); err != nil {
+			return err
 		}
 	}
 	out.Put("</")
 	out.Put(name)
 	out.Putc('>')
-	return len(out.Data) <= maxDOMBufferBytes
+	if len(out.Data) > maxDOMBufferBytes {
+		return ErrSize
+	}
+	return nil
 }
 
-func domSerialize(root *html.Node, aliases bool) (string, bool) {
+func domSerialize(root *html.Node, aliases bool) (string, error) {
 	var out Buffer
 	for child := domChildren(root); child != nil; child = child.NextSibling {
-		if !domSerializeNode(&out, child, 1, false, aliases) {
-			return "", false
+		if err := domSerializeNode(&out, child, 1, false, aliases); err != nil {
+			return "", err
 		}
 	}
 	if len(out.Data) > maxDOMBufferBytes {
-		return "", false
+		return "", ErrSize
 	}
-	return out.String(), true
+	return out.String(), nil
 }

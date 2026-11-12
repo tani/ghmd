@@ -21,9 +21,9 @@ func domHasInput(source string) bool {
 	return false
 }
 
-func inputSpans(node *html.Node, doc *domDocument, spans *[]rawSpan, depth int) bool {
+func inputSpans(node *html.Node, doc *domDocument, spans *[]rawSpan, depth int) error {
 	if depth > 512 {
-		return false
+		return ErrDepth
 	}
 	if node.Type == html.ElementNode && node.Data == "input" {
 		if loc := doc.locations[node]; loc != nil {
@@ -31,27 +31,27 @@ func inputSpans(node *html.Node, doc *domDocument, spans *[]rawSpan, depth int) 
 		}
 	}
 	for child := domChildren(node); child != nil; child = child.NextSibling {
-		if !inputSpans(child, doc, spans, depth+1) {
-			return false
+		if err := inputSpans(child, doc, spans, depth+1); err != nil {
+			return err
 		}
 	}
-	return true
+	return nil
 }
 
 // filterRawInputs removes only input start tags that became source-authored
 // parser elements. Text in attributes, raw-text elements, and ignored tokens is
 // left byte-for-byte intact.
-func filterRawInputs(source string) (string, bool) {
+func filterRawInputs(source string) (string, error) {
 	if !domHasInput(source) {
-		return source, true
+		return source, nil
 	}
-	doc, ok := parseDOM(source, false, true)
-	if !ok {
-		return "", false
+	doc, err := parseDOM(source, false, true)
+	if err != nil {
+		return "", err
 	}
 	var spans []rawSpan
-	if !inputSpans(doc.root, doc, &spans, 0) {
-		return "", false
+	if err := inputSpans(doc.root, doc, &spans, 0); err != nil {
+		return "", err
 	}
 	sort.Slice(spans, func(i, j int) bool { return spans[i].start < spans[j].start })
 	var out Buffer
@@ -64,5 +64,5 @@ func filterRawInputs(source string) (string, bool) {
 		start = span.end
 	}
 	out.Put(source[start:])
-	return out.String(), true
+	return out.String(), nil
 }

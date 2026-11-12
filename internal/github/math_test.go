@@ -8,15 +8,11 @@ import (
 func mathStage(t *testing.T, html string) string {
 	t.Helper()
 	ids := NewRenderIDs("00000000000000000000000000000000", "boundary")
-	marked, ok := prepareMathTables(html, ids.RunID, ids.Boundary, "")
-	if !ok {
-		t.Fatal("prepare tables failed")
+	marked, err := prepareMathTables(html, ids.RunID, ids.Boundary, "")
+	if err != nil {
+		t.Fatal(err)
 	}
-	out, ok := mathDOM(marked, ids.RunID, ids.Boundary)
-	if !ok {
-		t.Fatal("math DOM failed")
-	}
-	return out
+	return mathDOM(marked, ids.RunID, ids.Boundary)
 }
 
 func TestInlineMathBoundaries(t *testing.T) {

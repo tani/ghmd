@@ -11,22 +11,22 @@ import (
 
 func sanitizeStandalone(t *testing.T, source string) string {
 	t.Helper()
-	document, ok := parseDOM(source, false, false)
-	if !ok {
-		t.Fatalf("parse failed for %q", source)
+	document, err := parseDOM(source, false, false)
+	if err != nil {
+		t.Fatalf("parse failed for %q: %v", source, err)
 	}
-	output, ok := sanitizeDOM(document.root, "")
-	if !ok {
-		t.Fatalf("sanitize failed for %q", source)
+	output, err := sanitizeDOM(document.root, "")
+	if err != nil {
+		t.Fatalf("sanitize failed for %q: %v", source, err)
 	}
 	assertStandaloneSanitizedTree(t, output)
-	repeatedDocument, ok := parseDOM(output, false, false)
-	if !ok {
-		t.Fatalf("second parse failed for %q", output)
+	repeatedDocument, err := parseDOM(output, false, false)
+	if err != nil {
+		t.Fatalf("second parse failed for %q: %v", output, err)
 	}
-	repeated, ok := sanitizeDOM(repeatedDocument.root, "")
-	if !ok {
-		t.Fatalf("second sanitize failed for %q", output)
+	repeated, err := sanitizeDOM(repeatedDocument.root, "")
+	if err != nil {
+		t.Fatalf("second sanitize failed for %q: %v", output, err)
 	}
 	if repeated != output {
 		t.Fatalf("sanitize is not idempotent:\nfirst:\n%s\nsecond:\n%s", output, repeated)
@@ -237,10 +237,10 @@ func TestStandaloneSanitizerDeepTemplateCombinations(t *testing.T) {
 }
 
 func TestStandaloneSanitizerRejectsDepthAndMarkerCollisions(t *testing.T) {
-	if _, ok := domSanitize(strings.Repeat("<template>", 520), ""); ok {
+	if _, err := domSanitize(strings.Repeat("<template>", 520), ""); err == nil {
 		t.Fatal("accepted excessively nested templates")
 	}
-	if _, ok := domSanitize("<p>a<!--x-->b<!--y-->c</p>", "--><img src=x onerror=x()>"); ok {
+	if _, err := domSanitize("<p>a<!--x-->b<!--y-->c</p>", "--><img src=x onerror=x()>"); err == nil {
 		t.Fatal("accepted a marker that collides with comment text")
 	}
 

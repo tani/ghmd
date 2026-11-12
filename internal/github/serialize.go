@@ -1,6 +1,6 @@
 package github
 
-func writeTableTag(out *Buffer, t *Tree, id int, node *Node) bool {
+func writeTableTag(out *Buffer, t *Tree, id int, node *Node) {
 	attrs := attributesRead(t, node)
 	if t.TableMarker != "" {
 		attrs.remove(t.TableMarker)
@@ -26,10 +26,9 @@ func writeTableTag(out *Buffer, t *Tree, id int, node *Node) bool {
 		}
 	}
 	out.Putc('>')
-	return true
 }
 
-func serializeTree(t *Tree, out *Buffer) bool {
+func serializeTree(t *Tree, out *Buffer) {
 	id := t.Nodes[0].First
 	for id != None {
 		node := &t.Nodes[id]
@@ -46,14 +45,10 @@ func serializeTree(t *Tree, out *Buffer) bool {
 		} else if node.Checkbox {
 			writeCheckbox(out, t, node)
 		} else if node.RelativeImage {
-			if !writeImage(out, t, node) {
-				return false
-			}
+			writeImage(out, t, node)
 		} else if node.Footnote != 0 {
 			arrow := false
-			if !writeFootnoteTag(out, t, node, t.Token, &arrow) {
-				return false
-			}
+			writeFootnoteTag(out, t, node, t.Token, &arrow)
 			node.Arrow = arrow
 		} else if node.Alert != 0 {
 			kind := node.Alert - 1
@@ -63,9 +58,7 @@ func serializeTree(t *Tree, out *Buffer) bool {
 			out.Put(alertTitles[kind])
 			out.Put("</p>")
 		} else if node.WrapTable {
-			if !writeTableTag(out, t, id, node) {
-				return false
-			}
+			writeTableTag(out, t, id, node)
 		} else if node.NormalizeClass != 0 {
 			writeNormalizedTag(out, t, id, node)
 		} else {
@@ -103,21 +96,16 @@ func serializeTree(t *Tree, out *Buffer) bool {
 			break
 		}
 	}
-	return true
 }
 
 // FinalizeSerializedHTML applies the final feature adjustments and serializes.
-func FinalizeSerializedHTML(source, token, tableMarker string) (string, bool) {
+func FinalizeSerializedHTML(source, token, tableMarker string) string {
 	tree := NewTree(source)
 	tree.Token = token
 	tree.TableMarker = tableMarker
-	if !tree.ParseSerializedHTML() {
-		return "", false
-	}
+	tree.ParseSerializedHTML()
 	changed := adjustAlerts(tree)
-	if !adjustCheckboxes(tree, &changed) {
-		return "", false
-	}
+	adjustCheckboxes(tree, &changed)
 	if fixListMathSpacing(tree) {
 		changed = true
 	}
@@ -142,13 +130,11 @@ func FinalizeSerializedHTML(source, token, tableMarker string) (string, bool) {
 		}
 	}
 	if !changed {
-		return source, true
+		return source
 	}
 	var out Buffer
-	if !serializeTree(tree, &out) {
-		return "", false
-	}
-	return out.String(), true
+	serializeTree(tree, &out)
+	return out.String()
 }
 
 func hasAttribute(t *Tree, id int, name string) bool {

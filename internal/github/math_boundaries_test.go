@@ -83,9 +83,9 @@ func TestMathDisplayBlocksAndFencedMath(t *testing.T) {
 
 func TestMathStageRecognizesEmptyDisplayBlock(t *testing.T) {
 	ids := RenderIDs{RunID: mathBoundaryRunID, Boundary: "boundary"}
-	html, _, ok := renderMathStage("<p>$$\n\n$$</p>", ids)
-	if !ok {
-		t.Fatal("math stage failed")
+	html, _, err := renderMathStage("<p>$$\n\n$$</p>", ids)
+	if err != nil {
+		t.Fatal(err)
 	}
 	if !strings.Contains(html, `class="js-display-math"`) {
 		t.Fatalf("empty block was not recognized:\n%s", html)

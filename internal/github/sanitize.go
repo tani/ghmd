@@ -1,6 +1,10 @@
 package github
 
-import "golang.org/x/net/html"
+import (
+	"fmt"
+
+	"golang.org/x/net/html"
+)
 
 const (
 	htmlTags = "a abbr acronym address area article aside audio b bdi bdo big blink blockquote br button canvas caption center cite code col colgroup " +
@@ -216,17 +220,20 @@ type sanitizePolicy struct {
 
 // sanitizeNode deliberately emits one stream instead of another parsed tree;
 // this preserves the legacy comment boundaries used by the math renderer.
-func sanitizeNode(out *Buffer, node *html.Node, depth int, policy *sanitizePolicy) bool {
+func sanitizeNode(out *Buffer, node *html.Node, depth int, policy *sanitizePolicy) error {
 	if len(out.Data) > maxDOMBufferBytes {
-		return false
+		return ErrSize
 	}
 	if depth > 512 {
-		return false
+		return ErrDepth
 	}
 	switch node.Type {
 	case html.TextNode:
 		sanitizeEscape(out, node.Data, false)
-		return len(out.Data) <= maxDOMBufferBytes
+		if len(out.Data) > maxDOMBufferBytes {
+			return ErrSize
+		}
+		return nil
 	case html.CommentNode:
 		if policy.legacyStopped && policy.boundary != "" {
 			out.Put("<!--")
@@ -234,25 +241,28 @@ func sanitizeNode(out *Buffer, node *html.Node, depth int, policy *sanitizePolic
 			out.Put("-->")
 		}
 		policy.legacyStopped = true
-		return len(out.Data) <= maxDOMBufferBytes
+		if len(out.Data) > maxDOMBufferBytes {
+			return ErrSize
+		}
+		return nil
 	case html.ElementNode:
 		// Handled below.
 	default:
-		return true
+		return nil
 	}
 
 	isHTML := node.Namespace == ""
 	isMath := node.Namespace == "math"
 	if !isHTML && !isMath {
 		policy.legacyStopped = true
-		return true
+		return nil
 	}
 	allowed := isHTML && wordList(htmlTags, node.Data) || isMath && wordList(mathTags, node.Data)
 	if !allowed {
 		policy.legacyStopped = true
 	}
 	if !allowed && (!isHTML || wordList(dropContents, node.Data)) {
-		return true
+		return nil
 	}
 	if allowed {
 		out.Putc('<')
@@ -287,8 +297,8 @@ func sanitizeNode(out *Buffer, node *html.Node, depth int, policy *sanitizePolic
 		childrenPolicy = &sanitizePolicy{boundary: policy.boundary}
 	}
 	for child := domChildren(node); child != nil; child = child.NextSibling {
-		if !sanitizeNode(out, child, depth+1, childrenPolicy) {
-			return false
+		if err := sanitizeNode(out, child, depth+1, childrenPolicy); err != nil {
+			return err
 		}
 	}
 	if allowed && !(isHTML && wordList("area br col hr img input source track wbr", node.Data)) {
@@ -296,25 +306,28 @@ func sanitizeNode(out *Buffer, node *html.Node, depth int, policy *sanitizePolic
 		out.Put(node.Data)
 		out.Putc('>')
 	}
-	return len(out.Data) <= maxDOMBufferBytes
+	if len(out.Data) > maxDOMBufferBytes {
+		return ErrSize
+	}
+	return nil
 }
 
-func sanitizeDOM(root *html.Node, boundary string) (string, bool) {
+func sanitizeDOM(root *html.Node, boundary string) (string, error) {
 	for i := range boundary {
 		c := boundary[i]
 		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || c == '-') {
-			return "", false
+			return "", fmt.Errorf("%w: invalid sanitizer marker", ErrParse)
 		}
 	}
 	var out Buffer
 	policy := sanitizePolicy{boundary: boundary}
 	for child := domChildren(root); child != nil; child = child.NextSibling {
-		if !sanitizeNode(&out, child, 0, &policy) {
-			return "", false
+		if err := sanitizeNode(&out, child, 0, &policy); err != nil {
+			return "", err
 		}
 	}
 	if len(out.Data) > maxDOMBufferBytes {
-		return "", false
+		return "", ErrSize
 	}
-	return out.String(), true
+	return out.String(), nil
 }

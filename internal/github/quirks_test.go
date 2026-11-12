@@ -14,8 +14,8 @@ func renderAdapted(t *testing.T, source string) string {
 		t.Fatal(err)
 	}
 	defer document.Close()
-	if !adaptNodes(document.Root(), []byte(source)) {
-		t.Fatal("adapt failed")
+	if err := adaptNodes(document.Root(), []byte(source)); err != nil {
+		t.Fatal(err)
 	}
 	return document.HTML()
 }

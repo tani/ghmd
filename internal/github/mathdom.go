@@ -135,7 +135,7 @@ func mathCString(s string) string {
 	return s
 }
 
-func mathApply(tree *Tree, edits []mathEdit) bool {
+func mathApply(tree *Tree, edits []mathEdit) {
 	for id := 1; id < len(tree.Nodes); id++ {
 		if tree.Nodes[id].Inert || mathReplacedAncestor(tree, edits, id) || !mathTarget(tree, id) {
 			continue
@@ -176,7 +176,7 @@ func mathApply(tree *Tree, edits []mathEdit) bool {
 			mathText(&text, tree, edits, id)
 			blocks := displayMath(text.String())
 			if blocks == nil {
-				return false
+				return
 			}
 			if len(blocks) != 0 {
 				var out Buffer
@@ -231,7 +231,7 @@ func mathApply(tree *Tree, edits []mathEdit) bool {
 			decoded := text.String()
 			matches := inlineMath(decoded)
 			if matches == nil {
-				return false
+				return
 			}
 			if len(matches) != 0 {
 				var out Buffer
@@ -259,20 +259,15 @@ func mathApply(tree *Tree, edits []mathEdit) bool {
 		mathElement(&out, value, true, false, tree.Token)
 		edits[id].outer = out.String()
 	}
-	return true
 }
 
-func mathDOM(source, token, boundary string) (string, bool) {
+func mathDOM(source, token, boundary string) string {
 	tree := NewTree(source)
 	tree.Token = token
 	tree.TextBoundary = boundary
-	if !tree.ParseSerializedHTML() {
-		return "", false
-	}
+	tree.ParseSerializedHTML()
 	edits := make([]mathEdit, len(tree.Nodes))
-	if !mathApply(tree, edits) {
-		return "", false
-	}
+	mathApply(tree, edits)
 	changed := tree.HadTextBoundary
 	var out Buffer
 	id := tree.Nodes[0].First
@@ -317,7 +312,7 @@ func mathDOM(source, token, boundary string) (string, bool) {
 		}
 	}
 	if !changed {
-		return source, true
+		return source
 	}
-	return out.String(), true
+	return out.String()
 }

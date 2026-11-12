@@ -1,6 +1,7 @@
 package github
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -201,7 +202,7 @@ func recordDOMLocations(node *html.Node, document *domDocument, attribute string
 	}
 }
 
-func parseDOM(source string, aliases, tracked bool) (*domDocument, bool) {
+func parseDOM(source string, aliases, tracked bool) (*domDocument, error) {
 	tokens := tokenizeDOM(source, tracked)
 	rewritten, attribute, locations := rewriteDOMSource(source, tokens, aliases, tracked)
 	// A template fragment context is the direct x/net counterpart of the
@@ -211,7 +212,7 @@ func parseDOM(source string, aliases, tracked bool) (*domDocument, bool) {
 	context := &html.Node{Type: html.ElementNode, Data: "template", DataAtom: atom.Template}
 	children, err := html.ParseFragment(strings.NewReader(rewritten), context)
 	if err != nil {
-		return nil, false
+		return nil, fmt.Errorf("%w: %v", ErrParse, err)
 	}
 	document := &domDocument{
 		root:      &html.Node{Type: html.DocumentNode},
@@ -223,7 +224,7 @@ func parseDOM(source string, aliases, tracked bool) (*domDocument, bool) {
 	if tracked {
 		recordDOMLocations(document.root, document, attribute, locations)
 	}
-	return document, true
+	return document, nil
 }
 
 func domChildren(node *html.Node) *html.Node {
@@ -236,20 +237,23 @@ func domLastChild(node *html.Node) *html.Node {
 
 // domReparse neutralizes table/template names before parsing so HTML's native
 // insertion modes do not erase structure that the compatibility pass owns.
-func domReparse(source string) (string, bool) {
+func domReparse(source string) (string, error) {
 	if len(source) > maxOutputBytes {
-		return "", false
+		return "", ErrSize
 	}
-	document, ok := parseDOM(source, true, false)
-	if !ok || !domCompat(document.root, 0) {
-		return "", false
+	document, err := parseDOM(source, true, false)
+	if err != nil {
+		return "", err
+	}
+	if !domCompat(document.root, 0) {
+		return "", ErrDepth
 	}
 	return domSerialize(document.root, true)
 }
 
-func domAnchors(root *html.Node, document *domDocument, seen []bool, depth int) bool {
+func domAnchors(root *html.Node, document *domDocument, seen []bool, depth int) error {
 	if depth > 512 {
-		return false
+		return ErrDepth
 	}
 	node := domChildren(root)
 	for node != nil {
@@ -267,12 +271,12 @@ func domAnchors(root *html.Node, document *domDocument, seen []bool, depth int) 
 				seen[loc.start] = true
 			}
 		}
-		if !domAnchors(node, document, seen, depth+1) {
-			return false
+		if err := domAnchors(node, document, seen, depth+1); err != nil {
+			return err
 		}
 		node = node.NextSibling
 	}
-	return true
+	return nil
 }
 
 func domHasEarlier(root, tail *html.Node, document *domDocument, loc *domLocation, depth int) bool {
@@ -359,9 +363,9 @@ func domTrim(document *domDocument) {
 	}
 }
 
-func domSVG(root *html.Node, changed *bool, depth int) bool {
+func domSVG(root *html.Node, changed *bool, depth int) error {
 	if depth > 512 {
-		return false
+		return ErrDepth
 	}
 	node := domChildren(root)
 	for node != nil {
@@ -375,17 +379,17 @@ func domSVG(root *html.Node, changed *bool, depth int) bool {
 			*changed = true
 			continue
 		}
-		if !domSVG(node, changed, depth+1) {
-			return false
+		if err := domSVG(node, changed, depth+1); err != nil {
+			return err
 		}
 		node = node.NextSibling
 	}
-	return true
+	return nil
 }
 
-func domMark(root *html.Node, marker string, depth int) bool {
+func domMark(root *html.Node, marker string, depth int) error {
 	if depth > 512 {
-		return false
+		return ErrDepth
 	}
 	if root.Type == html.ElementNode && root.Data == "a" {
 		hasHref := false
@@ -410,38 +414,38 @@ func domMark(root *html.Node, marker string, depth int) bool {
 		}
 	}
 	for child := domChildren(root); child != nil; child = child.NextSibling {
-		if !domMark(child, marker, depth+1) {
-			return false
+		if err := domMark(child, marker, depth+1); err != nil {
+			return err
 		}
 	}
-	return true
+	return nil
 }
 
-func domSanitize(source, marker string) (string, bool) {
-	document, ok := parseDOM(source, false, true)
-	if !ok {
-		return "", false
+func domSanitize(source, marker string) (string, error) {
+	document, err := parseDOM(source, false, true)
+	if err != nil {
+		return "", err
 	}
-	if !domAnchors(document.root, document, make([]bool, len(source)+1), 0) {
-		return "", false
+	if err := domAnchors(document.root, document, make([]bool, len(source)+1), 0); err != nil {
+		return "", err
 	}
 	domTrim(document)
 	svg := false
-	if !domSVG(document.root, &svg, 0) {
-		return "", false
+	if err := domSVG(document.root, &svg, 0); err != nil {
+		return "", err
 	}
 	if svg {
-		serialized, ok := domSerialize(document.root, false)
-		if !ok {
-			return "", false
+		serialized, err := domSerialize(document.root, false)
+		if err != nil {
+			return "", err
 		}
-		document, ok = parseDOM(serialized, false, false)
-		if !ok {
-			return "", false
+		document, err = parseDOM(serialized, false, false)
+		if err != nil {
+			return "", err
 		}
 	}
-	if !domMark(document.root, marker, 0) {
-		return "", false
+	if err := domMark(document.root, marker, 0); err != nil {
+		return "", err
 	}
 	return sanitizeDOM(document.root, marker)
 }

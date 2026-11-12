@@ -21,27 +21,21 @@ func nativeStageIDs() RenderIDs {
 
 func prepareNativeStage(t *testing.T, source string) (string, bool) {
 	t.Helper()
-	html, needsReparse, ok := prepareHTMLStage(source, nativeTestBoundary)
-	if !ok {
-		t.Fatal("HTML preparation failed")
-	}
+	html, needsReparse := prepareHTMLStage(source, nativeTestBoundary)
 	return html, needsReparse
 }
 
 func renderNativeMathStage(t *testing.T, source string) (string, bool) {
 	t.Helper()
-	html, needsReparse, ok := renderMathStage(source, nativeStageIDs())
-	if !ok {
-		t.Fatal("math rendering failed")
+	html, needsReparse, err := renderMathStage(source, nativeStageIDs())
+	if err != nil {
+		t.Fatal(err)
 	}
 	return html, needsReparse
 }
 
 func finishCompleteResult(source string, ids RenderIDs) (string, error) {
-	html, ok := finishHTML(source, ids)
-	if !ok {
-		return "", errors.New("final HTML stage failed")
-	}
+	html := finishHTML(source, ids)
 	html = strings.TrimSuffix(html, "\n")
 	if len(html) > nativeTestOutputSize {
 		return "", errors.New("Rendered HTML exceeds 32 MB")

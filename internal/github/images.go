@@ -36,11 +36,11 @@ func adjustImages(t *Tree) bool {
 }
 
 // writeImage serializes a relative image and its optional preview link.
-func writeImage(out *Buffer, t *Tree, node *Node) bool {
+func writeImage(out *Buffer, t *Tree, node *Node) {
 	attrs := attributesRead(t, node)
 	srcAttr := attrs.find("src")
 	if srcAttr == nil {
-		return false
+		return
 	}
 	src := attributeValue(t, srcAttr)
 	imageHref := ""
@@ -82,5 +82,4 @@ func writeImage(out *Buffer, t *Tree, node *Node) bool {
 	if node.ImageLink {
 		out.Put("</a>")
 	}
-	return true
 }

@@ -143,7 +143,8 @@ func voidElement(name string) bool { return inList(voidElements, name) }
 func rawElement(name string) bool  { return inList(rawElements, name) }
 
 // ParseSerializedHTML parses sanitized HTML into the byte-range tree.
-func (t *Tree) ParseSerializedHTML() bool {
+// The parser cannot fail: node storage grows by append.
+func (t *Tree) ParseSerializedHTML() {
 	t.Nodes = []Node{{Parent: None, First: None, Last: None, Prev: None, Next: None}}
 	stack := []int{0}
 	s := t.Source
@@ -254,9 +255,6 @@ func (t *Tree) ParseSerializedHTML() bool {
 				TagStart: tagStart, TagEnd: tagEndPos, Element: true, Inert: inert,
 				Parent: None, First: None, Last: None, Prev: None, Next: None}
 			id := t.appendNode(current, element)
-			if id == None {
-				return false
-			}
 			if !voidElement(s[tagStart:tagEndPos]) {
 				stack = append(stack, id)
 			}
@@ -266,7 +264,6 @@ func (t *Tree) ParseSerializedHTML() bool {
 	if textStart < length {
 		t.appendNode(stack[len(stack)-1], Node{Start: textStart, End: length, Parent: None, First: None, Last: None, Prev: None, Next: None})
 	}
-	return true
 }
 
 // Detach removes a node from its parent's child list.
@@ -311,11 +308,6 @@ func (t *Tree) InsertBefore(parentID, id, anchor int) {
 
 // GetAttribute returns an attribute's raw value span.
 func (t *Tree) GetAttribute(id int, name string) (start, end int, ok bool) {
-	return t.GetAttributeAt(id, name, false)
-}
-
-// GetAttributeAt returns a raw or decoded attribute value span.
-func (t *Tree) GetAttributeAt(id int, name string, decoded bool) (start, end int, ok bool) {
 	s := t.Source
 	node := &t.Nodes[id]
 	p := node.TagEnd

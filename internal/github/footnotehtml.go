@@ -24,66 +24,60 @@ func sliceFootnoteUTF16(text string, units int) string {
 }
 
 func makeFootnoteReferenceValue(t *Tree, attrs *Attributes, name, prefix string, slice int,
-	token string, colonRemoves, lowercase bool) bool {
+	token string, colonRemoves, lowercase bool) {
 	attr := attrs.find(name)
 	if attr == nil {
-		return true
+		return
 	}
 	value := attributeValue(t, attr)
 	if value == "" {
-		return true
+		return
 	}
 	sliced := sliceFootnoteUTF16(value, slice)
 	if colonRemoves && sliced == ":" {
 		attrs.remove(name)
-		return true
+		return
 	}
 	if lowercase {
 		sliced = unicodeLower(sliced)
 	}
 	attrs.set(name, prefix+sliced+"-"+token)
-	return true
 }
 
 // Footnote flags: 1 reference, 2 back-reference, 4 superscript, 8 section,
 // 16 list item.
-func writeFootnoteTag(out *Buffer, t *Tree, node *Node, token string, arrow *bool) bool {
+func writeFootnoteTag(out *Buffer, t *Tree, node *Node, token string, arrow *bool) {
 	attrs := attributesRead(t, node)
-	ok := true
 	if node.Footnote&4 != 0 {
 		attrs.remove("class")
 	}
 	if node.Footnote&1 != 0 {
-		ok = makeFootnoteReferenceValue(t, &attrs, "href", "#user-content-fn-", 4, token, true, false) &&
-			makeFootnoteReferenceValue(t, &attrs, "id", "user-content-", 0, token, false, true)
-		if ok {
-			attrs.set("aria-describedby", "footnote-label")
-		}
+		makeFootnoteReferenceValue(t, &attrs, "href", "#user-content-fn-", 4, token, true, false)
+		makeFootnoteReferenceValue(t, &attrs, "id", "user-content-", 0, token, false, true)
+		attrs.set("aria-describedby", "footnote-label")
 	}
-	if ok && node.Footnote&2 != 0 {
+	if node.Footnote&2 != 0 {
 		if href := attrs.find("href"); href != nil {
 			value := attributeValue(t, href)
 			sliced := sliceFootnoteUTF16(value, 7)
 			*arrow = sliced == ":"
 			if !*arrow {
-				ok = makeFootnoteReferenceValue(t, &attrs, "href", "#user-content-", 1, token, false, false)
+				makeFootnoteReferenceValue(t, &attrs, "href", "#user-content-", 1, token, false, false)
 			}
 		}
 		if !*arrow {
 			attrs.remove("class")
 			attrs.remove("data-footnote-backref-idx")
-			if ok {
-				attrs.set("class", "data-footnote-backref")
-			}
+			attrs.set("class", "data-footnote-backref")
 		}
 	}
-	if ok && node.Footnote&8 != 0 {
+	if node.Footnote&8 != 0 {
 		attrs.remove("class")
 		attrs.remove("data-footnotes")
 		attrs.set("data-footnotes", "")
 		attrs.set("class", "footnotes")
 	}
-	if ok && node.Footnote&16 != 0 {
+	if node.Footnote&16 != 0 {
 		// A list item id is rewritten even when the original id is absent or empty.
 		attr := attrs.find("id")
 		value := ""
@@ -92,9 +86,9 @@ func writeFootnoteTag(out *Buffer, t *Tree, node *Node, token string, arrow *boo
 		}
 		attrs.set("id", "user-content-"+value+"-"+token)
 	}
-	if ok && *arrow {
+	if *arrow {
 		out.Put("↩")
-	} else if ok {
+	} else {
 		out.Put(t.Source[node.Start:node.TagEnd])
 		classSeen := false
 		for i := range attrs.Items {
@@ -134,7 +128,6 @@ func writeFootnoteTag(out *Buffer, t *Tree, node *Node, token string, arrow *boo
 			out.Put("<h2 id=\"footnote-label\" class=\"sr-only\">Footnotes</h2>")
 		}
 	}
-	return ok
 }
 
 func adjustFootnoteNodes(t *Tree) bool {

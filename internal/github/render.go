@@ -1,7 +1,11 @@
+// Package github implements the GitHub-compatible Markdown pipeline: AST
+// adaptation, HTML5 sanitization and repair, math, tables, alerts, footnotes,
+// task lists, images, links, and final serialization.
 package github
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"yagfm/internal/cmark-gfm"
@@ -24,27 +28,27 @@ type RenderIDs struct {
 // Validate checks render identifiers the way the native API did.
 func Validate(source, runID, boundary string) error {
 	if len(source) > maxSourceBytes {
-		return errors.New("Markdown exceeds 1 MB")
+		return ErrSourceSize
 	}
 	if len(runID) != runIDLength {
-		return errors.New("runId must be 32 lowercase hexadecimal characters")
+		return ErrRunID
 	}
 	for i := 0; i < len(runID); i++ {
 		if !isHex(runID[i]) {
-			return errors.New("runId must be 32 lowercase hexadecimal characters")
+			return ErrRunID
 		}
 	}
 	if len(boundary) != boundaryLength {
-		return errors.New("Invalid render boundary")
+		return ErrBoundary
 	}
 	for i := 0; i < len(boundary); i++ {
 		dash := i == 8 || i == 13 || i == 18 || i == 23
 		if dash {
 			if boundary[i] != '-' {
-				return errors.New("Invalid render boundary")
+				return ErrBoundary
 			}
 		} else if !isHex(boundary[i]) {
-			return errors.New("Invalid render boundary")
+			return ErrBoundary
 		}
 	}
 	return nil
@@ -69,140 +73,117 @@ func RenderDocument(source, runID, boundary string) (string, error) {
 		return "", err
 	}
 	if len(html) > maxOutputBytes {
-		return "", errors.New("Rendered HTML exceeds 32 MB")
+		return "", ErrOutputSize
 	}
-	html, ok := domSanitize(html, ids.Boundary)
-	if !ok {
-		return "", htmlStageError(html, "Cannot render HTML document")
+	html, err = domSanitize(html, ids.Boundary)
+	if err != nil {
+		return "", fmt.Errorf("%w: %w", ErrDocument, err)
 	}
-	html, ok = domReparse(html)
-	if !ok {
-		return "", htmlStageError(html, "Cannot render HTML document")
+	html, err = domReparse(html)
+	if err != nil {
+		return "", fmt.Errorf("%w: %w", ErrDocument, err)
 	}
-	html, reparse, ok := prepareHTMLStage(html, ids.Boundary)
-	if !ok {
-		return "", htmlStageError(html, "Cannot render HTML document")
-	}
+	html, reparse := prepareHTMLStage(html, ids.Boundary)
 	if reparse {
-		if html, ok = domReparse(html); !ok {
-			return "", htmlStageError(html, "Cannot render HTML document")
+		if html, err = domReparse(html); err != nil {
+			return "", fmt.Errorf("%w: %w", ErrDocument, err)
 		}
 	}
-	html, reparse, ok = renderMathStage(html, ids)
-	if !ok {
-		return "", htmlStageError(html, "Cannot render HTML document")
+	html, reparse, err = renderMathStage(html, ids)
+	if err != nil {
+		return "", fmt.Errorf("%w: %w", ErrDocument, err)
 	}
 	if reparse {
-		if html, ok = domReparse(html); !ok {
-			return "", htmlStageError(html, "Cannot render HTML document")
+		if html, err = domReparse(html); err != nil {
+			return "", fmt.Errorf("%w: %w", ErrDocument, err)
 		}
 	}
-	html, ok = finishHTML(html, ids)
-	if !ok {
-		return "", errors.New("Cannot render HTML document")
-	}
+	html = finishHTML(html, ids)
 	if len(html) > 0 && html[len(html)-1] == '\n' {
 		html = html[:len(html)-1]
 	}
 	if len(html) > maxOutputBytes {
-		return "", errors.New("Rendered HTML exceeds 32 MB")
+		return "", ErrOutputSize
 	}
 	return html, nil
 }
 
-func htmlStageError(_ string, message string) error { return errors.New(message) }
-
 func renderMarkdown(source []byte) (string, error) {
 	document, err := cmarkgfm.Parse(string(source))
 	if err != nil {
-		return "", errors.New("Cannot parse Markdown")
+		return "", ErrMarkdown
 	}
 	defer document.Close()
 	root := document.Root()
-	recovered, changed, ok := recoverLabels(root, source)
-	if !ok {
-		return "", errors.New("Cannot parse Markdown")
-	}
+	recovered, changed := recoverLabels(root, source)
 	if changed {
 		document.Close()
 		document, err = cmarkgfm.Parse(string(recovered))
 		if err != nil {
-			return "", errors.New("Cannot parse Markdown")
+			return "", ErrMarkdown
 		}
 		defer document.Close()
 		root = document.Root()
 		source = recovered
 	}
-	if !adaptNodes(root, source) {
-		return "", errors.New("Cannot parse Markdown")
+	if err := adaptNodes(root, source); err != nil {
+		return "", fmt.Errorf("%w: %w", ErrMarkdown, err)
 	}
-	if !walkNodes(root.FirstChild(), filterNode) {
-		return "", errors.New("Cannot filter raw HTML")
+	if err := walkNodes(root.FirstChild(), filterNode); err != nil {
+		return "", fmt.Errorf("Cannot filter raw HTML: %v", err)
 	}
 	return document.HTML(), nil
 }
 
-func walkNodes(node cmarkgfm.Node, visit func(cmarkgfm.Node) bool) bool {
+func walkNodes(node cmarkgfm.Node, visit func(cmarkgfm.Node) error) error {
 	for ; node.Valid(); node = node.Next() {
-		if !visit(node) {
-			return false
+		if err := visit(node); err != nil {
+			return err
 		}
-		if !walkNodes(node.FirstChild(), visit) {
-			return false
+		if err := walkNodes(node.FirstChild(), visit); err != nil {
+			return err
 		}
 	}
-	return true
+	return nil
 }
 
-func filterNode(node cmarkgfm.Node) bool {
+func filterNode(node cmarkgfm.Node) error {
 	kind := node.Type()
 	if kind != "html_inline" && kind != "html_block" {
-		return true
+		return nil
 	}
 	original := node.Literal()
-	filtered, ok := filterRawInputs(original)
-	if !ok {
-		return false
+	filtered, err := filterRawInputs(original)
+	if err != nil {
+		return err
 	}
 	if filtered != original && !node.SetLiteral(filtered) {
-		return false
+		return errors.New("cannot replace raw HTML")
 	}
-	return true
+	return nil
 }
 
-func prepareHTMLStage(source, boundary string) (string, bool, bool) {
-	flattened, ok := flattenTemplates(source, boundary)
-	if !ok {
-		return "", false, false
-	}
-	details, ok := prepareDetails(flattened)
-	if !ok {
-		return "", false, false
-	}
+func prepareHTMLStage(source, boundary string) (string, bool) {
+	flattened := flattenTemplates(source, boundary)
+	details := prepareDetails(flattened)
 	reparse := flattened != details
 	if reparse {
 		details = removeBoundaries(details, boundary)
 	}
-	return details, reparse, true
+	return details, reparse
 }
 
-func renderMathStage(source string, ids RenderIDs) (string, bool, bool) {
-	marked, ok := prepareMathTables(source, ids.RunID, ids.Boundary, ids.TableMarker)
-	if !ok {
-		return "", false, false
+func renderMathStage(source string, ids RenderIDs) (string, bool, error) {
+	marked, err := prepareMathTables(source, ids.RunID, ids.Boundary, ids.TableMarker)
+	if err != nil {
+		return "", false, err
 	}
 	plain := removeBoundaries(marked, ids.Boundary)
-	math, ok := mathDOM(marked, ids.RunID, ids.Boundary)
-	if !ok {
-		return "", false, false
-	}
-	return math, plain != math, true
+	math := mathDOM(marked, ids.RunID, ids.Boundary)
+	return math, plain != math, nil
 }
 
-func finishHTML(source string, ids RenderIDs) (string, bool) {
-	linked, ok := processLinks(source, ids.Boundary)
-	if !ok {
-		return "", false
-	}
+func finishHTML(source string, ids RenderIDs) string {
+	linked := processLinks(source, ids.Boundary)
 	return FinalizeSerializedHTML(linked, ids.RunID, ids.TableMarker)
 }

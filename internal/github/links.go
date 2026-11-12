@@ -1,6 +1,6 @@
 package github
 
-func writeLink(out *Buffer, t *Tree, id int, marker string) (unwrap bool, ok bool) {
+func writeLink(out *Buffer, t *Tree, id int, marker string) (unwrap bool) {
 	node := &t.Nodes[id]
 	attrs := attributesRead(t, node)
 	marked := attrs.find("data-gfm-had-href")
@@ -36,15 +36,13 @@ func writeLink(out *Buffer, t *Tree, id int, marker string) (unwrap bool, ok boo
 		}
 		out.Putc('>')
 	}
-	return unwrap, true
+	return unwrap
 }
 
 // processLinks restores sanitized links and applies GitHub's external-link rel policy.
-func processLinks(source, boundary string) (string, bool) {
+func processLinks(source, boundary string) string {
 	tree := NewTree(source)
-	if !tree.ParseSerializedHTML() {
-		return "", false
-	}
+	tree.ParseSerializedHTML()
 	var out Buffer
 	id := tree.Nodes[0].First
 	for id != None {
@@ -52,11 +50,7 @@ func processLinks(source, boundary string) (string, bool) {
 		if !node.Element {
 			out.Put(source[node.Start:node.End])
 		} else if !node.Inert && tree.NodeIs(id, "a") {
-			unwrap, ok := writeLink(&out, tree, id, boundary)
-			if !ok {
-				return "", false
-			}
-			node.Removed = unwrap
+			node.Removed = writeLink(&out, tree, id, boundary)
 		} else {
 			out.Put(source[node.Start:node.OpenEnd])
 		}
@@ -79,5 +73,5 @@ func processLinks(source, boundary string) (string, bool) {
 			break
 		}
 	}
-	return out.String(), true
+	return out.String()
 }

@@ -1,11 +1,9 @@
 package github
 
 // prepareDetails inserts GitHub's default summary into details elements without one.
-func prepareDetails(source string) (string, bool) {
+func prepareDetails(source string) string {
 	tree := NewTree(source)
-	if !tree.ParseSerializedHTML() {
-		return "", false
-	}
+	tree.ParseSerializedHTML()
 	var out Buffer
 	id := tree.Nodes[0].First
 	for id != None {
@@ -46,7 +44,7 @@ func prepareDetails(source string) (string, bool) {
 			break
 		}
 	}
-	return out.String(), true
+	return out.String()
 }
 
 // unwrapTemplates moves template children into their parents without merging text nodes.
@@ -69,13 +67,13 @@ func unwrapTemplates(t *Tree) {
 }
 
 // prepareWrite serializes an existing tree without invoking another HTML parser.
-func prepareWrite(t *Tree, out *Buffer, root int, boundary, tableMarker string, stripComments, preserveBoundaries bool) bool {
+func prepareWrite(t *Tree, out *Buffer, root int, boundary, tableMarker string, stripComments, preserveBoundaries bool) {
 	id := root
 	if root == 0 {
 		id = t.Nodes[0].First
 	}
 	if id == None {
-		return true
+		return
 	}
 	for id != None {
 		node := &t.Nodes[id]
@@ -122,7 +120,7 @@ func prepareWrite(t *Tree, out *Buffer, root int, boundary, tableMarker string, 
 				out.Put("</markdown-accessiblity-table>")
 			}
 			if id == root {
-				return true
+				return
 			}
 			if node.Next != None {
 				id = node.Next
@@ -134,22 +132,17 @@ func prepareWrite(t *Tree, out *Buffer, root int, boundary, tableMarker string, 
 			break
 		}
 	}
-	return true
 }
 
 // flattenTemplates exposes template contents while retaining text boundaries.
-func flattenTemplates(source, boundary string) (string, bool) {
+func flattenTemplates(source, boundary string) string {
 	tree := NewTree(source)
 	tree.SplitComments = true
-	if !tree.ParseSerializedHTML() {
-		return "", false
-	}
+	tree.ParseSerializedHTML()
 	unwrapTemplates(tree)
 	var out Buffer
-	if !prepareWrite(tree, &out, 0, boundary, "", false, true) {
-		return "", false
-	}
-	return out.String(), true
+	prepareWrite(tree, &out, 0, boundary, "", false, true)
+	return out.String()
 }
 
 // removeBoundaries removes only generated text-boundary comments.
@@ -170,12 +163,10 @@ func removeBoundaries(source, boundary string) string {
 }
 
 // prepareMathTables decides paragraph-local table wrapping before math rendering.
-func prepareMathTables(source, token, boundary, tableMarker string) (string, bool) {
+func prepareMathTables(source, token, boundary, tableMarker string) (string, error) {
 	tree := NewTree(source)
 	tree.SplitComments = true
-	if !tree.ParseSerializedHTML() {
-		return "", false
-	}
+	tree.ParseSerializedHTML()
 	subtreeEnd := make([]int, len(tree.Nodes))
 	for id := range subtreeEnd {
 		subtreeEnd[id] = id + 1
@@ -217,10 +208,7 @@ func prepareMathTables(source, token, boundary, tableMarker string) (string, boo
 			var paragraph Buffer
 			prepareWrite(tree, &paragraph, id, boundary, tableMarker, true, false)
 			paragraphSource := paragraph.String()
-			rendered, ok := mathDOM(paragraphSource, token, boundary)
-			if !ok {
-				return "", false
-			}
+			rendered := mathDOM(paragraphSource, token, boundary)
 			hasMath = rendered != paragraphSource
 		}
 		for n := id + 1; n < subtreeEnd[id]; n++ {
@@ -234,8 +222,6 @@ func prepareMathTables(source, token, boundary, tableMarker string) (string, boo
 		}
 	}
 	var out Buffer
-	if !prepareWrite(tree, &out, 0, boundary, tableMarker, true, true) {
-		return "", false
-	}
-	return out.String(), true
+	prepareWrite(tree, &out, 0, boundary, tableMarker, true, true)
+	return out.String(), nil
 }

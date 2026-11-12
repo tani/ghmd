@@ -1,7 +1,7 @@
 package github
 
 // adjustCheckboxes marks task inputs and moves leading checkboxes into paragraphs.
-func adjustCheckboxes(t *Tree, changed *bool) bool {
+func adjustCheckboxes(t *Tree, changed *bool) {
 	originalCount := len(t.Nodes)
 	for id := 1; id < originalCount; id++ {
 		if t.Nodes[id].Inert || !t.Checkbox(id) {
@@ -49,23 +49,16 @@ func adjustCheckboxes(t *Tree, changed *bool) bool {
 		}
 		t.Detach(input)
 		space := t.appendNode(0, Node{Synthetic: true, SyntheticByte: ' '})
-		if space == None {
-			return false
-		}
 		t.Detach(space)
 		t.InsertBefore(paragraph, space, t.Nodes[paragraph].First)
 		t.InsertBefore(paragraph, input, space)
 		if !t.TextStartsNewline(t.Nodes[id].First) {
 			newline := t.appendNode(0, Node{Synthetic: true, SyntheticByte: '\n'})
-			if newline == None {
-				return false
-			}
 			t.Detach(newline)
 			t.InsertBefore(id, newline, t.Nodes[id].First)
 		}
 		*changed = true
 	}
-	return true
 }
 
 // writeCheckbox serializes a sanitized task checkbox with its generated state attributes.
