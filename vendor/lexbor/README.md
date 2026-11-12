@@ -18,7 +18,7 @@ bun scripts/prepare-lexbor.ts /path/to/lexbor/html-single.h
 ```
 
 There is one deliberate adaptation: the element-construction definition is
-renamed so `src/html/core.c` can wrap it and attach source locations (including
+renamed so `src/html/parser.c` can wrap it and attach source locations (including
 reconstructed formatting nodes). The wrapper delegates to the original function;
 HTML parsing and tree repair stay in Lexbor. Tests reverse the rename and verify
 the original distribution's hash. Update the pinned commit, both hashes, and

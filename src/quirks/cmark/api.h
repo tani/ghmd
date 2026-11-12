@@ -2,10 +2,19 @@
 #define GFM_API_H
 #include <stddef.h>
 
-typedef struct { const unsigned char *data; size_t length; } gfm_view;
-typedef struct { unsigned char *data; size_t length; } gfm_string;
+typedef struct {
+  const unsigned char *data;
+  size_t length;
+} gfm_view;
+typedef struct {
+  unsigned char *data;
+  size_t length;
+} gfm_string;
 typedef enum { GFM_OK, GFM_BAD_ARGUMENT, GFM_NO_MEMORY, GFM_LIMIT_EXCEEDED } gfm_status;
-typedef struct { gfm_string text; const char *error; } gfm_result;
+typedef struct {
+  gfm_string text;
+  const char *error;
+} gfm_result;
 #define GFM_MAX_OUTPUT_BYTES ((size_t)32 * 1024 * 1024)
 
 /* Render Markdown to final sanitized HTML. Inputs are borrowed UTF-8 views;

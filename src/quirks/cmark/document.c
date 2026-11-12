@@ -1,73 +1,140 @@
-/* Complete Markdown-to-HTML operation. No JS callbacks or DOM round trips. */
-gfm_status gfm_render(gfm_view source, gfm_view token, gfm_view boundary, gfm_result *result) {
-  if (!result) return GFM_BAD_ARGUMENT;
-  *result = (gfm_result){0};
+/* Complete Markdown-to-HTML operation and ownership of intermediate strings. */
+enum { GFM_MAX_SOURCE_BYTES = 1000000, GFM_RUN_ID_LENGTH = 32, GFM_BOUNDARY_LENGTH = 36 };
+#define GFM_TABLE_MARKER_PREFIX "data-gfm-table-"
+typedef struct {
+  char run_id[GFM_RUN_ID_LENGTH + 1];
+  char boundary[GFM_BOUNDARY_LENGTH + 1];
+  char table_marker[sizeof(GFM_TABLE_MARKER_PREFIX) + GFM_RUN_ID_LENGTH];
+} gfm_render_ids;
+
+static void gfm_string_clear(gfm_string *string) {
+  free(string->data);
+  *string = (gfm_string){0};
+}
+/* Replacement takes a newly allocated string, even when the next step failed.
+ * Keep lengths cached: Bun 1.4.4's ARM64 compiler can miscompile nested strlen()
+ * expressions in calls that also pass several string modifiers. */
+static int gfm_string_replace(gfm_string *string, char *replacement) {
+  gfm_string_clear(string);
+  string->data = (unsigned char *)replacement;
+  if (replacement)
+    string->length = strlen(replacement);
+  return replacement != NULL;
+}
+static int gfm_is_hex(unsigned char c) {
+  return (c >= 'a' && c <= 'f') || (c >= '0' && c <= '9');
+}
+static gfm_status gfm_validate_render(gfm_view source, gfm_view token, gfm_view boundary,
+                                      gfm_result *result) {
   if (!source.data || !token.data || !boundary.data) {
-    result->error = "Required string argument is missing"; return GFM_BAD_ARGUMENT;
+    result->error = "Required string argument is missing";
+    return GFM_BAD_ARGUMENT;
   }
-  if (source.length > 1000000) { result->error = "Markdown exceeds 1 MB"; return GFM_LIMIT_EXCEEDED; }
-  if (token.length != 32) { result->error = "runId must be 32 lowercase hexadecimal characters"; return GFM_BAD_ARGUMENT; }
-  for (size_t i = 0; i < token.length; i++) if (!((token.data[i] >= 'a' && token.data[i] <= 'f') || (token.data[i] >= '0' && token.data[i] <= '9'))) {
-    result->error = "runId must be 32 lowercase hexadecimal characters"; return GFM_BAD_ARGUMENT;
+  if (source.length > GFM_MAX_SOURCE_BYTES) {
+    result->error = "Markdown exceeds 1 MB";
+    return GFM_LIMIT_EXCEEDED;
   }
-  if (boundary.length != 36) { result->error = "Invalid render boundary"; return GFM_BAD_ARGUMENT; }
-  for (size_t i = 0; i < 36; i++) {
-    unsigned char c = boundary.data[i];
+  if (token.length != GFM_RUN_ID_LENGTH)
+    goto invalid_token;
+  for (size_t i = 0; i < token.length; i++)
+    if (!gfm_is_hex(token.data[i]))
+      goto invalid_token;
+  if (boundary.length != GFM_BOUNDARY_LENGTH)
+    goto invalid_boundary;
+  for (size_t i = 0; i < boundary.length; i++) {
     int dash = i == 8 || i == 13 || i == 18 || i == 23;
-    if (dash ? c != '-' : !((c >= 'a' && c <= 'f') || (c >= '0' && c <= '9'))) { result->error = "Invalid render boundary"; return GFM_BAD_ARGUMENT; }
+    if (dash ? boundary.data[i] != '-' : !gfm_is_hex(boundary.data[i]))
+      goto invalid_boundary;
   }
-  char *modifiers = malloc(33 + 37 + 48);
-  if (!modifiers) { result->error = "Cannot allocate render identifiers"; return GFM_NO_MEMORY; }
-  char *run_id = modifiers, *marker = modifiers + 33, *table_marker = modifiers + 70;
-  memcpy(run_id, token.data, 32); run_id[32] = 0;
-  memcpy(marker, boundary.data, 36); marker[36] = 0;
-  memcpy(table_marker, "data-gfm-table-", 15); size_t used = 15;
-  for (size_t i = 0; i < 36; i++) if (boundary.data[i] != '-') table_marker[used++] = boundary.data[i];
-  table_marker[used] = 0;
-  gfm_status status = gfm_render_markdown(source, result);
-  if (status != GFM_OK) { free(modifiers); return status; }
-  if (result->text.length > GFM_MAX_OUTPUT_BYTES) {
-    free(modifiers); free(result->text.data); result->text = (gfm_string){0};
-    result->error = "Rendered HTML exceeds 32 MB"; return GFM_LIMIT_EXCEEDED;
+  return GFM_OK;
+invalid_token:
+  result->error = "runId must be 32 lowercase hexadecimal characters";
+  return GFM_BAD_ARGUMENT;
+invalid_boundary:
+  result->error = "Invalid render boundary";
+  return GFM_BAD_ARGUMENT;
+}
+static gfm_render_ids *gfm_render_ids_new(gfm_view token, gfm_view boundary) {
+  gfm_render_ids *ids = malloc(sizeof(*ids));
+  if (!ids)
+    return NULL;
+  memcpy(ids->run_id, token.data, GFM_RUN_ID_LENGTH);
+  ids->run_id[GFM_RUN_ID_LENGTH] = 0;
+  memcpy(ids->boundary, boundary.data, GFM_BOUNDARY_LENGTH);
+  ids->boundary[GFM_BOUNDARY_LENGTH] = 0;
+  size_t used = sizeof(GFM_TABLE_MARKER_PREFIX) - 1;
+  memcpy(ids->table_marker, GFM_TABLE_MARKER_PREFIX, used);
+  for (size_t i = 0; i < boundary.length; i++)
+    if (boundary.data[i] != '-')
+      ids->table_marker[used++] = boundary.data[i];
+  ids->table_marker[used] = 0;
+  return ids;
+}
+static int gfm_reparse_html(gfm_string *html, gfm_status *status) {
+  char *parsed = gfm_dom_reparse(html->data, html->length, status);
+  return gfm_string_replace(html, parsed);
+}
+static gfm_status gfm_complete_html(gfm_result *result) {
+  gfm_string *html = &result->text;
+  if (html->length && html->data[html->length - 1] == '\n')
+    html->data[--html->length] = 0;
+  if (html->length > GFM_MAX_OUTPUT_BYTES) {
+    gfm_string_clear(html);
+    result->error = "Rendered HTML exceeds 32 MB";
+    return GFM_LIMIT_EXCEEDED;
+  }
+  return GFM_OK;
+}
+
+gfm_status gfm_render(gfm_view source, gfm_view token, gfm_view boundary, gfm_result *result) {
+  if (!result)
+    return GFM_BAD_ARGUMENT;
+  *result = (gfm_result){0};
+  gfm_status status = gfm_validate_render(source, token, boundary, result);
+  if (status != GFM_OK)
+    return status;
+  gfm_render_ids *ids = gfm_render_ids_new(token, boundary);
+  if (!ids) {
+    result->error = "Cannot allocate render identifiers";
+    return GFM_NO_MEMORY;
+  }
+  gfm_string html = {0};
+  status = gfm_render_markdown(source, result);
+  if (status != GFM_OK)
+    goto done;
+  html = result->text;
+  result->text = (gfm_string){0};
+  if (html.length > GFM_MAX_OUTPUT_BYTES) {
+    result->error = "Rendered HTML exceeds 32 MB";
+    status = GFM_LIMIT_EXCEEDED;
+    goto done;
   }
   status = GFM_NO_MEMORY;
-  char *html = gfm_dom_sanitize(result->text.data, result->text.length, marker, &status);
-  free(result->text.data); result->text = (gfm_string){0};
-  if (!html) goto fail;
-  /* Cache lengths before calls: Bun 1.4.4's ARM64 C compiler can miscompile
-   * nested strlen() argument expressions in calls with several modifiers. */
-  size_t length = strlen(html);
-  char *parsed = gfm_dom_reparse((const unsigned char *)html, length, &status);
-  free(html); html = parsed;
-  if (!html) goto fail;
+  char *next = gfm_dom_sanitize(html.data, html.length, ids->boundary, &status);
+  if (!gfm_string_replace(&html, next) || !gfm_reparse_html(&html, &status))
+    goto failed_html;
   int reparse = 0;
-  length = strlen(html);
-  char *prepared = gfm_prepare_html_stage((const unsigned char *)html, length, marker, &reparse);
-  free(html); html = prepared;
-  if (!html) goto fail;
-  if (reparse) {
-    length = strlen(html);
-    char *next = gfm_dom_reparse((const unsigned char *)html, length, &status);
-    free(html); html = next;
-    if (!html) goto fail;
-  }
-  length = strlen(html);
-  char *math = gfm_render_math_stage((const unsigned char *)html, length, run_id, marker, table_marker, &reparse);
-  free(html); html = math;
-  if (!html) goto fail;
-  if (reparse) {
-    length = strlen(html);
-    char *next = gfm_dom_reparse((const unsigned char *)html, length, &status);
-    free(html); html = next;
-    if (!html) goto fail;
-  }
-  length = strlen(html);
-  char *final = gfm_finish_html((const unsigned char *)html, length, run_id, marker, table_marker);
-  free(html);
-  if (!final) goto fail;
-  result->text = (gfm_string){(unsigned char *)final, strlen(final)};
-  free(modifiers); return gfm_complete_html(result);
-fail:
-  free(modifiers);
-  result->error = status == GFM_LIMIT_EXCEEDED ? "HTML tree exceeds output or depth limit" : "Cannot render HTML document"; return status;
+  next = gfm_prepare_html_stage(html.data, html.length, ids->boundary, &reparse);
+  if (!gfm_string_replace(&html, next) || (reparse && !gfm_reparse_html(&html, &status)))
+    goto failed_html;
+  next = gfm_render_math_stage(html.data, html.length, ids->run_id, ids->boundary,
+                               ids->table_marker, &reparse);
+  if (!gfm_string_replace(&html, next) || (reparse && !gfm_reparse_html(&html, &status)))
+    goto failed_html;
+  next = gfm_finish_html(html.data, html.length, ids->run_id, ids->boundary, ids->table_marker);
+  if (!gfm_string_replace(&html, next))
+    goto failed_html;
+  result->text = html;
+  html = (gfm_string){0};
+  status = gfm_complete_html(result);
+  goto done;
+failed_html:
+  result->error = status == GFM_LIMIT_EXCEEDED ? "HTML tree exceeds output or depth limit"
+                                               : "Cannot render HTML document";
+done:
+  gfm_string_clear(&html);
+  if (status != GFM_OK)
+    gfm_string_clear(&result->text);
+  free(ids);
+  return status;
 }
