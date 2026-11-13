@@ -1,121 +1,81 @@
-# GitHub Markdown renderer in Go
+# ghmd
 
-This project renders GitHub-flavored Markdown to GitHub-compatible HTML and compares that output with a second GitHub-dialect parser. It is a Go rewrite of the former Bun/TypeScript implementation.
+GitHub-flavored Markdown renderer in Go. It uses vendored cmark-gfm for parsing, `golang.org/x/net/html` for HTML5 handling, and md4c for parser differential checks.
 
-- **cmark-gfm** (vendored) parses Markdown through cgo and supplies the GitHub AST.
-- **golang.org/x/net/html** owns HTML5 parsing, tree repair, sanitization and serialization.
-- **md4c** (vendored) parses the same Markdown through cgo as an independent GitHub dialect for differential checks, with LaTeX math spans enabled.
+## Build
 
-## Build and run
-
-Go 1.26 or later, a C compiler and cgo are required.
+Requires Go 1.26+, a C compiler, and cgo.
 
 ```sh
 go build ./cmd/ghmd
 ./ghmd render input.md > output.html
-./ghmd render --run-id 0123456789abcdef0123456789abcdef input.md
-./ghmd diff input.md        # cmark-gfm vs md4c structural differences
-./ghmd lint input.md        # suspicious raw HTML and renderer regressions
+./ghmd diff input.md
+./ghmd lint input.md
 ```
 
-`render` accepts standard input when the path is `-` or omitted. Input is limited to 1 MB and output to 32 MB. Reusing a run ID in the same page can cause anchor collisions; omitting it generates a random 32-character lowercase hexadecimal identifier.
-
-The public Go API is:
+`render` reads stdin when the path is `-` or omitted. Input is limited to 1 MB; output is limited to 32 MB.
 
 ```go
-import "ghmd"
-
-html, err := ghmd.Render(source, ghmd.RenderOptions{RunID: ""})
+html, err := ghmd.Render(source, ghmd.RenderOptions{})
 ```
 
 ### Make targets
 
-`make` builds with the host Go toolchain and with a TinyGo installation on `PATH`. Override either compiler with `GO=` or `TINYGO=`.
-
 | Target | Output |
 | --- | --- |
-| `make go-native` | `build/go/<arch>/ghmd` using cgo |
-| `make tinygo-native` | `build/tinygo/<arch>/ghmd` using TinyGo + cgo |
+| `make go-native` | `build/go/<arch>/ghmd` |
+| `make tinygo-native` | `build/tinygo/<arch>/ghmd` |
 | `make tinygo-wasi` | `build/tinygo/wasi/ghmd.wasm` |
-| `make web` | `web/dist/` web UI and WebAssembly module |
-| `make all` | All native builds |
-| `make clean` | Removes the generated binaries |
+| `make web` | `web/dist/` |
+| `make all` | All non-web builds |
+| `make clean` | Remove generated files |
 
-`<arch>` defaults to `go env GOHOSTARCH`. TinyGo 0.44.0 is the tested toolchain. It is used as a system executable rather than a Go module tool because building TinyGo from source requires matching LLVM and libclang development files. The Makefile also supplies absolute include paths for the vendored cmark-gfm headers, which TinyGo's cgo handling does not infer.
-
-The WASI build includes `third_party/cmark-gfm-bridge/wasi_shim.c`, which defines the ASCII `tolower` function missing from the available `wasi-libc` link set. It is compiled only under `__wasip1__` or `__wasi__`, so native builds are unaffected.
+TinyGo 0.44.0 is tested. Override tool paths with `GO=` or `TINYGO=`.
 
 ### Web UI
-
-`make web` builds `cmd/ghmd-wasm` with TinyGo and copies the static UI into `web/dist/`:
 
 ```sh
 make web
 python3 -m http.server 8765 --directory web/dist
 ```
 
-Open <http://localhost:8765/>. Render, lint, and diff run locally in the browser; no Markdown leaves the page. The GitHub Pages workflow in `.github/workflows/pages.yml` publishes `web/dist/` on pushes to `main` and through manual dispatch. Enable Pages with "GitHub Actions" as the source in repository settings before the first deployment.
+Open <http://localhost:8765/>. Render, lint, and diff run locally in the browser. Pushes to `main` deploy `web/dist/` through GitHub Pages; enable “GitHub Actions” as the Pages source first.
 
-## Lint behavior
+## Lint
 
-`ghmd diff` is intentionally lossy: it projects both rendered fragments onto a normalized tree and reports structural differences. It does not claim that either parser is correct.
+`ghmd lint` reports source locations that may render incorrectly on GitHub. `ghmd diff` reports structural differences between cmark-gfm and md4c. Findings use:
 
-`ghmd lint` reports source locations that are likely to break on GitHub:
+```text
+path:line:column: severity rule: message
+```
 
-- Raw HTML that GitHub removes, unwraps or relocates: executable/filtered containers (`script`, `style`, `iframe`, `svg`, ...), event and namespace attributes, unsafe URLs, source-authored `input`, `template`, nested anchors, block elements inside `p`, unclosed and stray tags.
-- Math that GitHub leaves literal or rejects: boundary violations (`a$x$`, `$ x$`, `$x $`, `&` in the expression), unclosed dollars (currency like `$5` is ignored), math inside footnote definitions, and non-isolated `$$...$$` display delimiters. When a boundary rule and `standard/lost-math` both fire on one line, the renderer comparison is kept and the boundary finding is dropped; boundary findings remain when md4c also rejects the syntax.
-- Backslash escapes such as `\{`, `\_`, `\#` and `\$` inside bare `$...$` or isolated `$$...$$` math: GitHub removes the backslash before math rendering. Use dollar-backtick inline math or a fenced `math` block to preserve the TeX source.
-- Macros rejected or ignored by GitHub's math renderer: `\operatorname` and `\operatorname*` fail with "The following macros are not allowed"; definition commands such as `\def`, `\newcommand`, `\let`, and `\DeclareMathOperator` are rendered literally instead of defining macros. Use built-in commands and inline the expanded expression.
-- Unknown TeX commands: commands absent from the generated KaTeX/MathJax allowlist are reported. This is a syntax warning, not proof that GitHub supports every allowlisted command, and document-local definitions do not suppress it.
-- Contexts that GitHub does not render as intended: dollar-backtick inline math immediately after a letter, `<tag`-like text inside display or fenced math, block math inside HTML containers, and nested dollar math inside `\text{...}` in fenced math. These checks are source-based warnings, not live-render claims.
-- Layout-sensitive TeX: inline large operators, radicals around fractions, and matrices receive `MATH-008` review warnings. These flag constructs whose visual result cannot be established from source alone; they do not claim a rendering failure.
-- Regressions relative to the md4c standard renderer: visible text, code, links, images, math, task state, inline formatting (`strong`, `em`, `del`) and table shape produced by the standard parser but missing or changed in the GitHub output. md4c runs with LaTeX math spans enabled, so `standard/lost-math` reports contexts where the standard parse renders math but GitHub leaves it literal (for example emphasis, link labels and raw inline tags). Known dialect noise is suppressed: math delimiters, footnote fallback links, alert markers, autolinks, table-pipe code, currency-like `$...$`, and presentation-only attributes. Differential checks are skipped for documents using footnote syntax or SVG, where md4c's parser semantics are not a usable baseline; strikethrough is compared through `del` formatting while its delimiter-level text noise is suppressed. Raw-HTML rules still apply in all cases.
+The command exits 1 when findings exist. See [RULES.md](RULES.md) for the complete rule list.
 
-Findings are printed as `path:line:column: severity rule: message` with one-based line and Unicode code-point columns. Unlocated differential findings use line 0, column 0. The command exits 1 when any finding is reported and prints nothing on clean input. The complete rule and severity catalog is in [RULES.md](RULES.md).
-
-### Authoring-style checks
-
-`StyleRules` composes source-observable checks by `RULES.md` ID. It covers blocks and list continuation, emphasis and CJK punctuation, code fences and inline code, bare-link detection, table structure and pipe escaping, tildes, task markers, footnote definitions and labels, alerts, details, math parsing and nesting risks, Mermaid parsing risks, and widget data. Source positions use one-based lines and Unicode code-point columns; examples in inline code, fences and HTML comments are ignored.
-
-## Tests
+## Test
 
 ```sh
 go test ./...
 ```
 
-The GitHub reference suite renders 617 captured inputs and compares canonical HTML trees against responses captured from GitHub's Markdown API in GFM mode. Fixtures live in `test/fixtures/e2e/`; source and response hashes are checked before rendering. The comparison ignores syntax-highlighting wrappers, normalizes generated footnote and math IDs, and collapses ordinary HTML whitespace, but still checks tags, nesting, attributes and content.
+The suite includes 617 GitHub Markdown API fixtures, native-pipeline regression cases, and 39 automatic authoring rules (60 expected findings).
 
-`test/fixtures/lint/rules-bad.md` deliberately violates every automatic authoring rule in `RULES.md`; `rules-bad.expected.json` records the expected violations. `TestRulesBadMarkdownRecall` lints each rule section independently to avoid cross-section cancellation and measures 100% recall for all 39 automatic authoring rules (60/60 findings) in the 219-line document.
+## Packages
 
-`test/fixtures/lint/cases.json` is a labeled corpus of suspicious raw HTML and renderer-regression cases. `TestLintCorpusRecall` requires every expected rule at the expected line and, where repeated findings need disambiguation, column. `TestFixtureDifferentialNoiseBudget` guards the 617 GitHub fixtures against differential-noise regressions.
+- `internal/cmark-gfm`: cmark-gfm binding
+- `internal/standard`: md4c binding
+- `internal/github`: GitHub compatibility pipeline
+- `internal/lint`: source and differential linting
+- `internal/diff`: normalized parser comparison
+- `cmd/ghmd`: CLI
+- `cmd/ghmd-wasm`: browser WebAssembly bridge
+- `web`: browser UI
 
-`test/fixtures/native-pipeline/` contains exact-byte regression cases for the postprocessing pipeline. Vendored cmark-gfm sources and generated headers are verified against `test/fixtures/cmark-gfm-upstream.json`.
+## Limits
 
-## Architecture
+- 1 MB Markdown, 32 MB HTML output, tree depth 512.
+- Raw HTML is allowlist-sanitized; unsafe tags, attributes, and URLs are removed.
+- No syntax highlighting or remote image proxying.
 
-| Package | Responsibility |
-| --- | --- |
-| `internal/cmark-gfm` | cgo binding to the unmodified vendored cmark-gfm parser and AST. |
-| `internal/standard` | cgo binding to the vendored md4c parser (CommonMark, GitHub extensions and LaTeX math spans). |
-| `internal/github` | Full GitHub compatibility pipeline: AST adaptation, sanitization, DOM repair, math, tables, alerts, footnotes, task lists, images, links and final serialization. |
-| `internal/analysis` | Shared HTML fragment parsing, structural tree comparison and semantic feature extraction. |
-| `internal/diff` | Thin wrapper over `analysis.CompareFragments` for cmark-gfm vs md4c structural differences. |
-| `internal/lint` | Raw-HTML source and policy rules plus the standard-renderer differential. Uses `analysis.SemanticFeatures`, not `internal/diff`. |
-| `internal/verify` | Fixture canonicalization and GitHub image-proxy normalization. |
-| `cmd/ghmd` | `render`, `diff` and `lint` command-line interface. |
-| `cmd/ghmd-wasm` | Browser WebAssembly bridge for the render, lint, and diff UI. |
-| `web` | Static browser workbench and GitHub Pages entry point. |
+## License
 
-The pipeline keeps the former renderer's byte-range tree for already-sanitized HTML. HTML5 boundaries use `x/net/html`: raw-input filtering, sanitizer traversal, DOM compatibility repair and DOM serialization. The renderer makes no JavaScript or Node calls.
-
-## Rendering policy
-
-- Raw HTML passes through an allowlist sanitizer. Executable containers, event handlers, inline styles, unsafe URLs, namespace attributes and dangerous `id`/`name` values are removed. Template contents are checked recursively; safe HTML and basic MathML are retained. Unknown tags are unwrapped.
-- The allowlist data is adapted from DOMPurify 3.4.1 under Apache-2.0; see `NOTICE` and `POLICY-LICENSE` with the pipeline sources.
-- Neither renderer performs syntax highlighting.
-- Input limits: 1 MB of Markdown, 32 MB of HTML output, tree depth 512.
-- Remote image URLs are left unproxied.
-
-## Vendored sources and licensing
-
-`third_party/cmark-gfm` is based on cmark-gfm 0.29.0.gfm.13 and is unmodified; see `PROVENANCE.json` and `COPYING`. `third_party/md4c` is md4c 0.5.2; see `PROVENANCE.json` and `LICENSE.md`. Original project code is MIT licensed; third-party code keeps its own license.
+Original code is MIT licensed. `third_party/cmark-gfm` is cmark-gfm 0.29.0.gfm.13; `third_party/md4c` is md4c 0.5.2. See their provenance and license files.
