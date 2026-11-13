@@ -3,7 +3,7 @@
   "rules": [
     {
       "id": "ALERT-001",
-      "startLine": 7,
+      "startLine": 5,
       "expected": [
         {
           "rule": "style/ALERT-001",
@@ -13,7 +13,7 @@
     },
     {
       "id": "BLOCK-001",
-      "startLine": 29,
+      "startLine": 10,
       "expected": [
         {
           "rule": "style/BLOCK-001",
@@ -23,7 +23,7 @@
     },
     {
       "id": "CODE-001",
-      "startLine": 38,
+      "startLine": 15,
       "expected": [
         {
           "rule": "style/CODE-001",
@@ -33,7 +33,7 @@
     },
     {
       "id": "CODE-002",
-      "startLine": 46,
+      "startLine": 23,
       "expected": [
         {
           "rule": "style/CODE-002",
@@ -43,7 +43,7 @@
     },
     {
       "id": "DETAILS-001",
-      "startLine": 62,
+      "startLine": 27,
       "expected": [
         {
           "rule": "html/unclosed-tag",
@@ -57,7 +57,7 @@
     },
     {
       "id": "DETAILS-002",
-      "startLine": 68,
+      "startLine": 32,
       "expected": [
         {
           "rule": "html/unclosed-tag",
@@ -71,7 +71,7 @@
     },
     {
       "id": "EXT-001",
-      "startLine": 74,
+      "startLine": 38,
       "expected": [
         {
           "rule": "style/EXT-001",
@@ -89,7 +89,7 @@
     },
     {
       "id": "FOOT-001",
-      "startLine": 78,
+      "startLine": 42,
       "expected": [
         {
           "rule": "style/FOOT-001",
@@ -103,7 +103,7 @@
     },
     {
       "id": "FOOT-002",
-      "startLine": 84,
+      "startLine": 48,
       "expected": [
         {
           "rule": "style/FOOT-002",
@@ -117,7 +117,7 @@
     },
     {
       "id": "FOOT-003",
-      "startLine": 92,
+      "startLine": 56,
       "expected": [
         {
           "rule": "math/footnote-literal",
@@ -127,7 +127,7 @@
     },
     {
       "id": "HTML-001",
-      "startLine": 104,
+      "startLine": 62,
       "expected": [
         {
           "rule": "raw-html/removed-container",
@@ -153,7 +153,7 @@
     },
     {
       "id": "MATH-001",
-      "startLine": 138,
+      "startLine": 72,
       "expected": [
         {
           "rule": "style/MATH-001",
@@ -163,7 +163,7 @@
     },
     {
       "id": "MATH-002",
-      "startLine": 142,
+      "startLine": 76,
       "expected": [
         {
           "rule": "standard/lost-math",
@@ -173,7 +173,7 @@
     },
     {
       "id": "MATH-003",
-      "startLine": 146,
+      "startLine": 80,
       "expected": [
         {
           "rule": "style/MATH-003",
@@ -183,7 +183,7 @@
     },
     {
       "id": "MATH-004",
-      "startLine": 150,
+      "startLine": 84,
       "expected": [
         {
           "rule": "standard/lost-math",
@@ -197,7 +197,7 @@
     },
     {
       "id": "MATH-005",
-      "startLine": 154,
+      "startLine": 88,
       "expected": [
         {
           "rule": "standard/lost-math",
@@ -215,7 +215,7 @@
     },
     {
       "id": "MATH-006",
-      "startLine": 162,
+      "startLine": 96,
       "expected": [
         {
           "rule": "standard/lost-math",
@@ -229,7 +229,7 @@
     },
     {
       "id": "MATH-007",
-      "startLine": 166,
+      "startLine": 100,
       "expected": [
         {
           "rule": "standard/lost-math",
@@ -243,7 +243,7 @@
     },
     {
       "id": "MERMAID-001",
-      "startLine": 182,
+      "startLine": 104,
       "expected": [
         {
           "rule": "style/MERMAID-001",
@@ -253,7 +253,7 @@
     },
     {
       "id": "STRIKE-001",
-      "startLine": 276,
+      "startLine": 111,
       "expected": [
         {
           "rule": "style/STRIKE-001",
@@ -267,7 +267,7 @@
     },
     {
       "id": "STRIKE-002",
-      "startLine": 280,
+      "startLine": 115,
       "expected": [
         {
           "rule": "style/STRIKE-002",
@@ -277,7 +277,7 @@
     },
     {
       "id": "TABLE-001",
-      "startLine": 284,
+      "startLine": 119,
       "expected": [
         {
           "rule": "style/TABLE-001",
@@ -291,7 +291,7 @@
     },
     {
       "id": "TABLE-002",
-      "startLine": 291,
+      "startLine": 126,
       "expected": [
         {
           "rule": "style/TABLE-002",
@@ -301,7 +301,7 @@
     },
     {
       "id": "TABLE-003",
-      "startLine": 297,
+      "startLine": 132,
       "expected": [
         {
           "rule": "style/TABLE-003",
@@ -311,7 +311,7 @@
     },
     {
       "id": "TABLE-004",
-      "startLine": 309,
+      "startLine": 138,
       "expected": [
         {
           "rule": "style/TABLE-004",
@@ -321,7 +321,7 @@
     },
     {
       "id": "TASK-001",
-      "startLine": 315,
+      "startLine": 144,
       "expected": [
         {
           "rule": "style/TASK-001",
@@ -331,7 +331,7 @@
     },
     {
       "id": "TEXT-001",
-      "startLine": 327,
+      "startLine": 148,
       "expected": [
         {
           "rule": "standard/lost-formatting",
@@ -345,7 +345,7 @@
     },
     {
       "id": "TEXT-002",
-      "startLine": 331,
+      "startLine": 152,
       "expected": [
         {
           "rule": "style/TEXT-002",
@@ -355,7 +355,7 @@
     },
     {
       "id": "WIDGET-001",
-      "startLine": 341,
+      "startLine": 156,
       "expected": [
         {
           "rule": "style/WIDGET-001",
