@@ -1,9 +1,6 @@
 package lint
 
-import (
-	"strings"
-	"testing"
-)
+import "testing"
 
 func TestMathPolicySourceChecks(t *testing.T) {
 	violations := mathPolicyStyleViolations("\\(x\\) and \\[y\\]")
@@ -16,65 +13,6 @@ func TestMathPolicySourceChecks(t *testing.T) {
 	}
 	violations = mathPolicyStyleViolations("[$x$](https://example.com)")
 	requireStyleViolation(t, violations, "MATH-005")
-}
-
-func TestMathBlockSizeLimit(t *testing.T) {
-	limit := strings.Repeat("a", maxMathBlockBytes)
-	over := strings.Repeat("a", maxMathBlockBytes+1)
-	tests := []struct {
-		name   string
-		source string
-		line   int
-		column int
-	}{
-		{name: "display at limit", source: "$$\n" + limit + "\n$$\n"},
-		{name: "fenced at limit", source: "```math\n" + limit + "\n```\n"},
-		{name: "unclosed display", source: "$$\n" + over + "\n"},
-		{name: "indented code", source: "    $$\n" + over + "\n    $$\n"},
-		{name: "tab-indented code", source: "\t$$\n" + over + "\n\t$$\n"},
-		{name: "non-math fence", source: "```text\n" + over + "\n```\n"},
-		{name: "display over limit", source: "$$\n" + over + "\n$$\n", line: 1, column: 1},
-		{name: "indented display over limit", source: "  $$\n" + over + "\n  $$\n", line: 1, column: 3},
-		{name: "fenced over limit", source: "```math\n" + over + "\n```\n", line: 1, column: 1},
-		{name: "indented fenced over limit", source: "  ```math\n" + over + "\n  ```\n", line: 1, column: 3},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			count := 0
-			for _, violation := range mathPolicyStyleViolations(test.source) {
-				if violation.ID != "MATH-009" {
-					continue
-				}
-				count++
-				if violation.Line != test.line || violation.Column != test.column {
-					t.Errorf("MATH-009 at %d:%d, want %d:%d", violation.Line, violation.Column, test.line, test.column)
-				}
-			}
-			want := 0
-			if test.line != 0 {
-				want = 1
-			}
-			if count != want {
-				t.Errorf("MATH-009 findings = %d, want %d", count, want)
-			}
-		})
-	}
-}
-
-func TestMathLayoutReviewSignals(t *testing.T) {
-	for _, source := range []string{
-		"$\\sum_i x_i$",
-		"$\\prod_{i=0}^{n} x_i$",
-		"$\\sqrt{\\frac{1}{2}}$",
-		"$\\begin{pmatrix}a & b\\\\ c & d\\end{pmatrix}$",
-	} {
-		requireStyleViolation(t, mathPolicyStyleViolations(source), "MATH-008")
-	}
-	for _, violation := range mathPolicyStyleViolations("$x + y$") {
-		if violation.ID == "MATH-008" {
-			t.Fatalf("plain inline math triggered a layout review: %v", violation)
-		}
-	}
 }
 
 func TestMathFencedBodyPolicy(t *testing.T) {

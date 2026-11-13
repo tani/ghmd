@@ -12,35 +12,11 @@
       ]
     },
     {
-      "id": "AUTO-001",
-      "startLine": 19,
-      "expected": [
-        {
-          "rule": "style/LINK-001",
-          "line": 1
-        },
-        {
-          "rule": "style/LINK-001",
-          "line": 1
-        }
-      ]
-    },
-    {
       "id": "BLOCK-001",
-      "startLine": 23,
-      "expected": [
-        {
-          "rule": "style/BLOCK-001",
-          "line": 3
-        }
-      ]
-    },
-    {
-      "id": "BLOCK-002",
       "startLine": 29,
       "expected": [
         {
-          "rule": "style/BLOCK-002",
+          "rule": "style/BLOCK-001",
           "line": 2
         }
       ]
@@ -176,20 +152,6 @@
       ]
     },
     {
-      "id": "LINK-001",
-      "startLine": 114,
-      "expected": [
-        {
-          "rule": "style/LINK-001",
-          "line": 1
-        },
-        {
-          "rule": "style/LINK-001",
-          "line": 1
-        }
-      ]
-    },
-    {
       "id": "MATH-001",
       "startLine": 138,
       "expected": [
@@ -280,76 +242,12 @@
       ]
     },
     {
-      "id": "MATH-008",
-      "startLine": 170,
-      "expected": [
-        {
-          "rule": "style/MATH-008",
-          "line": 1
-        }
-      ]
-    },
-    {
-      "id": "MATH-009",
-      "startLine": 174,
-      "expected": [
-        {
-          "rule": "style/MATH-009",
-          "line": 1
-        }
-      ]
-    },
-    {
       "id": "MERMAID-001",
       "startLine": 182,
       "expected": [
         {
           "rule": "style/MERMAID-001",
           "line": 1
-        }
-      ]
-    },
-    {
-      "id": "MERMAID-002",
-      "startLine": 195,
-      "expected": [
-        {
-          "rule": "style/MERMAID-002",
-          "line": 2
-        }
-      ]
-    },
-    {
-      "id": "MERMAID-003",
-      "startLine": 202,
-      "expected": [
-        {
-          "rule": "style/MERMAID-003",
-          "line": 3
-        }
-      ]
-    },
-    {
-      "id": "MERMAID-004",
-      "startLine": 209,
-      "expected": [
-        {
-          "rule": "style/MERMAID-004",
-          "line": 3
-        },
-        {
-          "rule": "style/MERMAID-004",
-          "line": 4
-        }
-      ]
-    },
-    {
-      "id": "MERMAID-005",
-      "startLine": 217,
-      "expected": [
-        {
-          "rule": "style/MERMAID-005",
-          "line": 2
         }
       ]
     },
@@ -427,16 +325,6 @@
       "expected": [
         {
           "rule": "style/TASK-001",
-          "line": 1
-        }
-      ]
-    },
-    {
-      "id": "TASK-002",
-      "startLine": 323,
-      "expected": [
-        {
-          "rule": "style/TASK-002",
           "line": 1
         }
       ]

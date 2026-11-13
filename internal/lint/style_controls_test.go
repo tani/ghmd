@@ -13,13 +13,11 @@ func TestRuleNegativeControls(t *testing.T) {
 	mathFence := "```math\nx = 1\n```"
 	mermaid := "Diagram description.\n\n```mermaid\nflowchart TD\n    A-->B\n```"
 	controls := []styleControl{
-		{"BLOCK-001", "# Title\n\n## Section\n\nText"},
-		{"BLOCK-002", "- item\n  continued text"},
+		{"BLOCK-001", "- item\n  continued text"},
 		{"TEXT-001", "**bold** and *emphasis*"},
 		{"TEXT-002", "これは**強調**です。"},
 		{"CODE-001", "```html\nliteral <text>\n```"},
 		{"CODE-002", "`simple inline code`"},
-		{"LINK-001", "Read [the example](https://example.com)."},
 		{"TABLE-001", "| a | b |\n| --- | --- |\n| 1 | 2 |"},
 		{"TABLE-002", "| a | b |\n| --- | --- |\n| plain | text |"},
 		{"TABLE-003", "| A |\n| --- |\n| `a\\|b` |"},
@@ -27,8 +25,6 @@ func TestRuleNegativeControls(t *testing.T) {
 		{"STRIKE-001", "~~obsolete~~ and ~~also obsolete~~"},
 		{"STRIKE-002", "~~removed~~ text"},
 		{"TASK-001", "- [ ] first task\n- [x] second task"},
-		{"TASK-002", "- [x] completed task"},
-		{"AUTO-001", "The [project](https://example.com) reference is explicit."},
 		{"HTML-001", "<strong>safe text</strong>"},
 		{"FOOT-001", "Text[^a]\n\n[^a]: note"},
 		{"FOOT-002", "Text[^a]\n\n[^a]: note"},
@@ -45,13 +41,7 @@ func TestRuleNegativeControls(t *testing.T) {
 		{"MATH-005", "$`x`$"},
 		{"MATH-006", "$`\\text{plain text}`$"},
 		{"MATH-007", "$`\\$x`$"},
-		{"MATH-008", "$x + y$"},
-		{"MATH-009", "$x + y$"},
 		{"MERMAID-001", mermaid},
-		{"MERMAID-002", mermaid},
-		{"MERMAID-003", mermaid},
-		{"MERMAID-004", mermaid},
-		{"MERMAID-005", mermaid},
 	}
 	for _, control := range controls {
 		t.Run(control.id, func(t *testing.T) {

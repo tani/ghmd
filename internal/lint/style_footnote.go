@@ -31,24 +31,15 @@ func footnoteViolations(source string) []styleViolation {
 
 	var definitions []footnoteToken
 	exactDefinitions := make(map[string]footnoteToken)
-	foldedDefinitions := make(map[string]footnoteToken)
 	definitionOpenLine := make([]bool, len(lines))
-	definitionStructureLine := make([]bool, len(lines))
 	for _, token := range tokens {
 		if !token.definition {
 			continue
 		}
 		definitions = append(definitions, token)
 		definitionOpenLine[token.line] = true
-		for line := token.line; line <= token.endLine && line < len(lines); line++ {
-			definitionStructureLine[line] = true
-		}
 		if _, exists := exactDefinitions[token.identifier]; !exists {
 			exactDefinitions[token.identifier] = token
-		}
-		folded := strings.ToLower(token.identifier)
-		if _, exists := foldedDefinitions[folded]; !exists {
-			foldedDefinitions[folded] = token
 		}
 	}
 
@@ -84,29 +75,6 @@ func footnoteViolations(source string) []styleViolation {
 		}
 		if _, exact := exactDefinitions[token.identifier]; exact {
 			continue
-		}
-		if definition, found := foldedDefinitions[strings.ToLower(token.identifier)]; found && definition.identifier != token.identifier && strings.EqualFold(definition.identifier, token.identifier) {
-			add(token, "FOOT-001", fmt.Sprintf("footnote reference [^%s] and definition [^%s] differ in case; use exactly the same spelling", token.identifier, definition.identifier))
-		}
-	}
-
-	// A definition block may only be followed by blank lines, other definitions,
-	// and indented continuation content. This suffix scan avoids confusing a
-	// continuation paragraph with prose that moves a definition away from the end.
-	topLevelProse := make([]bool, len(lines))
-	for i, line := range lines {
-		if fenced[i] || definitionStructureLine[i] || indentOf(line) != 0 || strings.TrimSpace(maskedLines[i]) == "" {
-			continue
-		}
-		topLevelProse[i] = true
-	}
-	proseAfter := make([]bool, len(lines)+1)
-	for i := len(lines) - 1; i >= 0; i-- {
-		proseAfter[i] = proseAfter[i+1] || topLevelProse[i]
-	}
-	for _, definition := range definitions {
-		if definition.endLine+1 < len(lines) && proseAfter[definition.endLine+1] {
-			add(definition, "FOOT-001", fmt.Sprintf("move footnote definition [^%s] and its continuations to the end of the document; non-indented prose follows it", definition.identifier))
 		}
 	}
 
@@ -146,15 +114,13 @@ func footnoteViolations(source string) []styleViolation {
 }
 
 func validFootnoteIdentifier(identifier string) bool {
-	if identifier == "" || identifier[0] < 'a' || identifier[0] > 'z' {
+	if identifier == "" || !asciiLetter(identifier[0]) {
 		return false
 	}
 	for i := 1; i < len(identifier); i++ {
 		c := identifier[i]
-		if c < 'a' || c > 'z' {
-			if (c < '0' || c > '9') && c != '-' {
-				return false
-			}
+		if !asciiLetter(c) && (c < '0' || c > '9') && c != '-' {
+			return false
 		}
 	}
 	return true

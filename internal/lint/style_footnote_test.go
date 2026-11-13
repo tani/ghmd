@@ -30,12 +30,11 @@ func rejectFootnoteRule(t *testing.T, source, id string) {
 	}
 }
 
-func TestFootnoteIdentifiersAndCase(t *testing.T) {
+func TestFootnoteIdentifiers(t *testing.T) {
 	tests := []struct {
 		name   string
 		source string
 	}{
-		{name: "uppercase reference", source: "Text[^A]"},
 		{name: "space in definition", source: "[^bad id]: note"},
 		{name: "colon", source: "Text[^a:b]"},
 		{name: "uppercase and colon", source: "Text[^A:B]"},
@@ -55,16 +54,6 @@ func TestFootnoteIdentifiersAndCase(t *testing.T) {
 		})
 	}
 
-	violations := requireFootnoteRule(t, "Text[^A]\n\n[^a]: note", "FOOT-001")
-	foundCaseWarning := false
-	for _, violation := range violations {
-		if strings.Contains(violation.Detail, "differ in case") && strings.Contains(violation.Detail, "[^A]") && strings.Contains(violation.Detail, "[^a]") {
-			foundCaseWarning = true
-		}
-	}
-	if !foundCaseWarning {
-		t.Fatalf("no actionable exact-case mismatch warning: %#v", violations)
-	}
 }
 
 func TestFootnoteSafeIdentifiersAndSurfaces(t *testing.T) {
@@ -72,9 +61,10 @@ func TestFootnoteSafeIdentifiersAndSurfaces(t *testing.T) {
 	for _, id := range []string{"FOOT-001", "FOOT-002", "FOOT-003"} {
 		rejectFootnoteRule(t, source, id)
 	}
+	rejectFootnoteRule(t, "Text[^A]\n\n[^A]: note", "FOOT-001")
 }
 
-func TestFootnoteDuplicateDefinitionsAndEndPlacement(t *testing.T) {
+func TestFootnoteDuplicateDefinitions(t *testing.T) {
 	violations := requireFootnoteRule(t, "[^a]: one\n[^a]: duplicate", "FOOT-001")
 	foundDuplicate := false
 	for _, violation := range violations {
@@ -84,25 +74,6 @@ func TestFootnoteDuplicateDefinitionsAndEndPlacement(t *testing.T) {
 		t.Fatalf("no duplicate-definition warning: %#v", violations)
 	}
 
-	source := "Text[^a]\n\n[^a]: note\n\nLater non-indented prose."
-	violations = requireFootnoteRule(t, source, "FOOT-001")
-	foundPlacement := false
-	for _, violation := range violations {
-		if violation.Line == 3 && strings.Contains(violation.Detail, "end of the document") {
-			foundPlacement = true
-		}
-	}
-	if !foundPlacement {
-		t.Fatalf("definition placement was not diagnosed at its definition: %#v", violations)
-	}
-	requireFootnoteRule(t, "[^a]: note\n\n## Later appendix", "FOOT-001")
-
-	safe := "[^a]: one\n    continuation\n\n[^b]: two\n    final continuation"
-	for _, violation := range footnoteViolations(safe) {
-		if violation.ID == "FOOT-001" && strings.Contains(violation.Detail, "end of the document") {
-			t.Fatalf("indented continuation or later definition caused a placement warning: %#v", violation)
-		}
-	}
 }
 
 func TestFootnoteStructuralLabelRules(t *testing.T) {

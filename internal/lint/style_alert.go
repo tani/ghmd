@@ -66,12 +66,7 @@ func alertViolations(source string) []styleViolation {
 			continue
 		}
 		if start := strings.Index(line, "<summary>"); start >= 0 {
-			remainder := line[start+len("<summary>"):]
-			if end := strings.Index(remainder, "</summary>"); end >= 0 {
-				remainder = remainder[:end]
-				if strings.ContainsAny(remainder, "*[]_`") {
-					out = append(out, styleViolation{ID: "DETAILS-001", Line: i + 1, Column: start + 1, Detail: "use plain text in <summary>, not Markdown formatting"})
-				}
+			if end := strings.Index(line[start+len("<summary>"):], "</summary>"); end >= 0 {
 				if after := strings.TrimSpace(line[start+len("<summary>")+end+len("</summary>"):]); after != "" {
 					out = append(out, styleViolation{ID: "DETAILS-001", Line: i + 1, Column: start + 1, Detail: "separate summary and body with a blank line"})
 				}

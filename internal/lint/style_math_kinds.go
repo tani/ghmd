@@ -1,9 +1,6 @@
 package lint
 
-import (
-	"sort"
-	"strings"
-)
+import "sort"
 
 type mathPolicyLineRules struct {
 	htmlBefore  []mathPolicyHTMLTag
@@ -65,30 +62,7 @@ func mathPolicyStyleViolations(source string) []styleViolation {
 			rules.add("MATH-007", at, "use ordinary TeX escapes such as \\$; do not compensate with doubled backslashes")
 		}
 	}
-	out = append(out, mathPolicyBlockLimitViolations(lines)...)
 	return append(out, mathPolicyBlockContextViolations(lines, htmlStacks)...)
-}
-
-func mathPolicyHasAnyCommand(body string, names ...string) bool {
-	for _, name := range names {
-		command := `\` + name
-		for from := 0; from < len(body); {
-			at := strings.Index(body[from:], command)
-			if at < 0 {
-				break
-			}
-			at += from
-			from = at + len(command)
-			if mathPolicyBackslashRun(body, at+1)%2 == 0 {
-				continue
-			}
-			if from < len(body) && asciiLetter(body[from]) {
-				continue
-			}
-			return true
-		}
-	}
-	return false
 }
 
 func (r *mathPolicyLineRules) checkSpan(span mathPolicySpan, body string) {
@@ -101,22 +75,6 @@ func (r *mathPolicyLineRules) checkSpan(span mathPolicySpan, body string) {
 	}{
 		{"MATH-003", func() (string, bool) {
 			return "inline math contains a TeX % comment; move comments and multiline expressions to a fenced math block", mathPolicyTeXComment(body) >= 0
-		}},
-		{"MATH-008", func() (string, bool) {
-			switch {
-			case strings.Contains(body, `\displaystyle`):
-				return "verify whether \\displaystyle is semantically needed; do not force it merely to enlarge inline output", true
-			case mathPolicyHasAnyCommand(body, "sum", "prod", "int", "iint", "iiint", "lim", "limsup", "liminf", "sup", "inf", "max", "min", "det", "gcd", "coprod", "bigcup", "bigcap"):
-				return "verify inline large-operator limits and glyph size; smaller operators can be correct TeX behavior", true
-			case strings.Contains(body, `\sqrt`) && strings.Contains(body, `\frac`):
-				return "verify the radical extent around a fraction in the target renderer", true
-			case strings.Contains(body, `\begin{`):
-				return "verify matrix row separators and cell layout in the target renderer", true
-			}
-			return "", false
-		}},
-		{"MATH-009", func() (string, bool) {
-			return "inline math exceeds 80 bytes; split only at valid boundaries or preserve a readable code fallback", len(body) > 80
 		}},
 		{"DETAILS-002", func() (string, bool) {
 			return "move equation widgets outside collapsible sections or test the actual initial expansion", mathPolicyDetailsOpen(r.htmlBefore)

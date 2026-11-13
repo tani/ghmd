@@ -64,35 +64,27 @@ The command allowlist is generated from the KaTeX v0.19.1 support table and the 
 
 ## Authoring rules
 
-Authoring checks produce `style/<ID>` findings. IDs are stable. The following 36 automatic rules emit a direct `style/` finding:
+Authoring checks produce `style/<ID>` findings. IDs are stable. The following 27 automatic rules emit a direct `style/` finding:
 
 | Rule | Checks |
 | --- | --- |
 | `ALERT-001` | Alert type is one of `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, or `CAUTION`; markers are not nested. |
-| `BLOCK-001` | One title, ATX heading hierarchy, and conservative blank-line separation. |
-| `BLOCK-002` | List continuation blocks are indented relative to the item content column. |
-| `CODE-001` | Multiline code and literal Markdown examples are fenced with a safe fence length and language identifier. |
+| `BLOCK-001` | List continuation blocks are indented relative to the item content column. |
+| `CODE-001` | Multiline code and literal Markdown examples use a fence longer than any embedded fence. |
 | `CODE-002` | Inline-code delimiters do not collide with embedded backticks; exact line breaks use fenced code. |
-| `DETAILS-001` | Plain-text summaries, required blank lines, and closed `<details>` sections. |
+| `DETAILS-001` | Required blank lines between `<summary>` and the Markdown body; closed `<details>` sections. |
 | `DETAILS-002` | Math and diagram widgets are not placed inside collapsible sections without explicit verification. |
 | `EXT-001` | Unsupported extensions such as highlight syntax, wiki links, colon directives, and PlantUML. |
-| `FOOT-001` | Footnote identifiers are unique, lowercase, and consistently referenced; definitions are at the end. |
+| `FOOT-001` | Footnote identifiers use ASCII letters, digits, and hyphens; definitions are unique. |
 | `FOOT-002` | Footnote references are outside link/image labels, and labels stay on one line. |
 | `FOOT-003` | Math is kept out of footnotes. |
-| `LINK-001` | Important references use explicit descriptive links rather than bare-URL detection. |
 | `MATH-001` | Alternate TeX delimiters require explicit parser support; GitHub's dollar-backtick syntax is not generic. |
 | `MATH-003` | Inline math stays on one line and avoids TeX `%` comments. |
 | `MATH-004` | Separate inline expressions are separated by prose or whitespace; adjacent dollars are rejected. |
 | `MATH-005` | Complex math is moved outside links, footnotes, tables, emphasis, alerts, and HTML containers. Also checks block math in HTML containers. |
 | `MATH-006` | Nested dollar math inside `\text{...}` is avoided, including in fenced math. |
 | `MATH-007` | Normal TeX escapes are retained and not doubled to compensate for parser behavior. |
-| `MATH-008` | Layout-sensitive TeX is reviewed: `\displaystyle`, large operators, roots around fractions, and matrices. |
-| `MATH-009` | Unusually large inline or display expressions are split at valid TeX boundaries. |
 | `MERMAID-001` | A lowercase `mermaid` fence starts with a valid diagram type. |
-| `MERMAID-002` | Established diagram types are preferred; newer types are gated on capability tests. |
-| `MERMAID-003` | Identifiers, labels, reserved words, Unicode quoting, and edge syntax are safe. |
-| `MERMAID-004` | HTML labels, callbacks, click directives, external assets, and per-diagram configuration are not required for meaning. |
-| `MERMAID-005` | Comments and configuration directives are kept explicit and portable. |
 | `STRIKE-001` | Strikeout uses exactly two tildes on each side. |
 | `STRIKE-002` | Strikeout stays on one line without overlapping emphasis. |
 | `TABLE-001` | Tables have consistent cell counts, one header row, and a valid delimiter row. |
@@ -100,25 +92,23 @@ Authoring checks produce `style/<ID>` findings. IDs are stable. The following 36
 | `TABLE-003` | Literal pipes in tables are escaped as `\|`. |
 | `TABLE-004` | Math is moved out of tables and avoids literal relation pipes. |
 | `TASK-001` | Task markers use `[ ]` or `[x]` after a list item and a space. |
-| `TASK-002` | Extra literal checkbox markers are not placed on the first task line. |
 | `TEXT-001` | Bold and emphasis delimiters are not nested, overlapping, or padded with whitespace. |
 | `TEXT-002` | Emphasis adjacent to CJK text and punctuation is reviewed. |
 | `WIDGET-001` | ASCII STL data is structurally valid; large models are linked. |
 
 ### Automatic rules covered by lower-level checks
 
-Three automatic authoring rules intentionally do not emit `style/<ID>` themselves:
+Two automatic authoring rules intentionally do not emit `style/<ID>` themselves:
 
 | Authoring rule | Emitted rule |
 | --- | --- |
-| `AUTO-001` | `style/LINK-001` |
 | `HTML-001` | `raw-html/removed-container`, `raw-html/unsafe-attribute`, `raw-html/unsafe-url` |
 | `MATH-002` | `standard/lost-math` |
 
 ## Coverage summary
 
 - 25 source and differential finding rules.
-- 36 direct automatic `style/` rules.
-- 3 automatic authoring rules reported through lower-level rules.
+- 27 direct automatic `style/` rules.
+- 2 automatic authoring rules reported through lower-level rules.
 
 The fixture suite in `test/fixtures/lint/` exercises automatic detection and negative controls. The command is not a proof that a target renderer produced correct visual output.

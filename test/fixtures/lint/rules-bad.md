@@ -7,17 +7,7 @@ This document violates every automatic authoring rule in RULES.md.
 > [!DANGER]
 > message
 
-## AUTO-001
-
-www.example.com and me@example.com
-
 ## BLOCK-001
-
-# Deliberately repeated title
-
-# Second document title
-
-## BLOCK-002
 
 - item x
 continuation at zero
@@ -36,8 +26,7 @@ continuation at zero
 
 ## DETAILS-001
 
-<details><summary>*em*</summary>
-
+<details><summary>More</summary>
 text
 
 ## DETAILS-002
@@ -80,12 +69,6 @@ Text[^a]
 
 <a href="javascript:alert(1)">x</a>
 
-## LINK-001
-
-[ www.example.com and mail me@example.com
-
-
-
 ## MATH-001
 
 \(x\) and \[y\]
@@ -118,47 +101,9 @@ $\text{$x$}$
 
 $\\$x$
 
-## MATH-008
-
-$\displaystyle\sum_i x_i$
-
-## MATH-009
-
-$a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a$
-
 ## MERMAID-001
 
 ```Mermaid
-flowchart TD
-A-->B
-```
-
-## MERMAID-002
-
-```mermaid
-sankey-beta
-A,B,1
-```
-
-## MERMAID-003
-
-```mermaid
-flowchart TD
-end-->A
-```
-
-## MERMAID-004
-
-```mermaid
-flowchart TD
-A["<b>x</b>"]
-click A callback
-```
-
-## MERMAID-005
-
-```mermaid
-%%{init: {}}%%
 flowchart TD
 A-->B
 ```
@@ -199,10 +144,6 @@ a~~***nested***~~a
 ## TASK-001
 
 -[ ] missing space
-
-## TASK-002
-
-- [x] [ ] extra marker
 
 ## TEXT-001
 

@@ -57,7 +57,7 @@ The command exits 1 when findings exist. See [RULES.md](RULES.md) for the comple
 go test ./...
 ```
 
-The suite includes 617 GitHub Markdown API fixtures, native-pipeline regression cases, and 39 automatic authoring rules (60 expected findings).
+The suite includes 617 GitHub Markdown API fixtures, native-pipeline regression cases, and 29 automatic authoring rules (47 expected findings).
 
 ## Packages
 

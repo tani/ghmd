@@ -50,11 +50,10 @@ func codeStyleViolations(lines []string, spans []coreInlineSpan) []styleViolatio
 }
 
 type coreFence struct {
-	char       byte
-	length     int
-	indent     int
-	info       string
-	infoOffset int
+	char   byte
+	length int
+	indent int
+	info   string
 }
 
 func coreParseFence(line string) (coreFence, bool) {
@@ -77,11 +76,7 @@ func coreParseFence(line string) (coreFence, bool) {
 	if char == '`' && strings.ContainsRune(info, '`') {
 		return coreFence{}, false
 	}
-	infoOffset := end
-	for infoOffset < len(line) && (line[infoOffset] == ' ' || line[infoOffset] == '\t') {
-		infoOffset++
-	}
-	return coreFence{char: char, length: end - at, indent: at, info: info, infoOffset: infoOffset}, true
+	return coreFence{char: char, length: end - at, indent: at, info: info}, true
 }
 
 func coreClosesFence(line string, opener coreFence) bool {
@@ -105,9 +100,6 @@ func fenceStyleViolations(lines []string) []styleViolation {
 			// the nested example's delimiters.
 			if isFence && candidate.char == opener.char && candidate.length >= opener.length && candidate.info != "" {
 				detail := "use an outer fence longer than the embedded " + line[candidate.indent:candidate.indent+candidate.length] + " fence"
-				if fields := strings.Fields(candidate.info); len(fields) > 0 && strings.ToLower(fields[0]) != fields[0] {
-					detail += " and use lowercase language identifier " + strings.ToLower(fields[0])
-				}
 				violations = append(violations, styleViolation{
 					ID: "CODE-001", Line: i + 1, Column: coreColumn(line, candidate.indent),
 					Detail: detail,
@@ -120,18 +112,6 @@ func fenceStyleViolations(lines []string) []styleViolation {
 		}
 		opener = candidate
 		open = true
-		fields := strings.Fields(candidate.info)
-		if len(fields) == 0 {
-			continue
-		}
-		language := fields[0]
-		lower := strings.ToLower(language)
-		if lower != language {
-			violations = append(violations, styleViolation{
-				ID: "CODE-001", Line: i + 1, Column: coreColumn(line, candidate.infoOffset),
-				Detail: "use lowercase language identifier " + lower + " instead of " + language,
-			})
-		}
 	}
 	return violations
 }

@@ -21,18 +21,6 @@ func TestCoreStyleRules(t *testing.T) {
 		{
 			id: "BLOCK-001",
 			bad: []coreStyleCase{
-				{source: "# Document\n\ncontent\n\n# Deliberately repeated title", line: 5, column: 1},
-				{source: "# Deliberately repeated title\n\n# Second document title", line: 3, column: 1},
-			},
-			safe: []string{
-				"# Document\n\n## Section\n\ncontent",
-				"# One\n\n## Section",
-				"## Section\n\n### Subsection",
-			},
-		},
-		{
-			id: "BLOCK-002",
-			bad: []coreStyleCase{
 				{source: "- item\ncontinuation at zero", line: 2, column: 1},
 				{source: " - item\n  continuation", line: 2, column: 3},
 				{source: "- one\n two", line: 2, column: 2},
@@ -70,7 +58,6 @@ func TestCoreStyleRules(t *testing.T) {
 		{
 			id: "CODE-001",
 			bad: []coreStyleCase{
-				{source: "```HTML\n<p>x</p>\n```", line: 1, column: 4},
 				{source: "```markdown\n```html\nliteral\n```", line: 2, column: 1},
 				{source: "````markdown\n`````HTML\n<script>alert(1)</script>\n```\n````", line: 2, column: 1},
 			},
@@ -94,39 +81,16 @@ func TestCoreStyleRules(t *testing.T) {
 			},
 		},
 		{
-			id: "LINK-001",
-			bad: []coreStyleCase{
-				{source: "www.example.com and me@example.com", line: 1, column: 1},
-				{source: "mail me@example.com", line: 1, column: 6},
-				{source: "https://example.com/docs", line: 1, column: 1},
-			},
-			safe: []string{
-				"[documentation](https://example.com/docs)",
-				"<https://example.com> and <me@example.com>",
-				"`www.example.com` and `me@example.com`",
-			},
-		},
-		{
 			id: "TASK-001",
 			bad: []coreStyleCase{
 				{source: "-[ ] missing space", line: 1, column: 1},
 				{source: "- [x]no space", line: 1, column: 3},
-				{source: "- [X] uppercase is a marker error", line: 1, column: 3},
 				{source: "-[x] text", line: 1, column: 1},
 			},
 			safe: []string{
-				"- [ ] todo\n- [x] done",
+				"- [ ] todo\n- [x] done\n- [X] uppercase is accepted by GitHub",
 				"-[todo] is not a checkbox",
 				"`-[ ] literal task syntax`",
-			},
-		},
-		{
-			id:  "TASK-002",
-			bad: []coreStyleCase{{source: "- [x] [ ] extra marker", line: 1, column: 7}},
-			safe: []string{
-				"- [x] done",
-				"- [ ] `[x]`",
-				"- plain [x] text is not a task item",
 			},
 		},
 	}

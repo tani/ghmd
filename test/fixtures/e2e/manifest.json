@@ -70,10 +70,7 @@
         {
           "id": "style-autolink-brackets",
           "origin": "styleguide",
-          "rules": [
-            "LINK-001",
-            "AUTO-001"
-          ]
+          "rules": []
         }
       ]
     },
@@ -86,9 +83,7 @@
         {
           "id": "style-links-relative-unicode",
           "origin": "styleguide",
-          "rules": [
-            "LINK-001"
-          ]
+          "rules": []
         }
       ]
     },
@@ -102,8 +97,7 @@
           "id": "style-tasks-markers-nesting",
           "origin": "styleguide",
           "rules": [
-            "TASK-001",
-            "TASK-002"
+            "TASK-001"
           ]
         }
       ]
@@ -239,10 +233,7 @@
         {
           "id": "style-mermaid-source",
           "origin": "styleguide",
-          "rules": [
-            "MERMAID-002",
-            "MERMAID-003"
-          ]
+          "rules": []
         }
       ]
     },

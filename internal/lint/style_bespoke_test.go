@@ -33,7 +33,7 @@ func TestNestedAlertPolicy(t *testing.T) {
 }
 
 func TestDetailsSummaryCorollary(t *testing.T) {
-	violations := alertViolations("<details><summary>*em*</summary>\n\ntext\n")
+	violations := alertViolations("<details><summary>More</summary>\ntext\n")
 	requireStyleViolation(t, violations, "DETAILS-001")
 }
 
@@ -46,7 +46,6 @@ func TestMathPolicyPreservesCurrencyAndEscapes(t *testing.T) {
 	}
 	requireStyleViolation(t, mathPolicyStyleViolations(`$\text{$x$}$`), "MATH-006")
 	requireStyleViolation(t, mathPolicyStyleViolations(`$\\$x$`), "MATH-007")
-	requireStyleViolation(t, mathPolicyStyleViolations(`$\displaystyle\sum x$`), "MATH-008")
 }
 
 func TestWidgetAndSocialPolicies(t *testing.T) {

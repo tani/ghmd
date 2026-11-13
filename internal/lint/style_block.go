@@ -1,13 +1,10 @@
 package lint
 
 import (
-	"regexp"
 	"sort"
 	"strings"
 	"unicode/utf8"
 )
-
-var coreCheckboxPattern = regexp.MustCompile(`\[( |x|X)\]`)
 
 // coreStyleViolations is the entry point for the source-observable rules owned
 // by the core style checker. The other style engines append their own rules in
@@ -23,7 +20,6 @@ func coreStyleViolations(source string) []styleViolation {
 	violations = append(violations, blockStyleViolations(lines, proseMasked, insideFence)...)
 	violations = append(violations, textStyleViolations(lines, proseMasked, insideFence)...)
 	violations = append(violations, codeStyleViolations(lines, codeSpans)...)
-	violations = append(violations, linkStyleViolations(lines, proseMasked, insideFence)...)
 	violations = append(violations, taskStyleViolations(lines, proseMasked, insideFence)...)
 	sort.SliceStable(violations, func(i, j int) bool {
 		a, b := violations[i], violations[j]
@@ -39,9 +35,8 @@ func coreStyleViolations(source string) []styleViolation {
 }
 
 type coreHeading struct {
-	level      int
-	marker     int
-	normalized string
+	level  int
+	marker int
 }
 
 func coreATXHeading(line string) (coreHeading, bool) {
@@ -63,56 +58,11 @@ func coreATXHeading(line string) (coreHeading, bool) {
 	for at < len(line) && (line[at] == ' ' || line[at] == '\t') {
 		at++
 	}
-	text := strings.TrimRight(line[at:], " \t")
-	// A closing ATX run is syntax only when whitespace separates it from the
-	// heading's content.
-	if end := len(text); end > 0 {
-		hashStart := end
-		for hashStart > 0 && text[hashStart-1] == '#' {
-			hashStart--
-		}
-		if hashStart < end && (hashStart == 0 || text[hashStart-1] == ' ' || text[hashStart-1] == '\t') {
-			text = strings.TrimRight(text[:hashStart], " \t")
-		}
-	}
-	return coreHeading{level: level, marker: marker, normalized: coreNormalizeHeading(text)}, true
-}
-
-func coreNormalizeHeading(text string) string {
-	// Formatting punctuation does not contribute to the human-readable title
-	// used by this policy. Keep Unicode letters, digits, and literal text.
-	text = strings.TrimSpace(text)
-	var b strings.Builder
-	for _, r := range text {
-		switch r {
-		case '`', '*', '_', '~':
-			continue
-		default:
-			b.WriteRune(r)
-		}
-	}
-	return strings.ToLower(strings.Join(strings.Fields(b.String()), " "))
+	return coreHeading{level: level, marker: marker}, true
 }
 
 func blockStyleViolations(lines, masked []string, insideFence []bool) []styleViolation {
 	var violations []styleViolation
-	seenDocumentTitle := false
-	for i, line := range lines {
-		if insideFence[i] {
-			continue
-		}
-		heading, isHeading := coreATXHeading(line)
-		if isHeading && heading.level == 1 {
-			if seenDocumentTitle {
-				violations = append(violations, styleViolation{
-					ID: "BLOCK-001", Line: i + 1, Column: coreColumn(line, heading.marker),
-					Detail: "use one document-level # title; make this heading ## or remove it",
-				})
-			}
-			seenDocumentTitle = true
-		}
-	}
-
 	violations = append(violations, listContinuationViolations(lines, masked, insideFence)...)
 	return violations
 }
@@ -196,7 +146,7 @@ func listContinuationViolations(lines, masked []string, insideFence []bool) []st
 			at++
 		}
 		violations = append(violations, styleViolation{
-			ID: "BLOCK-002", Line: i + 1, Column: coreColumn(line, at),
+			ID: "BLOCK-001", Line: i + 1, Column: coreColumn(line, at),
 			Detail: "indent this list continuation to the item content column; do not use an ambiguous lazy continuation",
 		})
 		reported = true
@@ -232,9 +182,6 @@ func taskStyleViolations(lines, masked []string, insideFence []bool) []styleViol
 		if bracket+3 < len(analysis) && analysis[bracket+3] != ' ' && analysis[bracket+3] != '\t' {
 			problems = append(problems, "add a space after the [x] or [ ] status marker")
 		}
-		if analysis[bracket+1] == 'X' {
-			problems = append(problems, "use lowercase [x] instead of uppercase [X]")
-		}
 		if len(problems) > 0 {
 			columnAt := bracket
 			if !hasBulletSpace {
@@ -243,14 +190,6 @@ func taskStyleViolations(lines, masked []string, insideFence []bool) []styleViol
 			violations = append(violations, styleViolation{
 				ID: "TASK-001", Line: i + 1, Column: coreColumn(line, columnAt),
 				Detail: strings.Join(problems, "; "),
-			})
-		}
-		rest := analysis[bracket+3:]
-		if extra := coreCheckboxPattern.FindStringIndex(rest); extra != nil {
-			at := bracket + 3 + extra[0]
-			violations = append(violations, styleViolation{
-				ID: "TASK-002", Line: i + 1, Column: coreColumn(line, at),
-				Detail: "remove the additional literal checkbox " + line[at:at+3] + " from the task's first line or put the example in code",
 			})
 		}
 	}
