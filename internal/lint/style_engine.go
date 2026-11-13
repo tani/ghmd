@@ -2,7 +2,6 @@ package lint
 
 import (
 	"strings"
-	"unicode"
 	"unicode/utf8"
 )
 
@@ -34,7 +33,6 @@ var styleChecks = []struct {
 	{"alerts", alertViolations},
 	{"math-policy", mathPolicyStyleViolations},
 	{"widgets", widgetViolations},
-	{"profile", profileViolation},
 }
 
 // StyleRules evaluates authoring rules with a stable, extensible rule registry.
@@ -48,31 +46,6 @@ func StyleRules(source string) []Finding {
 		findings = append(findings, violation.finding())
 	}
 	return findings
-}
-
-func profileViolation(source string) []styleViolation {
-	lower := strings.ToLower(source)
-	if strings.Contains(lower, "portable-gfm") || strings.Contains(lower, "github-rich") || strings.Contains(lower, "custom-verified") {
-		return nil
-	}
-	rich := false
-	for _, marker := range []string{"$", "[^", "> [!", "mermaid", "\\["} {
-		if strings.Contains(source, marker) {
-			rich = true
-			break
-		}
-	}
-	if !rich {
-		return nil
-	}
-	for i, line := range sourceLines(source) {
-		if strings.TrimSpace(line) == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		return []styleViolation{{ID: "COMPAT-001", Line: i + 1, Column: 1,
-			Detail: "rich GitHub features are used without a declared compatibility profile (portable-gfm, github-rich, or custom-verified)"}}
-	}
-	return nil
 }
 
 func sourceLines(source string) []string {
@@ -175,9 +148,4 @@ func maskLineCode(line string) string {
 		}
 	}
 	return string(data)
-}
-
-func isCJK(cp rune) bool {
-	return unicode.Is(unicode.Han, cp) || unicode.Is(unicode.Hiragana, cp) ||
-		unicode.Is(unicode.Katakana, cp) || unicode.Is(unicode.Hangul, cp)
 }

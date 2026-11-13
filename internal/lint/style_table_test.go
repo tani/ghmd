@@ -6,7 +6,7 @@ import (
 )
 
 var tableStrikeRuleIDs = []string{
-	"TABLE-001", "TABLE-002", "TABLE-003", "TABLE-004", "TABLE-005",
+	"TABLE-001", "TABLE-002", "TABLE-003", "TABLE-004",
 	"STRIKE-001", "STRIKE-002",
 }
 
@@ -74,27 +74,19 @@ func TestTableComplexCells(t *testing.T) {
 	tableStrikeTestCounts(t, "| A |\n| --- |\n| a - b |\n| `code` |\n| ```inline code``` |\n| $x$ |\n", map[string]int{})
 }
 
-func TestTableCosmeticPadding(t *testing.T) {
-	tableStrikeTestCounts(t, "|   a   |  b |\n| --- | --- |\n|   1   |  2 |\n", map[string]int{
-		"TABLE-004": 2,
-	})
-	tableStrikeTestCounts(t, "| 日本語 | 😀 |\n| --- | --- |\n| 値 | 絵文字 |\n", map[string]int{})
-	tableStrikeTestCounts(t, "| A | B |\n| --- | --- |\n|    | 内容 |\n", map[string]int{})
-}
-
 func TestTableMathLiteralPipe(t *testing.T) {
 	tableStrikeTestCounts(t, "| A |\n| --- |\n| $a | b$ |\n| $a \\vert b$ |\n| $a \\mid b$ |\n| $a \\| b$ |\n", map[string]int{
-		"TABLE-005": 1,
+		"TABLE-004": 1,
 	})
 	tableStrikeTestCounts(t, "| A |\n| --- |\n| $$a|b$$ |\n| `$a|b$` |\n", map[string]int{
 		"TABLE-002": 1,
 		"TABLE-003": 1,
-		"TABLE-005": 0,
+		"TABLE-004": 0,
 	})
 	tableStrikeTestCounts(t, "$a | b$\n\n$$a | b$$\n", map[string]int{})
 	tableStrikeTestCounts(t, "| A |\n| -- |\n| $a|b$ |\n", map[string]int{
 		"TABLE-001": 1,
-		"TABLE-005": 0,
+		"TABLE-004": 0,
 	})
 }
 

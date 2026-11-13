@@ -107,7 +107,7 @@ func mathPolicyBlockContextViolations(lines []string, htmlStacks [][]mathPolicyH
 func appendMathFencedBodyViolations(out []styleViolation, body []string, firstLine int) []styleViolation {
 	for offset, line := range body {
 		for _, at := range mathPolicyNestedTextDollars(line) {
-			out = append(out, styleViolation{ID: "MATH-008", Line: firstLine + offset + 1,
+			out = append(out, styleViolation{ID: "MATH-006", Line: firstLine + offset + 1,
 				Column: styleColumn(line, line[:at]),
 				Detail: "avoid nested dollar math inside \\text{...}; use supported TeX constructs without changing meaning"})
 		}
@@ -120,7 +120,7 @@ func appendMathBlockContext(out []styleViolation, line int, opening string, stac
 		return out
 	}
 	column := indentOf(opening) + 1
-	out = append(out, styleViolation{ID: "MATH-007", Line: line + 1, Column: column,
+	out = append(out, styleViolation{ID: "MATH-005", Line: line + 1, Column: column,
 		Detail: "move block math outside HTML containers, or verify the exact nested target structure"})
 	if mathPolicyDetailsOpen(stack) {
 		out = append(out, styleViolation{ID: "DETAILS-002", Line: line + 1, Column: column,
@@ -138,7 +138,7 @@ func appendMathBlockLimit(out []styleViolation, body []string, line int, opening
 	if mathBlockBytes(body) <= maxMathBlockBytes {
 		return out
 	}
-	return append(out, styleViolation{ID: "MATH-011", Line: line + 1,
+	return append(out, styleViolation{ID: "MATH-009", Line: line + 1,
 		Column: indentOf(opening) + 1,
 		Detail: fmt.Sprintf("display math exceeds %d bytes; split it at valid TeX boundaries or attach readable source", maxMathBlockBytes)})
 }

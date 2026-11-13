@@ -69,12 +69,9 @@ func TestFootnoteIdentifiersAndCase(t *testing.T) {
 
 func TestFootnoteSafeIdentifiersAndSurfaces(t *testing.T) {
 	source := "Prefix 日本 Text[^a][^a-2]\n\n[^a]: note\n    continued prose\n[^a-2]: another note"
-	for _, id := range []string{"FOOT-001", "FOOT-002", "FOOT-003", "FOOT-004"} {
+	for _, id := range []string{"FOOT-001", "FOOT-002", "FOOT-003"} {
 		rejectFootnoteRule(t, source, id)
 	}
-	rejectFootnoteRule(t, "Text[^a]\n\n[^a]: note", "FOOT-004")
-	rejectFootnoteRule(t, "A wiki can be discussed without using footnote syntax.", "FOOT-004")
-	rejectFootnoteRule(t, "wiki documentation\n\n```md\n[^bad id]: note\n```", "FOOT-004")
 }
 
 func TestFootnoteDuplicateDefinitionsAndEndPlacement(t *testing.T) {
@@ -165,22 +162,6 @@ func TestFootnoteCodeRegionsAreIgnored(t *testing.T) {
 	}
 }
 
-func TestFootnoteWikiSurface(t *testing.T) {
-	for _, source := range []string{
-		"Footnote assumed to work in a wiki.",
-		"wiki: footnote",
-		"wiki: documentation\n\nText[^a]\n\n[^a]: note",
-		"This wiki uses references.\n\nText[^a]",
-	} {
-		violations := requireFootnoteRule(t, source, "FOOT-004")
-		if !strings.Contains(violations[0].Detail, "numbered references section") {
-			t.Fatalf("wiki finding lacks an actionable fallback: %#v", violations[0])
-		}
-	}
-	rejectFootnoteRule(t, "Text[^a]\n\n[^a]: note", "FOOT-004")
-	rejectFootnoteRule(t, "The word wiki in literal code is ignored: `wiki: footnote`", "FOOT-004")
-}
-
 func TestAlertMarkers(t *testing.T) {
 	for _, source := range []string{
 		"> [!DANGER]\n> message",
@@ -209,28 +190,5 @@ func TestAlertMarkers(t *testing.T) {
 func TestSafeStandaloneAlerts(t *testing.T) {
 	source := "> [!NOTE]\n> Message.\n\n> [!TIP]\n> Message.\n\n> [!IMPORTANT]\n> Message.\n\n> [!WARNING]\n> Message.\n\n> [!CAUTION]\n> Message."
 	rejectFootnoteRule(t, source, "ALERT-001")
-	rejectFootnoteRule(t, source, "ALERT-002")
 	rejectFootnoteRule(t, "Ordinary prose with [!NOTE] but no alert claim.", "ALERT-001")
-}
-
-func TestPortableAlertFallback(t *testing.T) {
-	for _, source := range []string{
-		"profile: portable-gfm\n\n> [!NOTE]\n> message",
-		"portable profile assumes the alert works here",
-		"portable [!NOTE]",
-		"> [!WARNING] portable",
-	} {
-		violations := requireFootnoteRule(t, source, "ALERT-002")
-		if !strings.Contains(violations[0].Detail, "bold textual label") || !strings.Contains(violations[0].Detail, "**Warning:**") && !strings.Contains(violations[0].Detail, "**Note:**") {
-			t.Fatalf("portable alert lacks a bold-label fallback: %#v", violations[0])
-		}
-	}
-	for _, safe := range []string{
-		"> [!NOTE]\n> ordinary alert on a rich surface",
-		"profile: portable-gfm\n\nNo alert is used.",
-		"profile: portable-gfm\n\n```md\n> [!NOTE]\n```",
-		"portable prose with a literal `[!NOTE]` code span",
-	} {
-		rejectFootnoteRule(t, safe, "ALERT-002")
-	}
 }

@@ -24,7 +24,6 @@ func coreStyleViolations(source string) []styleViolation {
 	violations = append(violations, textStyleViolations(lines, proseMasked, insideFence)...)
 	violations = append(violations, codeStyleViolations(lines, codeSpans)...)
 	violations = append(violations, linkStyleViolations(lines, proseMasked, insideFence)...)
-	violations = append(violations, mediaStyleViolations(lines, proseMasked, insideFence)...)
 	violations = append(violations, taskStyleViolations(lines, proseMasked, insideFence)...)
 	sort.SliceStable(violations, func(i, j int) bool {
 		a, b := violations[i], violations[j]
@@ -250,7 +249,7 @@ func taskStyleViolations(lines, masked []string, insideFence []bool) []styleViol
 		if extra := coreCheckboxPattern.FindStringIndex(rest); extra != nil {
 			at := bracket + 3 + extra[0]
 			violations = append(violations, styleViolation{
-				ID: "TASK-003", Line: i + 1, Column: coreColumn(line, at),
+				ID: "TASK-002", Line: i + 1, Column: coreColumn(line, at),
 				Detail: "remove the additional literal checkbox " + line[at:at+3] + " from the task's first line or put the example in code",
 			})
 		}

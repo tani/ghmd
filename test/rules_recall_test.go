@@ -21,12 +21,12 @@ type styleGuideExpected struct {
 	} `json:"rules"`
 }
 
-// TestStyleGuideBadMarkdownPerBlockRecall isolates each rule section so
+// TestRulesBadMarkdownPerBlockRecall isolates each rule section so
 // repeated expressions, cross-block formatting multisets, and unrelated
 // definitions cannot hide or invent findings.
-func TestStyleGuideBadMarkdownRecall(t *testing.T) {
+func TestRulesBadMarkdownRecall(t *testing.T) {
 	directory := filepath.Join("fixtures", "lint")
-	data, err := os.ReadFile(filepath.Join(directory, "styleguide-bad.expected.json"))
+	data, err := os.ReadFile(filepath.Join(directory, "rules-bad.expected.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,20 +115,13 @@ func TestStyleGuideBadMarkdownRecall(t *testing.T) {
 	}
 
 	recall := float64(matched) / float64(wantTotal)
-	manual := 0
-	for _, rule := range expected.Rules {
-		if _, ok := lint.ManualRule(rule.ID); ok {
-			manual++
-		}
+	if inScope != len(expected.Rules) {
+		t.Fatalf("coverage model mismatch: %d automatic rules, want %d", inScope, len(expected.Rules))
 	}
-	if manual+inScope != len(expected.Rules) {
-		t.Fatalf("coverage model mismatch: %d automatic + %d manual = %d, want %d", inScope, manual, manual+inScope, len(expected.Rules))
-	}
-	t.Logf("per-block: %d rules, %d automatic, %d detected, undetected automatic %v", len(expected.Rules), inScope, detected, undetected)
+	t.Logf("per-block: %d rules, %d detected, undetected %v", len(expected.Rules), detected, undetected)
 	t.Logf("per-block finding recall %.3f (%d/%d); additional related findings in this deliberately bad document: %d",
 		recall, matched, wantTotal, len(extras))
-	t.Logf("automatic-rule coverage %.3f (%d/%d), manual review rules %d (BLOCK-003, TASK-002, COMPAT-002/003 and renderer requirements)",
-		float64(detected)/float64(inScope), detected, inScope, manual)
+	t.Logf("rule coverage %.3f (%d/%d)", float64(detected)/float64(inScope), detected, inScope)
 
 	if matched != wantTotal {
 		t.Fatalf("per-block recall gaps: %v", misses)

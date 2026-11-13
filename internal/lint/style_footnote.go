@@ -2,14 +2,8 @@ package lint
 
 import (
 	"fmt"
-	"regexp"
 	"sort"
 	"strings"
-)
-
-var (
-	footnoteWikiPattern         = regexp.MustCompile(`(?i)\bwiki(?:s)?\b`)
-	footnoteWikiMetadataPattern = regexp.MustCompile(`(?i)\bwiki\s*:\s*footnotes?\b`)
 )
 
 type footnoteToken struct {
@@ -148,37 +142,6 @@ func footnoteViolations(source string) []styleViolation {
 		}
 	}
 
-	wikiLine, declarationLine := -1, -1
-	for i, line := range maskedLines {
-		if !footnoteWikiPattern.MatchString(line) {
-			continue
-		}
-		if wikiLine < 0 {
-			wikiLine = i
-		}
-		lower := strings.ToLower(line)
-		if declarationLine < 0 && (footnoteWikiMetadataPattern.MatchString(line) ||
-			strings.Contains(lower, "footnote") && strings.Contains(lower, "assumed to work in a wiki")) {
-			declarationLine = i
-		}
-	}
-	if wikiLine >= 0 {
-		switch {
-		case len(definitions) > 0:
-			definition := definitions[0]
-			add(definition, "FOOT-004", fmt.Sprintf("footnotes such as [^%s] are not supported in GitHub wikis; use an ordinary numbered references section", definition.identifier))
-		case declarationLine >= 0:
-			out = append(out, styleViolation{ID: "FOOT-004", Line: declarationLine + 1, Column: 1,
-				Detail: "footnotes are not supported in GitHub wikis; use an ordinary numbered references section"})
-		default:
-			for _, token := range tokens {
-				if !token.definition {
-					add(token, "FOOT-004", fmt.Sprintf("footnote reference [^%s] is not supported in GitHub wikis; use an ordinary numbered references section", token.identifier))
-					break
-				}
-			}
-		}
-	}
 	return out
 }
 

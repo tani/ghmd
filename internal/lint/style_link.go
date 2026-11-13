@@ -13,31 +13,10 @@ var (
 
 func linkStyleViolations(lines, masked []string, insideFence []bool) []styleViolation {
 	var violations []styleViolation
-	headings := make(map[string]struct{})
 	for i, line := range lines {
 		if insideFence[i] {
 			continue
 		}
-		if heading, ok := coreATXHeading(line); ok && heading.level > 0 && heading.normalized != "" {
-			if _, duplicate := headings[heading.normalized]; duplicate {
-				violations = append(violations, styleViolation{
-					ID: "LINK-003", Line: i + 1, Column: coreColumn(line, heading.marker),
-					Detail: "duplicate heading " + heading.normalized + "; give each section a unique title for stable anchors",
-				})
-			} else {
-				headings[heading.normalized] = struct{}{}
-			}
-		}
-
-		for _, destination := range coreMarkdownDestinations(masked[i]) {
-			if strings.HasPrefix(destination.text, "../") {
-				violations = append(violations, styleViolation{
-					ID: "LINK-002", Line: i + 1, Column: coreColumn(line, destination.start),
-					Detail: "verify relative path " + destination.text + " against the destination document, or use an explicit absolute URL",
-				})
-			}
-		}
-
 		bareAnalysis := coreMaskExplicitLinks(masked[i])
 		urlMatches := coreBareURLPattern.FindAllStringIndex(bareAnalysis, -1)
 		for _, match := range urlMatches {
@@ -84,63 +63,6 @@ func coreBareTokenBoundary(line string, start int) bool {
 
 func coreTrimBareToken(token string) string {
 	return strings.TrimRight(token, ".,;:!?。．，、！？；：")
-}
-
-type coreDestination struct {
-	start int
-	text  string
-}
-
-func coreMarkdownDestinations(line string) []coreDestination {
-	var destinations []coreDestination
-	for at := 0; at+1 < len(line); at++ {
-		if line[at] != ']' || line[at+1] != '(' || coreEscaped(line, at) {
-			continue
-		}
-		start := at + 2
-		for start < len(line) && (line[start] == ' ' || line[start] == '\t') {
-			start++
-		}
-		if start < len(line) && line[start] == '<' {
-			start++
-		}
-		end := start
-		for end < len(line) && line[end] != ')' && line[end] != '>' && line[end] != ' ' && line[end] != '\t' {
-			if line[end] == '\\' && end+1 < len(line) {
-				end += 2
-				continue
-			}
-			end++
-		}
-		if end > start {
-			destinations = append(destinations, coreDestination{start: start, text: line[start:end]})
-		}
-	}
-	// Reference definitions are explicit links too. Their destination still
-	// needs the same relative-path validation as an inline destination.
-	at := 0
-	for at < len(line) && at < 4 && line[at] == ' ' {
-		at++
-	}
-	if at < len(line) && line[at] == '[' {
-		if close := strings.Index(line[at:], "]:"); close >= 0 {
-			start := at + close + 2
-			for start < len(line) && (line[start] == ' ' || line[start] == '\t') {
-				start++
-			}
-			if start < len(line) && line[start] == '<' {
-				start++
-			}
-			end := start
-			for end < len(line) && line[end] != ' ' && line[end] != '\t' && line[end] != '>' {
-				end++
-			}
-			if end > start {
-				destinations = append(destinations, coreDestination{start: start, text: line[start:end]})
-			}
-		}
-	}
-	return destinations
 }
 
 func coreMaskExplicitLinks(line string) string {

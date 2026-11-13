@@ -7,13 +7,6 @@ This document violates every automatic authoring rule in RULES.md.
 > [!DANGER]
 > message
 
-## ALERT-002
-
-profile: portable-gfm
-
-> [!NOTE]
-> use plain text instead of an alert
-
 ## AUTO-001
 
 www.example.com and me@example.com
@@ -29,10 +22,6 @@ www.example.com and me@example.com
 - item x
 continuation at zero
 
-## BLOCK-003
-
-Violates BLOCK-003: policy is ignored or the unsafe form is used.
-
 ## CODE-001
 
 ````markdown
@@ -44,18 +33,6 @@ Violates BLOCK-003: policy is ignored or the unsafe form is used.
 ## CODE-002
 
 `code with ` embedded backtick
-
-## COMPAT-001
-
-Math with no declared compatibility profile: $x$
-
-## COMPAT-002
-
-Violates COMPAT-002: policy is ignored or the unsafe form is used.
-
-## COMPAT-003
-
-Violates COMPAT-003: policy is ignored or the unsafe form is used.
 
 ## DETAILS-001
 
@@ -93,12 +70,6 @@ Text[^a]
 
 [^a]: $x$
 
-## FOOT-004
-
-Footnote used in a wiki document.
-
-[^wiki]: numbered references are safer here.
-
 ## HTML-001
 
 <script>alert(1)</script>
@@ -113,43 +84,25 @@ Footnote used in a wiki document.
 
 [ www.example.com and mail me@example.com
 
-## LINK-002
 
-[relative](../missing.md)
-
-## LINK-003
-
-## Same heading
-
-## Same heading
 
 ## MATH-001
 
-$x$
+\(x\) and \[y\]
 
 ## MATH-002
 
-$x$
-
-$$x$$
+$a \{ b \}$
 
 ## MATH-003
 
-\(x\) and \[y\]
+$a+% b$
 
 ## MATH-004
 
-$a \{ b \}$
-
-## MATH-005
-
-$a+% b$
-
-## MATH-006
-
 $x$$y$
 
-## MATH-007
+## MATH-005
 
 *before $x$ after*
 
@@ -157,25 +110,21 @@ $x$$y$
 
 <b>$x$</b>
 
-## MATH-008
+## MATH-006
 
 $\text{$x$}$
 
-## MATH-009
+## MATH-007
 
 $\\$x$
 
-## MATH-010
+## MATH-008
 
 $\displaystyle\sum_i x_i$
 
-## MATH-011
+## MATH-009
 
 $a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a+a$
-
-## MEDIA-001
-
-![](missing.png)
 
 ## MERMAID-001
 
@@ -187,24 +136,18 @@ A-->B
 ## MERMAID-002
 
 ```mermaid
-info
-```
-
-## MERMAID-003
-
-```mermaid
 sankey-beta
 A,B,1
 ```
 
-## MERMAID-004
+## MERMAID-003
 
 ```mermaid
 flowchart TD
 end-->A
 ```
 
-## MERMAID-005
+## MERMAID-004
 
 ```mermaid
 flowchart TD
@@ -212,64 +155,13 @@ A["<b>x</b>"]
 click A callback
 ```
 
-## MERMAID-006
+## MERMAID-005
 
 ```mermaid
 %%{init: {}}%%
 flowchart TD
 A-->B
 ```
-
-## MERMAID-007
-
-```mermaid
-flowchart TD
-A-->B
-B-->C
-C-->D
-D-->E
-E-->F
-F-->G
-```
-
-## MERMAID-008
-
-```mermaid
-flowchart TD
-A-->B
-```
-
-## RENDER-001
-
-Violates RENDER-001: policy is ignored or the unsafe form is used.
-
-## RENDER-002
-
-Violates RENDER-002: policy is ignored or the unsafe form is used.
-
-## RENDER-003
-
-Violates RENDER-003: policy is ignored or the unsafe form is used.
-
-## RENDER-004
-
-Violates RENDER-004: policy is ignored or the unsafe form is used.
-
-## RENDER-005
-
-Violates RENDER-005: policy is ignored or the unsafe form is used.
-
-## RENDER-006
-
-Violates RENDER-006: policy is ignored or the unsafe form is used.
-
-## RENDER-007
-
-Violates RENDER-007: policy is ignored or the unsafe form is used.
-
-## SOCIAL-001
-
-@name #123 :smile: :#ff0000:
 
 ## STRIKE-001
 
@@ -300,12 +192,6 @@ a~~***nested***~~a
 
 ## TABLE-004
 
-|   a   |  b |
-| --- | --- |
-|   1   |  2 |
-
-## TABLE-005
-
 | A |
 | --- |
 | $a | b$ |
@@ -315,10 +201,6 @@ a~~***nested***~~a
 -[ ] missing space
 
 ## TASK-002
-
-- [x] treated as an interactive control
-
-## TASK-003
 
 - [x] [ ] extra marker
 
@@ -332,13 +214,6 @@ a~~***nested***~~a
 
 ## WIDGET-001
 
-```geojson
-not valid json
-```
-
-## WIDGET-002
-
 ```stl
 not valid stl
 ```
-

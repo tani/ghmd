@@ -40,21 +40,18 @@ func TestDetailsSummaryCorollary(t *testing.T) {
 func TestMathPolicyPreservesCurrencyAndEscapes(t *testing.T) {
 	violations := mathPolicyStyleViolations("cost $5 and $6 plus \\$x\\$")
 	for _, violation := range violations {
-		if violation.ID == "MATH-002" || violation.ID == "MATH-009" {
+		if violation.ID == "MATH-007" {
 			t.Fatalf("currency or legal escape was flagged: %v", violation)
 		}
 	}
-	requireStyleViolation(t, mathPolicyStyleViolations("$x$"), "MATH-002")
-	requireStyleViolation(t, mathPolicyStyleViolations(`$\text{$x$}$`), "MATH-008")
-	requireStyleViolation(t, mathPolicyStyleViolations(`$\\$x$`), "MATH-009")
-	requireStyleViolation(t, mathPolicyStyleViolations(`$\displaystyle\sum x$`), "MATH-010")
+	requireStyleViolation(t, mathPolicyStyleViolations(`$\text{$x$}$`), "MATH-006")
+	requireStyleViolation(t, mathPolicyStyleViolations(`$\\$x$`), "MATH-007")
+	requireStyleViolation(t, mathPolicyStyleViolations(`$\displaystyle\sum x$`), "MATH-008")
 }
 
 func TestWidgetAndSocialPolicies(t *testing.T) {
 	widget := widgetViolations("```Mermaid\nflowchart TD\nA-->B\n```\n")
 	requireStyleViolation(t, widget, "MERMAID-001")
-	widget = widgetViolations("@name #123 :smile:\n")
-	requireStyleViolation(t, widget, "SOCIAL-001")
 	widget = widgetViolations("==highlight== [[wiki]] ::: warning\n")
 	if len(widget) < 3 {
 		t.Fatalf("expected all extension violations: %v", widget)

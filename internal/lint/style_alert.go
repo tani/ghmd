@@ -1,11 +1,6 @@
 package lint
 
-import (
-	"regexp"
-	"strings"
-)
-
-var alertPortablePattern = regexp.MustCompile(`(?i)\bportable(?:-gfm)?\b`)
+import "strings"
 
 type alertSourceMarker struct {
 	name         string
@@ -22,7 +17,6 @@ func alertViolations(source string) []styleViolation {
 	maskedLines := coreMaskInlineCode(commentsMasked, codeSpans)
 
 	var out []styleViolation
-	hasAlert := false
 	quoteOpen, quoteHasContent, quoteHasAlert := false, false, false
 	for i, line := range lines {
 		masked := maskedLines[i]
@@ -36,7 +30,6 @@ func alertViolations(source string) []styleViolation {
 		}
 		marker, ok := parseAlertSourceMarker(line)
 		if ok {
-			hasAlert = true
 			add := func(detail string) {
 				out = append(out, styleViolation{
 					ID: "ALERT-001", Line: i + 1, Column: coreColumn(line, marker.markerOffset), Detail: detail,
@@ -63,25 +56,6 @@ func alertViolations(source string) []styleViolation {
 		}
 		if strings.TrimSpace(masked[contentOffset:]) != "" {
 			quoteHasContent = true
-		}
-	}
-
-	for i, line := range lines {
-		masked := maskedLines[i]
-		portable := alertPortablePattern.FindStringIndex(masked)
-		if portable == nil {
-			continue
-		}
-		lower := strings.ToLower(masked)
-		sameLineAlert := alertBracketInText(masked)
-		explicitAssumption := strings.Contains(lower, "portable profile") && strings.Contains(lower, "alert") && strings.Contains(lower, "assum")
-		profileDeclaration := strings.Contains(lower, "portable-gfm") || strings.Contains(lower, "portable profile") ||
-			strings.Contains(lower, "profile: portable") || strings.Contains(lower, "profile = portable")
-		if sameLineAlert || explicitAssumption || hasAlert && profileDeclaration {
-			out = append(out, styleViolation{
-				ID: "ALERT-002", Line: i + 1, Column: coreColumn(line, portable[0]),
-				Detail: "for portable-gfm, replace the alert with an ordinary paragraph beginning with a bold textual label such as **Note:** or **Warning:**",
-			})
 		}
 	}
 
@@ -148,19 +122,4 @@ func parseAlertSourceMarker(line string) (alertSourceMarker, bool) {
 		name: line[content+2 : close], markerOffset: content, afterMarker: close + 1,
 		depth: depth,
 	}, true
-}
-
-func alertBracketInText(line string) bool {
-	for from := 0; from < len(line); {
-		relative := strings.Index(line[from:], "[!")
-		if relative < 0 {
-			return false
-		}
-		open := from + relative
-		if close := strings.IndexByte(line[open+2:], ']'); close >= 0 {
-			return true
-		}
-		from = open + 2
-	}
-	return false
 }

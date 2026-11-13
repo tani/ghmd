@@ -157,7 +157,6 @@ func tableStyleLines(lines []string, inside, fenceOpens []bool) []styleViolation
 			}
 
 			violations = append(violations, tableLiteralPipeViolations(row)...)
-			violations = append(violations, tablePaddingViolations(row)...)
 			if validTable {
 				violations = append(violations, tableMathPipeViolations(row)...)
 			}
@@ -503,27 +502,6 @@ func tableLiteralPipeViolations(row tablePipeRow) []styleViolation {
 	return violations
 }
 
-func tablePaddingViolations(row tablePipeRow) []styleViolation {
-	var violations []styleViolation
-	for _, cell := range row.cells {
-		left := cell.start
-		for left < cell.end && row.text[left] == ' ' {
-			left++
-		}
-		right := cell.end
-		for right > left && row.text[right-1] == ' ' {
-			right--
-		}
-		if left == right || left-cell.start < 2 || cell.end-right < 2 {
-			continue
-		}
-		content := row.text[left:right]
-		violations = append(violations, tableViolation("TABLE-004", row, cell.start,
-			fmt.Sprintf("cell %q has manual alignment padding; use one surrounding space on each side and leave width adjustment to the renderer", content)))
-	}
-	return violations
-}
-
 func tableMathPipeViolations(row tablePipeRow) []styleViolation {
 	var violations []styleViolation
 	for _, span := range row.math {
@@ -534,7 +512,7 @@ func tableMathPipeViolations(row tablePipeRow) []styleViolation {
 			if row.text[i] != '|' || tableBackslashRun(row.text, i)%2 != 0 {
 				continue
 			}
-			violations = append(violations, tableViolation("TABLE-005", row, i,
+			violations = append(violations, tableViolation("TABLE-004", row, i,
 				"inline math contains a literal pipe; use \\vert or \\mid where semantically appropriate, or move the math out of the table"))
 		}
 	}

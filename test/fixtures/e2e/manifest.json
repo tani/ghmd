@@ -57,9 +57,7 @@
         {
           "id": "style-table-unicode-empty",
           "origin": "styleguide",
-          "rules": [
-            "TABLE-004"
-          ]
+          "rules": []
         }
       ]
     },
@@ -89,8 +87,7 @@
           "id": "style-links-relative-unicode",
           "origin": "styleguide",
           "rules": [
-            "LINK-001",
-            "LINK-002"
+            "LINK-001"
           ]
         }
       ]
@@ -106,7 +103,7 @@
           "origin": "styleguide",
           "rules": [
             "TASK-001",
-            "TASK-003"
+            "TASK-002"
           ]
         }
       ]
@@ -243,8 +240,8 @@
           "id": "style-mermaid-source",
           "origin": "styleguide",
           "rules": [
-            "MERMAID-003",
-            "MERMAID-004"
+            "MERMAID-002",
+            "MERMAID-003"
           ]
         }
       ]
@@ -259,8 +256,7 @@
           "id": "style-data-widgets",
           "origin": "styleguide",
           "rules": [
-            "WIDGET-001",
-            "WIDGET-002"
+            "WIDGET-001"
           ]
         }
       ]
@@ -276,7 +272,7 @@
           "origin": "styleguide",
           "rules": [
             "CODE-001",
-            "MATH-003"
+            "MATH-001"
           ]
         }
       ]
@@ -291,8 +287,7 @@
           "id": "style-html-dangerous",
           "origin": "styleguide",
           "rules": [
-            "HTML-001",
-            "RENDER-003"
+            "HTML-001"
           ]
         }
       ]
@@ -306,9 +301,7 @@
         {
           "id": "style-html-misnested",
           "origin": "styleguide",
-          "rules": [
-            "RENDER-001"
-          ]
+          "rules": []
         },
         {
           "id": "expanded-html-context-closed_b",

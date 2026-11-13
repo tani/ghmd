@@ -6,18 +6,6 @@ import (
 	"unicode/utf8"
 )
 
-// mathPolicyProfile is deliberately source-oriented: a profile only affects
-// syntax policy when it is declared near the start of the document. Merely
-// discussing a profile later in prose must not disable the checks.
-type mathPolicyProfile uint8
-
-const (
-	mathPolicyProfileUnspecified mathPolicyProfile = iota
-	mathPolicyProfilePortable
-	mathPolicyProfileRich
-	mathPolicyProfileCustom
-)
-
 type mathPolicySpan struct {
 	start     int
 	end       int // exclusive, including the delimiters
@@ -25,37 +13,6 @@ type mathPolicySpan struct {
 	bodyEnd   int
 	display   bool
 	code      bool
-}
-
-func mathPolicyDocumentProfile(lines []string, fenced []bool) mathPolicyProfile {
-	meaningful := 0
-	for i, line := range lines {
-		if fenced[i] {
-			continue
-		}
-		trimmed := strings.TrimSpace(line)
-		if trimmed == "" || trimmed == "---" || strings.HasPrefix(trimmed, "#") {
-			continue
-		}
-		lower := strings.ToLower(trimmed)
-		declaration := strings.Contains(lower, "profile") || strings.HasPrefix(lower, "compatibility:")
-		for _, candidate := range []struct {
-			name    string
-			profile mathPolicyProfile
-		}{{"portable-gfm", mathPolicyProfilePortable}, {"github-rich", mathPolicyProfileRich}, {"custom-verified", mathPolicyProfileCustom}} {
-			if strings.Contains(lower, candidate.name) && (declaration || lower == candidate.name) {
-				return candidate.profile
-			}
-		}
-		if strings.HasPrefix(trimmed, "<!--") {
-			continue
-		}
-		meaningful++
-		if meaningful >= 6 {
-			break
-		}
-	}
-	return mathPolicyProfileUnspecified
 }
 
 func mathPolicyMaskComment(line string) string {

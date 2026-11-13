@@ -6,10 +6,8 @@ import (
 )
 
 func TestMathPolicySourceChecks(t *testing.T) {
-	violations := mathPolicyStyleViolations("$x$")
-	requireStyleViolation(t, violations, "MATH-002")
-	violations = mathPolicyStyleViolations("\\(x\\) and \\[y\\]")
-	requireStyleViolation(t, violations, "MATH-003")
+	violations := mathPolicyStyleViolations("\\(x\\) and \\[y\\]")
+	requireStyleViolation(t, violations, "MATH-001")
 	violations = tableStrikeStyleViolations("a~~***nested***~~a")
 	requireStyleViolation(t, violations, "STRIKE-002")
 	violations = mathPolicyStyleViolations("cost $5 and $6 total")
@@ -17,7 +15,7 @@ func TestMathPolicySourceChecks(t *testing.T) {
 		t.Fatalf("currency should remain ordinary prose: %v", violations)
 	}
 	violations = mathPolicyStyleViolations("[$x$](https://example.com)")
-	requireStyleViolation(t, violations, "MATH-007")
+	requireStyleViolation(t, violations, "MATH-005")
 }
 
 func TestMathBlockSizeLimit(t *testing.T) {
@@ -44,12 +42,12 @@ func TestMathBlockSizeLimit(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			count := 0
 			for _, violation := range mathPolicyStyleViolations(test.source) {
-				if violation.ID != "MATH-011" {
+				if violation.ID != "MATH-009" {
 					continue
 				}
 				count++
 				if violation.Line != test.line || violation.Column != test.column {
-					t.Errorf("MATH-011 at %d:%d, want %d:%d", violation.Line, violation.Column, test.line, test.column)
+					t.Errorf("MATH-009 at %d:%d, want %d:%d", violation.Line, violation.Column, test.line, test.column)
 				}
 			}
 			want := 0
@@ -57,7 +55,7 @@ func TestMathBlockSizeLimit(t *testing.T) {
 				want = 1
 			}
 			if count != want {
-				t.Errorf("MATH-011 findings = %d, want %d", count, want)
+				t.Errorf("MATH-009 findings = %d, want %d", count, want)
 			}
 		})
 	}
@@ -70,10 +68,10 @@ func TestMathLayoutReviewSignals(t *testing.T) {
 		"$\\sqrt{\\frac{1}{2}}$",
 		"$\\begin{pmatrix}a & b\\\\ c & d\\end{pmatrix}$",
 	} {
-		requireStyleViolation(t, mathPolicyStyleViolations(source), "MATH-010")
+		requireStyleViolation(t, mathPolicyStyleViolations(source), "MATH-008")
 	}
 	for _, violation := range mathPolicyStyleViolations("$x + y$") {
-		if violation.ID == "MATH-010" {
+		if violation.ID == "MATH-008" {
 			t.Fatalf("plain inline math triggered a layout review: %v", violation)
 		}
 	}
@@ -82,7 +80,7 @@ func TestMathLayoutReviewSignals(t *testing.T) {
 func TestMathFencedBodyPolicy(t *testing.T) {
 	requireStyleViolation(t,
 		mathPolicyStyleViolations("```math\n\\text{$\\alpha$}\n```\n"),
-		"MATH-008")
+		"MATH-006")
 	if got := mathPolicyStyleViolations("```math\n\\text{plain text}\n```\n"); len(got) != 0 {
 		t.Fatalf("plain text fenced math was flagged: %v", got)
 	}
@@ -94,7 +92,7 @@ func TestMathBlockHTMLContext(t *testing.T) {
 		"<details>\n<summary>More</summary>\n\n$$\nA = 5\n$$\n\n</details>\n",
 	} {
 		violations := mathPolicyStyleViolations(source)
-		requireStyleViolation(t, violations, "MATH-007")
+		requireStyleViolation(t, violations, "MATH-005")
 		requireStyleViolation(t, violations, "DETAILS-002")
 	}
 	if got := mathPolicyStyleViolations("```math\nA = 5\n```\n"); len(got) != 0 {
@@ -105,10 +103,8 @@ func TestMathBlockHTMLContext(t *testing.T) {
 func TestDetailsMathContext(t *testing.T) {
 	violations := mathPolicyStyleViolations("<details><summary>x</summary>\n\n$y$\n")
 	requireStyleViolation(t, violations, "DETAILS-002")
-	violations = mathPolicyStyleViolations("$$x$$")
-	requireStyleViolation(t, violations, "MATH-002")
 	violations = mathPolicyStyleViolations(`$\text{$x$}$`)
-	requireStyleViolation(t, violations, "MATH-008")
+	requireStyleViolation(t, violations, "MATH-006")
 	violations = mathPolicyStyleViolations(`$\\$x$`)
-	requireStyleViolation(t, violations, "MATH-009")
+	requireStyleViolation(t, violations, "MATH-007")
 }

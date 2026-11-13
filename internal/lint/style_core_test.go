@@ -107,36 +107,6 @@ func TestCoreStyleRules(t *testing.T) {
 			},
 		},
 		{
-			id:  "LINK-002",
-			bad: []coreStyleCase{{source: "[relative](../missing.md)", line: 1, column: 12}},
-			safe: []string{
-				"[absolute](https://example.com/docs)",
-				"[local](docs/missing.md)",
-				"`[relative](../missing.md)`",
-			},
-		},
-		{
-			id:  "LINK-003",
-			bad: []coreStyleCase{{source: "## Same heading\n\n## Same heading", line: 3, column: 1}},
-			safe: []string{
-				"## First heading\n\n## Second heading",
-				"```markdown\n## Same heading\n## Same heading\n```",
-				"## Same heading\n\nDifferent prose",
-			},
-		},
-		{
-			id: "MEDIA-001",
-			bad: []coreStyleCase{
-				{source: "![](missing.png)", line: 1, column: 1},
-				{source: "![missing.png](missing.png)", line: 1, column: 1},
-			},
-			safe: []string{
-				"![A missing-file diagram](missing.png)",
-				"![A screenshot of the results](results.png)",
-				"`![](missing.png)`",
-			},
-		},
-		{
 			id: "TASK-001",
 			bad: []coreStyleCase{
 				{source: "-[ ] missing space", line: 1, column: 1},
@@ -151,7 +121,7 @@ func TestCoreStyleRules(t *testing.T) {
 			},
 		},
 		{
-			id:  "TASK-003",
+			id:  "TASK-002",
 			bad: []coreStyleCase{{source: "- [x] [ ] extra marker", line: 1, column: 7}},
 			safe: []string{
 				"- [x] done",
@@ -193,26 +163,5 @@ func TestCoreStyleRules(t *testing.T) {
 				})
 			}
 		})
-	}
-}
-
-func TestCoreManualRulesAreReviewGuidanceOnly(t *testing.T) {
-	tests := []struct {
-		id     string
-		source string
-	}{
-		{id: "BLOCK-003", source: "line one\nline two"},
-		{id: "TASK-002", source: "- [x] checkboxes are document data"},
-	}
-	for _, test := range tests {
-		guidance, ok := ManualRule(test.id)
-		if !ok || strings.TrimSpace(guidance) == "" {
-			t.Errorf("%s has no manual review guidance", test.id)
-		}
-		for _, violation := range coreStyleViolations(test.source) {
-			if violation.ID == test.id {
-				t.Errorf("manual intent became an automatic finding: %#v", violation)
-			}
-		}
 	}
 }
