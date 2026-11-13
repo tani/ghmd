@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ghmd — GitHub Markdown workbench</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>ghmd</h1>
+      <p>GitHub Markdown render, lint, and parser diff — entirely in your browser.</p>
+    </div>
+    <span class="badge">WebAssembly</span>
+  </header>
+
+  <main class="workspace">
+    <section class="pane editor-pane" aria-labelledby="source-label">
+      <div class="pane-head">
+        <label id="source-label" for="source">Markdown</label>
+        <span id="input-stats" class="muted"></span>
+      </div>
+      <textarea id="source" spellcheck="false" autocomplete="off"># ghmd web UI
+
+Render, lint, and compare GitHub-flavored Markdown locally.
+
+## Task list
+
+- [x] render HTML
+- [ ] deploy to GitHub Pages
+
+## Math
+
+Inline math: $`x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}`$
+
+$$
+\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
+$$
+</textarea>
+    </section>
+
+    <section class="pane result-pane" aria-labelledby="result-label">
+      <div class="pane-head">
+        <h2 id="result-label">Result</h2>
+        <div class="tabs" role="tablist" aria-label="Output mode">
+          <button class="tab active" data-mode="render" role="tab" aria-selected="true">Render</button>
+          <button class="tab" data-mode="lint" role="tab" aria-selected="false">Lint</button>
+          <button class="tab" data-mode="diff" role="tab" aria-selected="false">Diff</button>
+        </div>
+      </div>
+
+      <div id="status" class="status" role="status">Loading WebAssembly…</div>
+
+      <div id="render-view" class="result-view">
+        <iframe id="preview" title="Rendered Markdown preview" sandbox=""></iframe>
+        <details class="html-output">
+          <summary>HTML output</summary>
+          <pre id="html-output"></pre>
+        </details>
+      </div>
+
+      <div id="lint-view" class="result-view" hidden>
+        <div id="lint-summary" class="summary"></div>
+        <ul id="lint-results" class="findings"></ul>
+      </div>
+
+      <div id="diff-view" class="result-view" hidden>
+        <div id="diff-summary" class="summary"></div>
+        <ul id="diff-results" class="findings"></ul>
+      </div>
+    </section>
+  </main>
+
+  <script src="wasm_exec.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

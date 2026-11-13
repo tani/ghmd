@@ -1,0 +1,182 @@
+:root {
+  color-scheme: light;
+  --bg: #f6f8fa;
+  --panel: #ffffff;
+  --ink: #1f2328;
+  --muted: #656d76;
+  --line: #d0d7de;
+  --accent: #0969da;
+  --accent-soft: #ddf4ff;
+  --error: #cf222e;
+  --ok: #1a7f37;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+h1 { margin: 0; font-size: 24px; letter-spacing: -0.03em; }
+h2 { margin: 0; font-size: 15px; }
+.topbar p { margin: 4px 0 0; color: var(--muted); }
+
+.badge {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 16px;
+  height: calc(100vh - 92px);
+  padding: 16px;
+}
+
+.pane {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.muted, .pane-head label { color: var(--muted); font-size: 12px; }
+.pane-head label { font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+
+textarea {
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+  resize: none;
+  border: 0;
+  outline: 0;
+  padding: 16px;
+  background: transparent;
+  color: var(--ink);
+  font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  tab-size: 2;
+}
+
+.tabs { display: flex; gap: 4px; }
+
+.tab {
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+}
+
+.tab:hover { background: var(--bg); color: var(--ink); }
+.tab.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.tab:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.status {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+.status.ok { color: var(--ok); }
+.status.error { color: var(--error); background: #ffebe9; }
+
+.result-view { display: flex; min-height: 0; flex: 1; flex-direction: column; }
+.result-view[hidden] { display: none; }
+
+#preview {
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+  border: 0;
+  background: #fff;
+}
+
+.html-output { border-top: 1px solid var(--line); }
+.html-output summary {
+  padding: 8px 14px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+}
+.html-output pre {
+  max-height: 32vh;
+  margin: 0;
+  overflow: auto;
+  padding: 12px 14px;
+  background: var(--bg);
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.summary { padding: 12px 14px 4px; color: var(--muted); }
+
+.findings {
+  margin: 0;
+  padding: 8px 14px 16px;
+  overflow: auto;
+  list-style: none;
+}
+
+.finding {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 8px 0;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.finding-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.finding-title { font: 600 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--error); }
+.finding-meta { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.finding pre {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@media (max-width: 860px) {
+  .workspace {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .pane { min-height: 55vh; }
+  .editor-pane { min-height: 40vh; }
+}

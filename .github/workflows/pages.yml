@@ -1,0 +1,55 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install TinyGo
+        run: |
+          curl -fsSL https://github.com/tinygo-org/tinygo/releases/download/v0.44.0/tinygo0.44.0.linux-amd64.tar.gz -o "$RUNNER_TEMP/tinygo.tar.gz"
+          tar -xzf "$RUNNER_TEMP/tinygo.tar.gz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/tinygo/bin" >> "$GITHUB_PATH"
+
+      - name: Build WebAssembly and static site
+        run: |
+          mkdir -p web/dist
+          CGO_CFLAGS="-I$GITHUB_WORKSPACE/third_party/cmark-gfm/src -I$GITHUB_WORKSPACE/third_party/cmark-gfm/extensions -I$GITHUB_WORKSPACE/third_party/cmark-gfm/generated" \
+            tinygo build -target=wasm -no-debug -o web/dist/ghmd.wasm ./cmd/ghmd-wasm
+          cp "$(tinygo env TINYGOROOT)/targets/wasm_exec.js" web/dist/wasm_exec.js
+          cp web/index.html web/app.js web/style.css web/dist/
+          test -s web/dist/ghmd.wasm
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

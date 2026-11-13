@@ -37,12 +37,24 @@ html, err := ghmd.Render(source, ghmd.RenderOptions{RunID: ""})
 | `make go-native` | `build/go/<arch>/ghmd` using cgo |
 | `make tinygo-native` | `build/tinygo/<arch>/ghmd` using TinyGo + cgo |
 | `make tinygo-wasi` | `build/tinygo/wasi/ghmd.wasm` |
-| `make all` | All three builds |
+| `make web` | `web/dist/` web UI and WebAssembly module |
+| `make all` | All native builds |
 | `make clean` | Removes the generated binaries |
 
 `<arch>` defaults to `go env GOHOSTARCH`. TinyGo 0.44.0 is the tested toolchain. It is used as a system executable rather than a Go module tool because building TinyGo from source requires matching LLVM and libclang development files. The Makefile also supplies absolute include paths for the vendored cmark-gfm headers, which TinyGo's cgo handling does not infer.
 
 The WASI build includes `third_party/cmark-gfm-bridge/wasi_shim.c`, which defines the ASCII `tolower` function missing from the available `wasi-libc` link set. It is compiled only under `__wasip1__` or `__wasi__`, so native builds are unaffected.
+
+### Web UI
+
+`make web` builds `cmd/ghmd-wasm` with TinyGo and copies the static UI into `web/dist/`:
+
+```sh
+make web
+python3 -m http.server 8765 --directory web/dist
+```
+
+Open <http://localhost:8765/>. Render, lint, and diff run locally in the browser; no Markdown leaves the page. The GitHub Pages workflow in `.github/workflows/pages.yml` publishes `web/dist/` on pushes to `main` and through manual dispatch. Enable Pages with "GitHub Actions" as the source in repository settings before the first deployment.
 
 ## Lint behavior
 
@@ -91,6 +103,8 @@ The GitHub reference suite renders 617 captured inputs and compares canonical HT
 | `internal/lint` | Raw-HTML source and policy rules plus the standard-renderer differential. Uses `analysis.SemanticFeatures`, not `internal/diff`. |
 | `internal/verify` | Fixture canonicalization and GitHub image-proxy normalization. |
 | `cmd/ghmd` | `render`, `diff` and `lint` command-line interface. |
+| `cmd/ghmd-wasm` | Browser WebAssembly bridge for the render, lint, and diff UI. |
+| `web` | Static browser workbench and GitHub Pages entry point. |
 
 The pipeline keeps the former renderer's byte-range tree for already-sanitized HTML. HTML5 boundaries use `x/net/html`: raw-input filtering, sanitizer traversal, DOM compatibility repair and DOM serialization. The renderer makes no JavaScript or Node calls.
 

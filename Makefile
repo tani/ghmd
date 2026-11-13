@@ -1,13 +1,14 @@
 GO ?= go
 TINYGO ?= tinygo
 OUT_DIR ?= build
+WEB_DIR ?= web/dist
 ARCH ?= $(shell $(GO) env GOHOSTARCH)
 
 CMARK_CGO_CFLAGS := -I$(CURDIR)/third_party/cmark-gfm/src \
 	-I$(CURDIR)/third_party/cmark-gfm/extensions \
 	-I$(CURDIR)/third_party/cmark-gfm/generated
 
-.PHONY: all go-native tinygo-native tinygo-wasi clean
+.PHONY: all go-native tinygo-native tinygo-wasi web clean
 
 all: go-native tinygo-native tinygo-wasi
 
@@ -26,7 +27,16 @@ tinygo-wasi:
 	CGO_CFLAGS="$(CMARK_CGO_CFLAGS) $(CGO_CFLAGS)" \
 		$(TINYGO) build -target=wasi -no-debug -o "$(OUT_DIR)/tinygo/wasi/ghmd.wasm" ./cmd/ghmd
 
+web:
+	mkdir -p "$(WEB_DIR)"
+	CGO_CFLAGS="$(CMARK_CGO_CFLAGS) $(CGO_CFLAGS)" \
+		$(TINYGO) build -target=wasm -no-debug -o "$(WEB_DIR)/ghmd.wasm" ./cmd/ghmd-wasm
+	cp "$$($(TINYGO) env TINYGOROOT)/targets/wasm_exec.js" "$(WEB_DIR)/wasm_exec.js"
+	cp web/index.html web/app.js web/style.css "$(WEB_DIR)/"
+
 clean:
 	rm -f "$(OUT_DIR)/go/$(ARCH)/ghmd" "$(OUT_DIR)/tinygo/$(ARCH)/ghmd" \
 		"$(OUT_DIR)/tinygo/wasi/ghmd.wasm" "$(OUT_DIR)/ghmd-go-native" \
-		"$(OUT_DIR)/ghmd-native" "$(OUT_DIR)/ghmd.wasm"
+		"$(OUT_DIR)/ghmd-native" "$(OUT_DIR)/ghmd.wasm" \
+		"$(WEB_DIR)/ghmd.wasm" "$(WEB_DIR)/wasm_exec.js" \
+		"$(WEB_DIR)/index.html" "$(WEB_DIR)/app.js" "$(WEB_DIR)/style.css"
